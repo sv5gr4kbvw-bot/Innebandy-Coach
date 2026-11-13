@@ -18,6 +18,18 @@
    else{hint.textContent=n+' bildrutor sparade. Tryck Spela för att se övningen, eller flytta spelare och lägg till fler bildrutor.';}
    play.setAttribute('aria-description',n<2?'Spara minst två bildrutor för att visa en rörelse.':'Spela upp sparade bildrutor.');
   };
+  // Prevent accidental loss of recorded exercise frames on small touch screens.
+  const clear=document.getElementById('framesClear');
+  if(clear){
+   clear.addEventListener('click',event=>{
+    const n=parseInt(count.textContent,10)||0;
+    if(n===0)return;
+    if(!window.confirm('Vill du radera alla '+n+' bildrutor i övningen? Det går inte att ångra.')){
+     event.preventDefault();
+     event.stopImmediatePropagation();
+    }
+   },true);
+  }
   const observer=new MutationObserver(update);
   observer.observe(count,{subtree:true,childList:true,characterData:true});
   update();
