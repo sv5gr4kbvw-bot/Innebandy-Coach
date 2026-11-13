@@ -337,6 +337,25 @@ body.board-fullscreen #board,body.board-fullscreen #board *,body.board-fullscree
  },{capture:true,passive:false});
 })();
 </script>
+<style id="coach302-app-shell">
+/* Permanent, viewport-sized tactical board: no document scrolling in coaching mode. */
+html:has(body.board-fullscreen),html:has(body.board-fullscreen) body{height:100%!important;overflow:hidden!important;overscroll-behavior:none!important}
+body.board-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;overflow:hidden!important;margin:0!important;padding:0!important}
+body.board-fullscreen #board{display:block!important;max-height:100dvh!important;touch-action:none!important}
+body.board-fullscreen .board-workspace{max-height:100dvh!important;overflow:hidden!important}
+</style>
+<script id="coach302-scroll-lock">
+(function(){
+ // Only block document-level swipes; menus and dialog content retain their own controls.
+ const allowed=e=>e.target.closest?.('#coach205Menu,#coach294panel,#playerEditor,#fullCoachSheet,.tool-drawer,[role="dialog"]');
+ document.addEventListener('touchmove',e=>{
+  if(document.body.classList.contains('board-fullscreen')&&!allowed(e)&&e.cancelable)e.preventDefault();
+ },{passive:false,capture:true});
+ window.addEventListener('scroll',()=>{
+  if(document.body.classList.contains('board-fullscreen')&&window.scrollY)window.scrollTo(0,0);
+ },{passive:true});
+})();
+</script>
 </head><body><details id="installCoachHelp" class="panel"><summary>📱 Installera som app på iPhone</summary><p>Öppna den publicerade adressen i Safari, tryck på Dela och välj <strong>Lägg till på hemskärmen</strong>. Starta sedan Innebandy Coach från ikonen. Grundfunktionerna kan användas offline efter att appen har laddats in; matchdelning kräver internet.</p><p>Vill du senare publicera en native iOS-app kan samma webbapp användas som grund, men App Store-publicering har egna krav och kostnader.</p></details><div class="wrap"><header><div><h1>🏑 Innebandy Coach <span style="color:#78b7ff">PRO</span></h1><small>Taktiktavla · träningspass · övningar</small></div><span class="pill">Offline-klar</span></header>
 <section class="coach-focus-toggle" aria-label="Fokusläge"><div><strong>🏑 Planen i fokus</strong><small>Dubbeltryck på planen för verktyg</small></div><div class="focus-actions"><button type="button" id="coachFocusUndo" aria-label="Ångra senaste ändringen" title="Ångra">↶ Ångra</button><button type="button" id="coachFocusRedo" aria-label="Gör om ändringen" title="Gör om">↷ Gör om</button><button type="button" id="coachFocusFullBoard" aria-label="Öppna helplansläge">⛶ Helplan</button><button type="button" id="coachFocusToggle" aria-pressed="true">Visa fler val</button></div></section><div class="toolbox" id="modes">
 <div class="tool-section"><div class="tool-label">Redigera</div><div class="tools"><button data-mode="move" class="active">✋ Flytta</button><button data-mode="draw">✏️ Rita</button><button data-mode="arrow">↗️ Pil</button><button data-mode="erase">🧽 Sudda</button></div></div>
