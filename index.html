@@ -2463,7 +2463,7 @@ const groups={
 main:{title:'☰ Huvudmeny',hint:'Match, chatt, delning och träning öppnas ovanpå helplanen. Gemensam tavla och chatt kräver konfigurerad Firebase.',items:[
 ['🏑 Snabbverktyg','special:tools'],['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['📋 Träningspass','more:coach80Planner'],['📚 Övningar','more:smartDrills'],['👥 Femmor & trupp','more:rosterPanel'],['🎬 Animationer','more:customStoryboard'],['💾 Spara tavlan','click:save'],['⚙️ Planinställningar','more:boardOptions'],['📤 Exportera','click:export']]},
 left:{title:'🧰 Alla verktyg',hint:'Välj verktyg och arbeta vidare direkt på planen.',items:[
-['✋ Flytta','mode:move'],['🔵 Blå spelare','mode:playerA'],['🔴 Röd spelare','mode:playerB'],['🧤 Målvakt','mode:goalieA'],['⚪ Boll','mode:ball'],['🔺 Kona','mode:cone'],['🥅 Mål','mode:goal'],['✏️ Rita','mode:draw'],['↗️ Pil','mode:arrow'],['🧽 Sudda','mode:erase'],['📝 Ändra spelare','mode:edit'],['🔄 Rotera objekt','mode:rotateObject'],['🎨 Färg & tjocklek','more:boardOptions'],['👥 Spelartrupp','more:rosterPanel']]},
+['✋ Flytta','mode:move'],['🏑 Träning','special:training'],['🔵 Blå spelare','mode:playerA'],['🔴 Röd spelare','mode:playerB'],['🧤 Målvakt','mode:goalieA'],['⚪ Boll','mode:ball'],['🔺 Kona','mode:cone'],['🥅 Mål','mode:goal'],['✏️ Rita','mode:draw'],['↗️ Pil','mode:arrow'],['🧽 Sudda','mode:erase'],['📝 Ändra spelare','mode:edit'],['🔄 Rotera objekt','mode:rotateObject'],['🎨 Färg & tjocklek','more:boardOptions'],['👥 Spelartrupp','more:rosterPanel']]},
 right:{title:'⚙️ Redigera & spara',hint:'Snabbåtgärder utan att lämna helplan.',items:[
 ['🏑 Match+ · statistik','special:matchstats'],['↶ Ångra','click:undo'],['↷ Gör om','click:redo'],['📸 Nytt filmsteg','click:frame'],['💾 Spara','click:save'],['📤 Exportera','click:export'],['🗑️ Töm planen','click:clear'],['👥 Spelartrupp','more:rosterPanel'],['🎨 Planinställningar','more:boardOptions']]},
 bottom:{title:'📋 Match, övningar & träningspass',hint:'Använd funktionerna från helplan. För större redigering kan du öppna motsvarande del av appen.',items:[
@@ -2474,7 +2474,8 @@ let active=null,down=null;
 function close(){shade.classList.remove('open');active=null;down=null}
 function act(spec){
  const [type,id]=spec.split(':');
- if(type==='special'&&id==='matchstats'){document.getElementById('coach294open')?.click();return true}
+ if(type==='special'&&id==='training'){window.coach304OpenTraining?.();return true}
+    if(type==='special'&&id==='matchstats'){document.getElementById('coach294open')?.click();return true}
   if(type==='special'&&id==='tools'){document.getElementById('coach205Menu')?.dispatchEvent(new Event('coach-open-normal'));return true}
  if(type==='special'&&(id==='chat'||id==='share')){
   if(id==='share'&&typeof window.matchShareCurrentRoom==='function'){window.matchShareCurrentRoom();return true;}
@@ -2642,7 +2643,8 @@ html:has(body.board-fullscreen),body.board-fullscreen{height:100%;overflow:hidde
 <script src="./coach294.js?v=298"></script>
 <style id="coach304-quick-animation-css">
 #coach304Anim{display:none;position:fixed;right:0;top:15%;z-index:2147483499;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none}
-body.board-fullscreen #coach304Anim{display:flex}
+body.board-fullscreen #coach304Anim{display:none}
+body.board-fullscreen #coach304Anim.coach304-open{display:flex}
 #coach304Anim button{box-sizing:border-box;pointer-events:auto;touch-action:manipulation;background:#123d53f2;color:#fff;border:1px solid #9cc6d6;border-radius:9px 0 0 9px;font:700 16px system-ui;padding:0;text-align:center}
 #coach304Anim #coach304Toggle{width:28px;min-height:80px;writing-mode:vertical-rl;font-size:11px;letter-spacing:.1px}
 #coach304Anim #coach304Capture,#coach304Anim #coach304Play,#coach304Anim #coach304Count{display:none}
@@ -2664,6 +2666,7 @@ body.board-fullscreen #coach304Anim{display:flex}
  capture.addEventListener('click',()=>{document.getElementById('frame')?.click();update()});
  play.addEventListener('click',()=>{document.getElementById('play')?.click();update()});
  document.getElementById('framesClear')?.addEventListener('click',()=>setTimeout(update,0));
+ window.coach304OpenTraining=function(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.textContent='×';update()};
  update();
 })();
 </script>
