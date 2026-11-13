@@ -1,5 +1,6 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 23.2</title>
-<link rel="stylesheet" href="./coach30-mobile.css">\n<style>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.1</title>
+<link rel="stylesheet" href="./coach30-mobile.css">
+<style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
 .toolbox{padding:0 10px 7px}.tool-section{margin:7px 0;background:#141f30;border:1px solid #34445d;border-radius:13px;padding:6px 3px}.tool-label{font-size:12px;color:#aabbd1;padding:5px 12px 0;font-weight:700;letter-spacing:.02em}.tools{padding:6px 7px;gap:6px}.tools button{min-height:46px;padding:10px 14px}.mode-banner{margin:4px 12px 7px;padding:10px 12px;border-radius:11px;background:#173653;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#b7d5f4}.mode-banner #currentMode{font-size:14px;font-weight:800;color:#fff;white-space:nowrap}.group{background:#101b2b;margin:5px 12px;border-radius:11px;padding:8px}.pitch{margin-top:0}.bottom{padding-bottom:12px}button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}@media(max-width:390px){header h1{font-size:18px}.mode-banner span:last-child{font-size:11px}} .roster-grid{display:grid;grid-template-columns:105px minmax(0,1fr) 65px;gap:6px;align-items:center;margin:7px 0}.roster-grid input{width:100%;min-width:0}.roster-tabs{display:flex;gap:5px;overflow-x:auto;padding:8px 0}.roster-tabs button{flex:none}.roster-tabs .active{background:#2563eb}.roster-actions{display:flex;gap:6px;flex-wrap:wrap}.roster-actions button{flex:1}.player-editor{display:none;position:fixed;inset:0;background:#000b;z-index:30;align-items:center;justify-content:center;padding:16px}.player-editor.open{display:flex}.player-card{width:min(100%,390px);background:#192b40;border:1px solid #527090;border-radius:18px;padding:18px}.player-card input,.player-card select{display:block;width:100%;margin:5px 0 12px;padding:12px;background:white;color:#111;border-radius:8px} 
 /* PRO 5.2: plan-first mobile layout with accessible surrounding tools */
@@ -1994,19 +1995,19 @@ $('coach80Level').value=['red','junior','senior'].includes(state.level)?state.le
 if ('serviceWorker' in navigator) {
  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(console.warn));
 }
-</script><script>
-/* 7.1: export/import of locally stored coach data, no cloud credentials */
+</script><script src="./coach-data.js?v=301"></script><script>
+/* 30.1: full backup includes match statistics and validates before restoring. */
 (function(){
- const keys=['innebandy_coach_pro_library_v1','innebandy_coach_sessions_v1','ib-roster-current-v2','ib-rosters-v2','ib-coach-storyboards-v7','innebandy-coach-planner-v8'];
+ const keys=['innebandy_coach_pro_library_v1','innebandy_coach_sessions_v1','ib-roster-current-v2','ib-rosters-v2','ib-coach-storyboards-v7','innebandy-coach-planner-v8','coach294_data_v1'];
  // Include other local animation keys from the app, without copying unrelated site storage.
- const animationKeys=Object.keys(localStorage).filter(k=>/^innebandy.*(story|anim|frame)/i.test(k));
- const allKeys=[...new Set([...keys,...animationKeys])];
+ const allowedKey=k=>keys.includes(k)||/^innebandy.*(story|anim|frame)/i.test(k);
+ const allKeys=()=>[...new Set([...keys,...Object.keys(localStorage).filter(allowedKey)])];
  const downloadBtn=document.getElementById('backupAll');
  const importBtn=document.getElementById('restoreAll');
  const picker=document.getElementById('restoreAllFile');
  downloadBtn.onclick=()=>{
   const data={format:'innebandy-coach-backup',version:1,createdAt:new Date().toISOString(),data:{}};
-  for(const k of allKeys){const v=localStorage.getItem(k);if(v!==null)data.data[k]=v;}
+  for(const k of allKeys()){const v=localStorage.getItem(k);if(v!==null)data.data[k]=v;}
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='innebandy-coach-full-backup.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  };
@@ -2017,9 +2018,9 @@ if ('serviceWorker' in navigator) {
   try{
    const parsed=JSON.parse(await file.text());
    if(parsed.format!=='innebandy-coach-backup'||parsed.version!==1||!parsed.data||typeof parsed.data!=='object'||Array.isArray(parsed.data))throw Error('Fel format');
-   const entries=Object.entries(parsed.data).filter(([k])=>allKeys.includes(k));
+   const entries=Object.entries(parsed.data).filter(([k])=>allowedKey(k));
    if(!entries.length||entries.some(([,v])=>typeof v!=='string'))throw Error('Ingen giltig data');
-   entries.forEach(([,v])=>JSON.parse(v));
+   entries.forEach(([k,v])=>{const parsed=JSON.parse(v);if(k==='coach294_data_v1'){if(!window.coachValidateMatchData)throw Error('Matchkontrollen kunde inte laddas');window.coachValidateMatchData(parsed);}});
    if(!confirm('Återställa '+entries.length+' datagrupper? Befintliga uppgifter i dessa grupper ersätts. Exportera gärna en backup först.'))return;
    const originals=entries.map(([k])=>[k,localStorage.getItem(k)]);
    try{entries.forEach(([k,v])=>localStorage.setItem(k,v));}
@@ -2666,7 +2667,7 @@ html:has(body.board-fullscreen),body.board-fullscreen{height:100%;overflow:hidde
  <section><h3>Säsongsstatistik</h3><div id="coach294stats"></div></section>
  <section><h3>Säkerhetskopiering</h3><div class="c294row"><button id="coach294backup">⬇ Exportera allt (JSON)</button><button id="coach294csv">⬇ Statistik (CSV)</button><label>Återställ <input id="coach294restore" type="file" accept=".json,application/json"></label></div><p class="muted">Import ersätter uppgifterna i den här tränarvyn efter bekräftelse.</p></section>
 </div>
-<script src="./coach294.js?v=298"></script>
+<script src="./coach294.js?v=301"></script>
 <style id="coach304-quick-animation-css">
 #coach304Anim{display:none;position:fixed;right:0;top:15%;z-index:2147483499;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none}
 body.board-fullscreen #coach304Anim{display:none}
