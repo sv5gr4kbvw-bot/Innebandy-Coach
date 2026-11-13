@@ -16,7 +16,25 @@
    if(mode!=='full'&&board.getAttribute('viewBox')!==expected){changing=true;board.setAttribute('viewBox',expected);changing=false;}
    if(mode==='full'){const [w,h]=dimensions();const nativeView=`0 0 ${w} ${h}`;if(board.getAttribute('viewBox')!==nativeView){changing=true;board.setAttribute('viewBox',nativeView);changing=false;}}
    document.body.classList.toggle('coach30-half-active',mode!=='full');
+   requestAnimationFrame(fitBoard);
   }
+  function fitBoard(){
+   if(!document.body.classList.contains('board-fullscreen')){board.style.removeProperty('position');board.style.removeProperty('top');board.style.removeProperty('left');board.style.removeProperty('width');board.style.removeProperty('height');return;}
+   const vw=window.innerWidth,vh=window.innerHeight;
+   const [fullW,fullH]=dimensions();
+   const ratio=mode==='full'?fullW/fullH:(fullW>fullH?390/420:420/390);
+   const topReserve=72,bottomReserve=18;
+   const availH=Math.max(180,vh-topReserve-bottomReserve);
+   const h=Math.min(availH,(vw-8)/ratio);
+   const w=h*ratio;
+   const top=topReserve+(availH-h)/2;
+   const props={position:'fixed',left:((vw-w)/2)+'px',top:top+'px',width:w+'px',height:h+'px','max-width':'none','max-height':'none',margin:'0',transform:'none','object-fit':'fill','z-index':'152'};
+   for(const [key,val] of Object.entries(props))board.style.setProperty(key,val,'important');
+   board.setAttribute('preserveAspectRatio','xMidYMid meet');
+  }
+  window.addEventListener('resize',()=>requestAnimationFrame(fitBoard),{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(fitBoard,250),{passive:true});
+  new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(document.body,{attributes:true,attributeFilter:['class']});
   function insertControls(){
    if(!sheet.parentElement?.classList.contains('open')||sheet.parentElement.dataset.side!=='left')return;
    const grid=sheet.querySelector('.c212-grid');if(!grid||grid.querySelector('[data-coach30-pitch]'))return;
