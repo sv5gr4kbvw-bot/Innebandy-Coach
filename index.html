@@ -2510,6 +2510,7 @@ function act(spec){
 }
 function open(side){
  if(!document.body.classList.contains('board-fullscreen'))return;
+ if(shade.classList.contains('open'))shade.dispatchEvent(new Event('coach212-close'));
  close();active=side;shade.dataset.side=side==='main'?'left':side;
  const g=groups[side];sheet.replaceChildren();
  const head=document.createElement('div');head.className='c212-head';
@@ -2527,7 +2528,7 @@ for(const side of ['left','right','bottom']){
  const b=document.getElementById('coach212'+side[0].toUpperCase()+side.slice(1));
  b.addEventListener('click',()=>open(side));
  b.addEventListener('pointerdown',e=>{down={side,x:e.clientX,y:e.clientY};},{passive:true});
- b.addEventListener('pointerup',e=>{if(!down)return;const dist=side==='bottom'?down.y-e.clientY:side==='left'?e.clientX-down.x:down.x-e.clientX;if(dist>18){e.preventDefault();open(side)}down=null});
+ b.addEventListener('pointerup',e=>{if(!down)return;const dist=side==='bottom'?e.clientX-down.x:side==='left'?e.clientX-down.x:down.x-e.clientX;if(dist>18){e.preventDefault();open(side)}down=null});
 }
 window.coach214OpenMain=function(){open('main')};
 document.getElementById('exitFullBoard')?.addEventListener('click',dismiss);
