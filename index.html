@@ -1,4 +1,4 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.7</title>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.8</title>
 <link rel="stylesheet" href="./coach30-mobile.css">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
@@ -2739,6 +2739,18 @@ body.board-fullscreen #coach304Anim.coach304-open #coach304Capture{background:#b
 body.board-fullscreen #coach304Anim.recording #coach304Capture{background:#ef4444!important;box-shadow:0 0 0 2px #ffb4b4 inset!important}
 body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{right:calc(46px + env(safe-area-inset-right))!important}
 #coach305Options{right:calc(48px + env(safe-area-inset-right))}
+</style><style id="coach308-training-polish">
+/* The right edge is reserved from launch; opening or recording never resizes the pitch. */
+body.board-fullscreen #coach304Anim{right:env(safe-area-inset-right,0px)!important}
+body.board-fullscreen #coach304Anim.coach304-open{width:42px!important;padding:4px!important;gap:5px!important;background:linear-gradient(180deg,#173444,#0c202d)!important;border:1px solid #3b6276!important;border-right:0!important;border-radius:14px 0 0 14px!important;box-shadow:0 5px 18px #0005}
+body.board-fullscreen #coach304Anim.coach304-open button{display:flex!important;align-items:center;justify-content:center;flex:0 0 34px!important;height:34px!important;min-height:34px!important;background:#1e3e50!important;color:#dcecf4!important;border:1px solid #426377!important;border-radius:9px!important;padding:0!important;box-shadow:none!important}
+#coach304Anim button svg{display:block;width:18px;height:18px;pointer-events:none}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Capture{background:#b82737!important;border-color:#ed6172!important;color:#fff!important}
+body.board-fullscreen #coach304Anim.recording #coach304Capture{background:#ed4055!important;box-shadow:0 0 0 2px #ffb3be inset!important}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Play{color:#80e0bd!important}
+body.board-fullscreen #coach304Anim.coach304-open button:disabled{opacity:.3}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Count{font:600 10px system-ui;color:#9eb8c8;line-height:14px}
+body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{display:none!important}
 </style><script id="coach304-quick-animation-js">
 (function(){
  const dock=document.createElement('div');dock.id='coach304Anim';
@@ -2756,13 +2768,20 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{right:calc
  more.addEventListener('click',()=>{options.hidden=!options.hidden;});
  stop.addEventListener('click',()=>{finishStep();document.getElementById('stop')?.click();});
  const modeButton=document.createElement('button');modeButton.id='coach306Mode';modeButton.type='button';dock.insertBefore(modeButton,undo);modeButton.addEventListener('click',()=>{finishStep();multiMode=!multiMode;update();});
+ const icon=path=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
+ const recordIcon=icon('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>'),stopIcon=icon('<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/>'),oneIcon=icon('<circle cx="12" cy="7" r="3"/><path d="M6 21v-3a6 6 0 0 1 12 0v3"/>'),manyIcon=icon('<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v2"/>'),closeIcon=icon('<path d="m6 6 12 12M18 6 6 18"/>');
+ undo.innerHTML=icon('<path d="M8 4 3 9l5 5M3 9h11a7 7 0 0 1 0 14" transform="translate(0 -2)"/>');
+ play.innerHTML=icon('<path d="m8 4 12 8-12 8Z" fill="currentColor" stroke="none"/>');
+ stop.innerHTML=stopIcon;
+ more.innerHTML=icon('<circle cx="12" cy="12" r="3"/><path d="m10 2 4 0 1 3 3 1 3 0 1 4-2 2 0 3 1 3-3 3-3-1-3 0-2 2-4-1 0-3-1-3-3-1 0-4 3-1 1-3 0-3Z"/>');
+ 
  const frame=document.getElementById('frame'),frameCount=document.getElementById('frameCount');
  let recording=false,pending=false,moved=0,multiMode=true;
  const total=()=>parseInt(frameCount?.textContent,10)||0;
  function update(){
   count.textContent=String(Math.max(0,total()-1));count.setAttribute('aria-label',Math.max(0,total()-1)+' rörelsesteg sparade');
-  capture.textContent=recording?'■':'●';
-  modeButton.textContent=multiMode?'👥':'1';modeButton.setAttribute('aria-label',multiMode?'Flera spelare per steg. Växla till en spelare.':'En spelare per steg. Växla till flera spelare.');modeButton.title=multiMode?'Flera spelare samtidigt':'En spelare per steg';modeButton.setAttribute('aria-pressed',String(multiMode));
+  capture.innerHTML=recording?stopIcon:recordIcon;
+  modeButton.innerHTML=multiMode?manyIcon:oneIcon;modeButton.setAttribute('aria-label',multiMode?'Flera spelare per steg. Växla till en spelare.':'En spelare per steg. Växla till flera spelare.');modeButton.title=multiMode?'Flera spelare samtidigt':'En spelare per steg';modeButton.setAttribute('aria-pressed',String(multiMode));
   capture.setAttribute('aria-label',recording?'Spara steget med alla förflyttningar':'Spela in ett steg: flytta valfritt antal spelare och bollar');
   capture.setAttribute('aria-pressed',String(recording));
   capture.title=recording?moved+' förflyttningar – alla spelas upp samtidigt':'Starta ett nytt gemensamt rörelsesteg';
@@ -2770,7 +2789,7 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{right:calc
  }
  function captureStep(){const before=total();frame?.click();if(total()>before){pending=false;moved=0;}update();}
  function finishStep(){if(pending)captureStep();recording=false;update();}
- function openTraining(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.textContent='×';update();}
+ function openTraining(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.innerHTML=closeIcon;update();}
  toggle.addEventListener('click',()=>{if(dock.classList.contains('coach304-open')){finishStep();options.hidden=true;dock.classList.remove('coach304-open');toggle.setAttribute('aria-expanded','false');toggle.textContent='🏑 Träning';}else openTraining();});
  capture.addEventListener('click',()=>{
   if(recording){finishStep();return;}
@@ -2793,4 +2812,4 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{right:calc
  update();
 })();
 </script>
-<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js" defer></script></body></html>
+<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js?v=308" defer></script></body></html>

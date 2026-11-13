@@ -37,8 +37,7 @@
    const [fw,fh]=dimensions();
    const aspect=mode==='full'?fw/fh:(fw>fh?390/420:420/390);
    const dock=document.getElementById('coach304Anim');
-   const dockRect=dock?.classList.contains('coach304-open')?dock.getBoundingClientRect():null;
-   const reserved=dockRect?Math.max(0,vw-dockRect.left):0;
+   const reserved=42+(dock?parseFloat(getComputedStyle(dock).right)||0:0);
    document.documentElement.style.setProperty('--coach-training-width',reserved+'px');
    const topSpace=mode==='full'?16:4,bottomSpace=8;
    const availableHeight=Math.max(200,vh-topSpace-bottomSpace);

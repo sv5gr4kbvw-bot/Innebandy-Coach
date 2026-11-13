@@ -60,3 +60,8 @@ Senast uppdaterad: 2026-11-13
 - Dubbeltrycksmenyn reagerar inte på spelare/objekt.
 - Planens mått följer inte längre höjdändringar från Safaris adressfält. Rotation och verklig breddändring uppdaterar måtten.
 - Test av faktisk pointermove-kod visar förflyttning utan DOM-ombyggnad och bibehållen begränsning till planen. iPhone/Safari behöver användarverifieras.
+
+## Version 30.8
+- Reserverar samma högermarginal från start så planen inte krymper/flyttas när träning öppnas eller inspelning startar.
+- Döljer duplicerad högerflik medan träningspanelen är öppen; fliken flyttas inte in över planen.
+- Samordnade SVG-ikoner, mörk panel, röd inspelning och grön uppspelning. Symbolvalet En/Flera kvar.
