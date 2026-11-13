@@ -25,3 +25,10 @@
 .coach30-multi-toggle[aria-pressed="true"] { background:#17634f; border-color:#65c8a0; }
 .coach30-multi-info { margin:7px 0 0; padding:9px 11px; border-radius:9px; background:#122f3d; color:#d6f6e9; font-size:12px; line-height:1.45; }
 .coach30-multi-info[hidden] { display:none !important; }
+
+/* Full-screen half-pitch controls; no changes to object coordinates. */
+#coach30HalfBar{position:fixed;z-index:190;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;align-items:center;max-width:calc(100vw - 18px);padding:6px;border-radius:14px;background:#101f32ee;box-shadow:0 6px 20px #0006}
+#coach30HalfBar button{min-height:44px;white-space:nowrap;font-size:12px;padding:8px 10px;background:#20486b;color:#fff;border:1px solid #5084a8;border-radius:10px}
+#coach30HalfBar button[hidden]{display:none!important}
+body:not(.board-fullscreen) #coach30HalfBar{position:relative;bottom:auto;left:auto;transform:none;width:max-content;margin:8px auto;box-shadow:none}
+body.coach30-half-active .pitch svg{object-fit:contain!important}
