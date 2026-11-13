@@ -676,7 +676,8 @@ function finish(e){if(!gesture||gesture.pointer!==e.pointerId)return;if(e.type==
   toast('Rörelsebana inspelad – spara nästa filmsteg');
  }
 }
-if(mode==='erase'&&!gesture.changed)cancelEmptyGesture(gesture);if(mode==='move'&&!gesture.moved&&gesture.item)cancelEmptyGesture(gesture);if((mode==='draw'||mode==='arrow')&&!gesture.moved){items=items.filter(it=>it.id!==gesture.item?.id);cancelEmptyGesture(gesture)}gesture=null;render()}
+if(mode==='erase'&&!gesture.changed)cancelEmptyGesture(gesture);if(mode==='move'&&!gesture.moved&&gesture.item)cancelEmptyGesture(gesture);if((mode==='draw'||mode==='arrow')&&!gesture.moved){items=items.filter(it=>it.id!==gesture.item?.id);cancelEmptyGesture(gesture)}const recordedMove=mode==='move'&&gesture.moved&&!!gesture.item;
+gesture=null;render();if(recordedMove)document.dispatchEvent(new Event('coach306-object-moved'))}
 window.matchLocalGestureActive=()=>!!gesture;board.addEventListener('pointerup',finish);board.addEventListener('pointercancel',finish);
 function openPlayer(it){selectedPlayer=it.id;$('editName').value=it.name||'';$('editNumber').value=it.number??it.label??'';$('editPosition').value=it.position|| (it.type.startsWith('goalie')?'Målvakt':'Center');$('playerEditor').classList.add('open')}
 function rotateSelected(degrees,reset=false){let it=items.find(x=>x.id===selectedRotation);if(!it||!['cone','goal'].includes(it.type)){toast('Välj först en kona eller ett mål');return}checkpoint();it.rotation=reset?0:((it.rotation||0)+degrees+360)%360;render();$('rotationTitle').textContent=(it.type==='cone'?'Kona':'Mål')+' · '+it.rotation+'°'}
@@ -2688,8 +2689,17 @@ body.board-fullscreen #coach304Anim.coach304-open{display:flex}
  const capture=dock.querySelector('#coach304Capture'),play=dock.querySelector('#coach304Play'),count=dock.querySelector('#coach304Count'),toggle=dock.querySelector('#coach304Toggle');
  toggle.addEventListener('click',()=>{const opened=dock.classList.toggle('coach304-open');toggle.setAttribute('aria-expanded',String(opened));toggle.setAttribute('aria-label',opened?'Stäng träningskontroller':'Öppna träning och animation');toggle.textContent=opened?'×':'🏑 Träning'});
  function update(){const n=document.getElementById('frameCount')?.textContent||'0 bildrutor';const v=parseInt(n,10)||0;count.textContent=v+' steg';capture.setAttribute('aria-label',v?'Spara nästa animationssteg':'Spela in första animationssteget')}
- capture.addEventListener('click',()=>{document.getElementById('frame')?.click();update()});
- play.addEventListener('click',()=>{document.getElementById('play')?.click();update()});
+ let recording=false;
+ function captureStep(){document.getElementById('frame')?.click();update()}
+ capture.addEventListener('click',()=>{
+  recording=!recording;
+  capture.textContent=recording?'■':'●';
+  capture.style.color=recording?'#ff7777':'#ff4444';
+  capture.setAttribute('aria-label',recording?'Stoppa inspelningen':'Starta inspelningen');
+  if(recording){document.querySelector('#modes [data-mode="move"]')?.click();captureStep()}
+ }); 
+ document.addEventListener('coach306-object-moved',()=>{if(recording)captureStep()});
+ play.addEventListener('click',()=>{if(recording){recording=false;capture.textContent='●';capture.setAttribute('aria-label','Starta inspelningen')}document.getElementById('play')?.click();update()});
  document.getElementById('framesClear')?.addEventListener('click',()=>setTimeout(update,0));
  window.coach304OpenTraining=function(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.textContent='×';update()};
  update();
