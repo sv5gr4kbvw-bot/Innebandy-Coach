@@ -11,7 +11,7 @@
   hint.setAttribute('role','status');
   hint.setAttribute('aria-live','polite');
   count.parentElement.insertAdjacentElement('afterend',hint);
-  let multiMode=false, movedCount=0;
+  let multiMode=!!window.coach30MultiMode, movedCount=0;
   const multi=document.createElement('button');
   multi.type='button';
   multi.className='coach30-multi-toggle';
@@ -28,6 +28,7 @@
   document.addEventListener('coach306-object-moved',()=>{if(multiMode){movedCount++;showMulti();}});
   frame.addEventListener('click',()=>{if(multiMode){movedCount=0;showMulti();}});
   document.getElementById('framesClear')?.addEventListener('click',()=>{if(multiMode){movedCount=0;showMulti();}});
+  document.addEventListener('coach-animation-step-undone',()=>{movedCount=0;showMulti();});
   const update=()=>{
    const n=parseInt(count.textContent,10)||0;
    if(n===0){hint.textContent='Börja med att placera spelare på planen. Tryck sedan + Bildruta för att spara startläget.';}
@@ -49,6 +50,7 @@
   }
   const observer=new MutationObserver(update);
   observer.observe(count,{subtree:true,childList:true,characterData:true});
+  document.dispatchEvent(new CustomEvent('coach30-multi-mode',{detail:{enabled:multiMode}}));
   update();
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();

@@ -33,3 +33,10 @@ Senast uppdaterad: 2026-11-13
 - Sista väntande gruppsteget sparas vid stopp, uppspelning och växling av läge.
 - Rensning av bildrutor avslutar inspelningen. Räknaren följer befintliga bildrutor.
 - Automatiska flödestester för inspelning, gruppsteg, stopp, uppspelning, lägesbyte och rensning godkända. iPhone-gester återstår att testa.
+
+## Version 30.3
+- Planens passning till skärmen pausas under aktivt drag; objektens koordinater använder dragets ursprungliga skärmtransformation.
+- Träningspanelen ligger i en egen bottenrad. Planens tillgängliga höjd räknar bort panelen.
+- Stor Ångra steg-knapp återställer en osparad grupp eller tar bort senaste sparade steg och återställer föregående positioner.
+- Flera spelare per steg är standard. Tryck + Steg efter gruppens förflyttningar.
+- Test av två spelare samtidigt i faktisk uppspelningskod och båda ångrafallen godkänt. iPhone-dragning behöver användarverifieras.

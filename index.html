@@ -1,4 +1,4 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.2</title>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.3</title>
 <link rel="stylesheet" href="./coach30-mobile.css">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
@@ -537,7 +537,7 @@ function checkpoint(){if(playing)stopPlayback();history.push(copy(items));if(his
 // Preserve redo when a gesture turns out to be a tap rather than an edit.
 function cancelEmptyGesture(g){if(history.length)history.pop();if(g&&g.redoBefore)future=g.redoBefore;}
 
-function coords(e){let p=board.createSVGPoint();p.x=e.clientX;p.y=e.clientY;let c=board.getScreenCTM();if(!c)return{x:0,y:0};p=p.matrixTransform(c.inverse());const{w,h}=dimensions();return{x:clamp(p.x,0,w),y:clamp(p.y,0,h)}}
+function coords(e){let p=board.createSVGPoint();p.x=e.clientX;p.y=e.clientY;let c=gesture?.screenInverse||board.getScreenCTM()?.inverse();if(!c)return{x:0,y:0};p=p.matrixTransform(c);const{w,h}=dimensions();return{x:clamp(p.x,0,w),y:clamp(p.y,0,h)}}
 function nearest(x,y){for(let i=items.length-1;i>=0;i--){let it=items[i];if(it.points){for(let j=1;j<it.points.length;j++){let a=it.points[j-1],b=it.points[j],dx=b[0]-a[0],dy=b[1]-a[1],t=clamp(((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1),0,1);if(Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)<12)return it}}else if(Math.hypot(x-it.x,y-it.y)<28)return it}return null}
 // Eraser removes only the ink underneath the finger, splitting paths at gaps.
 function eraseInkAt(x,y,radius=13){
@@ -645,7 +645,7 @@ document.addEventListener('touchend',function(e){
 document.addEventListener('touchcancel',()=>{coach223Start=null;coach223Swallow=false;coach223LastTap=null},true);
 board.addEventListener('dblclick',e=>{e.preventDefault();e.stopImmediatePropagation();coach223Open()},true);
 [['quickUndo','undo'],['quickRedo','redo'],['quickFrame','frame'],['quickSave','save'],['quickExport','export'],['quickClear','clear']].forEach(([a,b])=>$(a).addEventListener('click',()=>$(b).click()));$('quickOptions').onclick=()=>$('boardOptions').classList.toggle('open');$('quickRoster').onclick=()=>{$('rosterPanel').open=true;$('rosterPanel').scrollIntoView({behavior:'smooth',block:'start'})};$('quickRotate').onclick=()=>{$('orientation').value=$('orientation').value==='vertical'?'horizontal':'vertical';$('orientation').dispatchEvent(new Event('change'))};
-board.addEventListener('pointerdown',e=>{if(gesture||e.isPrimary===false||e.button!==undefined&&e.button!==0)return;e.preventDefault();let p=coords(e),hit=nearest(p.x,p.y);try{board.setPointerCapture(e.pointerId)}catch{};gesture={pointer:e.pointerId,start:p,last:p,moved:false,hit:hit?.id,redoBefore:future.slice()};if(mode==='route'){if(!hit||!(hit.type.startsWith('player')||hit.type.startsWith('goalie'))){toast('Börja med fingret på en spelare');gesture=null;return}gesture.routeId=hit.id;gesture.routePoints=[[hit.x,hit.y]];customRouteDraft={id:'route-preview',type:'draw',points:gesture.routePoints,color:'#16a34a',width:4};items.push(customRouteDraft);render();return}else if(mode==='rotateObject'){if(hit&&(hit.type==='cone'||hit.type==='goal')){selectedRotation=hit.id;$('rotationPanel').classList.add('open');$('rotationTitle').textContent=(hit.type==='cone'?'Kona':'Mål')+' · '+(hit.rotation||0)+'°'}else{toast('Tryck på en kona eller ett mål')}gesture=null;return}else if(mode==='edit'){if(hit&&(hit.type.startsWith('player')||hit.type.startsWith('goalie')))openPlayer(hit);gesture=null;return}else if(mode==='move'&&hit){checkpoint();gesture.item=hit;gesture.original=copy(hit);if(['playerA','playerB','goalieA','goalieB','ball'].includes(hit.type))gesture.motionPath=[[hit.x,hit.y]]}else if(mode==='erase'){checkpoint();gesture.erasing=true;gesture.changed=eraseInkAlong(p,p)}else if(mode==='draw'||mode==='arrow'){checkpoint();gesture.item={id:uid(),type:mode,points:[[p.x,p.y],[p.x,p.y]],color:$('ink').value,width:Number($('thick').value)};items.push(gesture.item);render()}else if(mode!=='move'&&mode!=='edit'&&mode!=='rotateObject'){
+board.addEventListener('pointerdown',e=>{if(gesture||e.isPrimary===false||e.button!==undefined&&e.button!==0)return;e.preventDefault();let p=coords(e),hit=nearest(p.x,p.y);try{board.setPointerCapture(e.pointerId)}catch{};gesture={pointer:e.pointerId,start:p,last:p,moved:false,hit:hit?.id,redoBefore:future.slice(),screenInverse:board.getScreenCTM()?.inverse()};if(mode==='route'){if(!hit||!(hit.type.startsWith('player')||hit.type.startsWith('goalie'))){toast('Börja med fingret på en spelare');gesture=null;return}gesture.routeId=hit.id;gesture.routePoints=[[hit.x,hit.y]];customRouteDraft={id:'route-preview',type:'draw',points:gesture.routePoints,color:'#16a34a',width:4};items.push(customRouteDraft);render();return}else if(mode==='rotateObject'){if(hit&&(hit.type==='cone'||hit.type==='goal')){selectedRotation=hit.id;$('rotationPanel').classList.add('open');$('rotationTitle').textContent=(hit.type==='cone'?'Kona':'Mål')+' · '+(hit.rotation||0)+'°'}else{toast('Tryck på en kona eller ett mål')}gesture=null;return}else if(mode==='edit'){if(hit&&(hit.type.startsWith('player')||hit.type.startsWith('goalie')))openPlayer(hit);gesture=null;return}else if(mode==='move'&&hit){checkpoint();gesture.item=hit;gesture.original=copy(hit);if(['playerA','playerB','goalieA','goalieB','ball'].includes(hit.type))gesture.motionPath=[[hit.x,hit.y]]}else if(mode==='erase'){checkpoint();gesture.erasing=true;gesture.changed=eraseInkAlong(p,p)}else if(mode==='draw'||mode==='arrow'){checkpoint();gesture.item={id:uid(),type:mode,points:[[p.x,p.y],[p.x,p.y]],color:$('ink').value,width:Number($('thick').value)};items.push(gesture.item);render()}else if(mode!=='move'&&mode!=='edit'&&mode!=='rotateObject'){
  const place=()=>{checkpoint();let count=items.filter(i=>i.type===mode).length+1;items.push({id:uid(),type:mode,x:p.x,y:p.y,label:String(count)});render()};
  if(placeModes.has(mode)){
   // Wait until the double-tap window expires before placing anything.
@@ -692,6 +692,15 @@ $('orientation').onchange=e=>{checkpoint();let old=dimensions();orientation=e.ta
 function toast(s){let el=$('toast');el.textContent=s;el.style.display='block';setTimeout(()=>el.style.display='none',2600)}
 function download(blob,name){let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 function updateFrameCount(){$('frameCount').textContent=frames.length+' bildrutor'}
+window.coachUndoAnimationStep=function(pending){
+ if(window.matchReadOnly)return;
+ stopPlayback();if(!frames.length)return;
+ checkpoint();
+ if(pending){items=copy(frames[frames.length-1]);}
+ else{const removed=frames.pop();items=copy(frames.length?frames[frames.length-1]:removed);}
+ customRoutePending={};updateFrameCount();render();
+ document.dispatchEvent(new Event('coach-animation-step-undone'));
+};
 $('frame').onclick=()=>{if(playing)return;frames.push(copy(items));updateFrameCount();toast('Bildruta '+frames.length+' sparad')};
 function stopPlayback(){playing=false;if(playTimer)clearInterval(playTimer);playTimer=null;render();$('play').disabled=false}
 $('stop').onclick=stopPlayback;
@@ -2034,7 +2043,7 @@ if ('serviceWorker' in navigator) {
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script id="match-readonly-keyboard">(()=>{document.addEventListener('keydown',e=>{if(!window.matchReadOnly)return;const key=e.key.toLowerCase();const modifier=e.ctrlKey||e.metaKey;const typing=e.target.closest?.('input,textarea,[contenteditable="true"]');if(typing)return;if((modifier&&['z','y','x','v'].includes(key))||['delete','backspace'].includes(key)){e.preventDefault();e.stopImmediatePropagation();const n=document.getElementById('matchReadOnlyNotice');if(n)n.hidden=false;}},true)})();</script>
-<script id="match-readonly-controls">(()=>{const editingIds=new Set(['undo','redo','quickUndo','quickRedo','fullBoardUndo','fullBoardRedo','quickClear','clear','quickRotate','rotMinus','rotPlus','rotQuarter','rotReset','filmQuickCapture','filmQuickUndo','timelineStart','timelineNext','timelineEnd','customNew','customCapture','customNext','customClear','aiApply','aiGenerate','smartExercise','quickRoster','filmQuickAdd','filmQuickDelete','filmQuickSave','customPlay','customStop','smartApply']);document.addEventListener('click',event=>{if(!window.matchReadOnly)return;const button=event.target.closest('button');if(!button)return;if(button.dataset.mode||editingIds.has(button.id)){event.preventDefault();event.stopImmediatePropagation();const notice=document.getElementById('matchReadOnlyNotice');if(notice)notice.hidden=false;}},true);document.addEventListener('change',event=>{if(!window.matchReadOnly)return;if(event.target.id==='orientation'){event.stopImmediatePropagation();}},true);})();</script>
+<script id="match-readonly-controls">(()=>{const editingIds=new Set(['coach304Capture','coach304Undo','coach304Next','undo','redo','quickUndo','quickRedo','fullBoardUndo','fullBoardRedo','quickClear','clear','quickRotate','rotMinus','rotPlus','rotQuarter','rotReset','filmQuickCapture','filmQuickUndo','timelineStart','timelineNext','timelineEnd','customNew','customCapture','customNext','customClear','aiApply','aiGenerate','smartExercise','quickRoster','filmQuickAdd','filmQuickDelete','filmQuickSave','customPlay','customStop','smartApply']);document.addEventListener('click',event=>{if(!window.matchReadOnly)return;const button=event.target.closest('button');if(!button)return;if(button.dataset.mode||editingIds.has(button.id)){event.preventDefault();event.stopImmediatePropagation();const notice=document.getElementById('matchReadOnlyNotice');if(notice)notice.hidden=false;}},true);document.addEventListener('change',event=>{if(!window.matchReadOnly)return;if(event.target.id==='orientation'){event.stopImmediatePropagation();}},true);})();</script>
 <script src="./match.js?v=298"></script><script id="coach101-actions">
 (()=>{'use strict';
  const $=id=>document.getElementById(id),dock=$('filmDock'),status=$('filmDockStatus');
@@ -2686,6 +2695,16 @@ body.board-fullscreen #coach304Anim.coach304-open{display:flex}
 #coach304Anim #coach304Next[hidden]{display:none!important}
 #coach304Anim.coach304-open #coach304Count{max-width:72px}
 </style>
+
+<style id="coach303-training-layout">
+/* A separate bottom strip reserves its own space outside the playing surface. */
+body.board-fullscreen #coach304Anim.coach304-open{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;justify-content:center!important;gap:5px!important;padding:7px 6px calc(7px + env(safe-area-inset-bottom))!important;background:#102d3e!important;border-top:1px solid #8ab4c5;pointer-events:auto;box-sizing:border-box}
+body.board-fullscreen #coach304Anim.coach304-open button{display:block!important;writing-mode:horizontal-tb!important;width:auto!important;min-width:44px!important;max-width:none!important;height:44px!important;min-height:44px!important;border-radius:9px!important;font-size:14px!important;padding:4px 9px!important;touch-action:manipulation}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Next[hidden]{display:none!important}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Count{display:block!important;max-width:none!important;min-width:48px;font-size:12px}
+body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Bottom{bottom:calc(var(--coach-training-height,110px) + 4px)!important}
+#board,#board *{touch-action:none!important;overscroll-behavior:none!important;-webkit-user-drag:none}
+</style>
 <script id="coach304-quick-animation-js">
 (function(){
  const dock=document.createElement('div');dock.id='coach304Anim';
@@ -2694,7 +2713,9 @@ body.board-fullscreen #coach304Anim.coach304-open{display:flex}
  const capture=dock.querySelector('#coach304Capture'),play=dock.querySelector('#coach304Play'),count=dock.querySelector('#coach304Count'),toggle=dock.querySelector('#coach304Toggle');
  const multi=document.createElement('button');multi.id='coach304Multi';multi.type='button';dock.append(multi);
  const next=document.createElement('button');next.id='coach304Next';next.type='button';next.textContent='+ Steg';next.setAttribute('aria-label','Spara alla förflyttningar i samma animationssteg');dock.append(next);
- let recording=false,pending=false,multiMode=false,moved=0;
+ const undo=document.createElement('button');undo.type='button';undo.id='coach304Undo';undo.textContent='↶ Ångra steg';undo.setAttribute('aria-label','Ångra senaste animationssteget');dock.append(undo);
+ undo.addEventListener('click',()=>{window.coachUndoAnimationStep?.(pending);pending=false;moved=0;update();});
+ let recording=false,pending=false,multiMode=true,moved=0;
  const frame=document.getElementById('frame'),frameCount=document.getElementById('frameCount');
  const total=()=>parseInt(frameCount?.textContent,10)||0;
  function update(){
@@ -2705,7 +2726,7 @@ body.board-fullscreen #coach304Anim.coach304-open{display:flex}
   multi.textContent=multiMode?'👥 Flera':'👤 En';
   multi.setAttribute('aria-label',multiMode?'Flera spelare per steg – tryck för en spelare':'En spelare per steg – tryck för flera spelare');
   multi.setAttribute('aria-pressed',String(multiMode));
-  next.hidden=!recording||!multiMode;next.disabled=!pending;
+  next.hidden=!recording||!multiMode;next.disabled=!pending;undo.disabled=!total();
  }
  function captureStep(){if(!frame)return;const before=total();frame.click();if(total()>before){pending=false;moved=0;}update();}
  function flush(){if(pending)captureStep();}
@@ -2730,6 +2751,9 @@ body.board-fullscreen #coach304Anim.coach304-open{display:flex}
  play.addEventListener('click',()=>{stopRecording();document.getElementById('play')?.click();update();});
  document.getElementById('framesClear')?.addEventListener('click',()=>{queueMicrotask(()=>{if(total()===0){recording=false;pending=false;moved=0;}update();});});
  if(frameCount)new MutationObserver(update).observe(frameCount,{childList:true,characterData:true,subtree:true});
+ document.addEventListener('coach-animation-step-undone',()=>{pending=false;moved=0;update();});
+ document.dispatchEvent(new CustomEvent('coach30-multi-mode',{detail:{enabled:true}}));
+ window.coach30MultiMode=true;
  window.coach304OpenTraining=function(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.textContent='×';update();};
  update();
 })();

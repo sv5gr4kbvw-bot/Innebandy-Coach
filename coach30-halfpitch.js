@@ -3,7 +3,12 @@
  const init=()=>{
   const board=document.getElementById('board'),sheet=document.getElementById('coach212Sheet');
   if(!board||!sheet)return;
-  let mode='full',changing=false;
+  let mode='full',changing=false,dragging=false;
+  board.addEventListener('pointerdown',()=>{dragging=true;},{capture:true});
+  const release=()=>{dragging=false;};
+  window.addEventListener('pointerup',release,{capture:true});
+  window.addEventListener('pointercancel',release,{capture:true});
+  board.addEventListener('lostpointercapture',release);
   const dimensions=()=>document.getElementById('orientation')?.value==='horizontal'?[760,420]:[420,760];
   const viewFor=()=>{
    const [w,h]=dimensions();
@@ -19,6 +24,7 @@
    requestAnimationFrame(fitBoard);
   }
   function fitBoard(){
+   if(dragging||window.matchLocalGestureActive?.())return;
    if(!document.body.classList.contains('board-fullscreen')){
     for(const p of ['position','left','top','width','height','max-width','max-height','margin','transform','object-fit','z-index'])board.style.removeProperty(p);
     return;
@@ -28,7 +34,11 @@
    const vh=viewport?.height||window.innerHeight;
    const [fw,fh]=dimensions();
    const aspect=mode==='full'?fw/fh:(fw>fh?390/420:420/390);
-   const topSpace=mode==='full'?16:4,bottomSpace=8;
+   const dock=document.getElementById('coach304Anim');
+   const dockRect=dock?.classList.contains('coach304-open')?dock.getBoundingClientRect():null;
+   const reserved=dockRect?Math.max(0,vh-dockRect.top):0;
+   document.documentElement.style.setProperty('--coach-training-height',reserved+'px');
+   const topSpace=mode==='full'?16:4,bottomSpace=Math.max(8,reserved+8);
    const availableHeight=Math.max(200,vh-topSpace-bottomSpace);
    const width=Math.min(vw-4,availableHeight*aspect);
    const height=width/aspect;
@@ -40,6 +50,8 @@
   window.addEventListener('resize',()=>requestAnimationFrame(fitBoard),{passive:true});
   window.visualViewport?.addEventListener('resize',()=>requestAnimationFrame(fitBoard),{passive:true});
   window.addEventListener('orientationchange',()=>setTimeout(fitBoard,250),{passive:true});
+  const dock=document.getElementById('coach304Anim');
+  if(dock){new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(dock,{attributes:true,attributeFilter:['class']});if(window.ResizeObserver)new ResizeObserver(()=>requestAnimationFrame(fitBoard)).observe(dock);}
   new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(document.body,{attributes:true,attributeFilter:['class']});
   function insertControls(){
    if(!sheet.parentElement?.classList.contains('open')||sheet.parentElement.dataset.side!=='left')return;
