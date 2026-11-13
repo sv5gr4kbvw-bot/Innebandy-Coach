@@ -40,3 +40,8 @@ Senast uppdaterad: 2026-11-13
 - Stor Ångra steg-knapp återställer en osparad grupp eller tar bort senaste sparade steg och återställer föregående positioner.
 - Flera spelare per steg är standard. Tryck + Steg efter gruppens förflyttningar.
 - Test av två spelare samtidigt i faktisk uppspelningskod och båda ångrafallen godkänt. iPhone-dragning behöver användarverifieras.
+
+## Version 30.4
+- Explicit Spela in ett steg / Spara steget-flöde. Alla förflyttningar mellan dessa tryck lagras i en destination och spelas samtidigt.
+- Ingen begränsning till två spelare; test med åtta förflyttningar sparar en gemensam bildruta.
+- En kompakt rad utan radbrytning: stäng, spela in/spara steg, ångra, spela och stegräknare. Gamla En/Flera-valet tas bort.

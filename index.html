@@ -1,4 +1,4 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.3</title>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.4</title>
 <link rel="stylesheet" href="./coach30-mobile.css">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
@@ -2697,64 +2697,54 @@ body.board-fullscreen #coach304Anim.coach304-open{display:flex}
 </style>
 
 <style id="coach303-training-layout">
-/* A separate bottom strip reserves its own space outside the playing surface. */
-body.board-fullscreen #coach304Anim.coach304-open{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;justify-content:center!important;gap:5px!important;padding:7px 6px calc(7px + env(safe-area-inset-bottom))!important;background:#102d3e!important;border-top:1px solid #8ab4c5;pointer-events:auto;box-sizing:border-box}
-body.board-fullscreen #coach304Anim.coach304-open button{display:block!important;writing-mode:horizontal-tb!important;width:auto!important;min-width:44px!important;max-width:none!important;height:44px!important;min-height:44px!important;border-radius:9px!important;font-size:14px!important;padding:4px 9px!important;touch-action:manipulation}
-body.board-fullscreen #coach304Anim.coach304-open #coach304Next[hidden]{display:none!important}
-body.board-fullscreen #coach304Anim.coach304-open #coach304Count{display:block!important;max-width:none!important;min-width:48px;font-size:12px}
-body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Bottom{bottom:calc(var(--coach-training-height,110px) + 4px)!important}
+/* One compact row, with no controls covering the pitch. */
+body.board-fullscreen #coach304Anim.coach304-open{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;display:grid!important;grid-template-columns:32px minmax(0,1fr) 44px 44px 28px!important;align-items:center!important;gap:4px!important;padding:4px 4px max(4px,env(safe-area-inset-bottom))!important;background:#102d3e!important;border-top:1px solid #8ab4c5;pointer-events:auto;box-sizing:border-box}
+body.board-fullscreen #coach304Anim.coach304-open button{display:block!important;writing-mode:horizontal-tb!important;width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;border-radius:8px!important;font-size:18px!important;padding:3px!important;touch-action:manipulation}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Capture{font-size:13px!important;white-space:nowrap!important}
+body.board-fullscreen #coach304Anim.recording #coach304Capture{background:#13614d!important;border-color:#88e8c3!important}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Count{display:block!important;min-width:0!important;max-width:none!important;font-size:11px;text-align:center}
+body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Bottom{bottom:calc(var(--coach-training-height,56px) + 4px)!important}
 #board,#board *{touch-action:none!important;overscroll-behavior:none!important;-webkit-user-drag:none}
 </style>
 <script id="coach304-quick-animation-js">
 (function(){
  const dock=document.createElement('div');dock.id='coach304Anim';
- dock.innerHTML='<button type="button" id="coach304Toggle" aria-label="Öppna träning och animation" aria-expanded="false">🏑 Träning</button><button type="button" id="coach304Capture" title="Starta eller stoppa inspelningen">●</button><button type="button" id="coach304Play" aria-label="Spela upp övningen" title="Spela upp">▶</button><span id="coach304Count" aria-live="polite">0 steg</span>';
+ dock.innerHTML='<button type="button" id="coach304Toggle" aria-label="Öppna träning och animation" aria-expanded="false">🏑 Träning</button><button type="button" id="coach304Capture">● Spela in ett steg</button><button type="button" id="coach304Undo" aria-label="Ångra senaste animationssteget" title="Ångra steg">↶</button><button type="button" id="coach304Play" aria-label="Spela upp övningen" title="Spela upp">▶</button><span id="coach304Count" aria-live="polite">0</span>';
  document.body.append(dock);
- const capture=dock.querySelector('#coach304Capture'),play=dock.querySelector('#coach304Play'),count=dock.querySelector('#coach304Count'),toggle=dock.querySelector('#coach304Toggle');
- const multi=document.createElement('button');multi.id='coach304Multi';multi.type='button';dock.append(multi);
- const next=document.createElement('button');next.id='coach304Next';next.type='button';next.textContent='+ Steg';next.setAttribute('aria-label','Spara alla förflyttningar i samma animationssteg');dock.append(next);
- const undo=document.createElement('button');undo.type='button';undo.id='coach304Undo';undo.textContent='↶ Ångra steg';undo.setAttribute('aria-label','Ångra senaste animationssteget');dock.append(undo);
- undo.addEventListener('click',()=>{window.coachUndoAnimationStep?.(pending);pending=false;moved=0;if(!total())recording=false;update();});
- let recording=false,pending=false,multiMode=true,moved=0;
+ const capture=dock.querySelector('#coach304Capture'),play=dock.querySelector('#coach304Play'),count=dock.querySelector('#coach304Count'),toggle=dock.querySelector('#coach304Toggle'),undo=dock.querySelector('#coach304Undo');
  const frame=document.getElementById('frame'),frameCount=document.getElementById('frameCount');
+ let recording=false,pending=false,moved=0;
  const total=()=>parseInt(frameCount?.textContent,10)||0;
  function update(){
-  count.textContent=total()+' steg'+(pending?' · '+moved+' flyttade':'');
-  capture.textContent=recording?'■':'●';capture.style.color=recording?'#ff7777':'#ff4444';
-  capture.setAttribute('aria-label',recording?'Stoppa inspelningen':'Starta inspelningen');
+  count.textContent=String(Math.max(0,total()-1));count.setAttribute('aria-label',Math.max(0,total()-1)+' rörelsesteg sparade');
+  capture.textContent=recording?'✓ Spara steget':'● Spela in ett steg';
+  capture.setAttribute('aria-label',recording?'Spara steget med alla förflyttningar':'Spela in ett steg: flytta valfritt antal spelare och bollar');
   capture.setAttribute('aria-pressed',String(recording));
-  multi.textContent=multiMode?'👥 Flera':'👤 En';
-  multi.setAttribute('aria-label',multiMode?'Flera spelare per steg – tryck för en spelare':'En spelare per steg – tryck för flera spelare');
-  multi.setAttribute('aria-pressed',String(multiMode));
-  next.hidden=!recording||!multiMode;next.disabled=!pending;undo.disabled=!total();
+  capture.title=recording?moved+' förflyttningar – alla spelas upp samtidigt':'Starta ett nytt gemensamt rörelsesteg';
+  undo.disabled=!total();dock.classList.toggle('recording',recording);
  }
- function captureStep(){if(!frame)return;const before=total();frame.click();if(total()>before){pending=false;moved=0;}update();}
- function flush(){if(pending)captureStep();}
- function stopRecording(){flush();recording=false;update();}
- toggle.addEventListener('click',()=>{const opened=dock.classList.toggle('coach304-open');toggle.setAttribute('aria-expanded',String(opened));toggle.setAttribute('aria-label',opened?'Stäng träningskontroller':'Öppna träning och animation');toggle.textContent=opened?'×':'🏑 Träning';});
+ function captureStep(){const before=total();frame?.click();if(total()>before){pending=false;moved=0;}update();}
+ function finishStep(){if(pending)captureStep();recording=false;update();}
+ function openTraining(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.textContent='×';update();}
+ toggle.addEventListener('click',()=>{if(dock.classList.contains('coach304-open')){finishStep();dock.classList.remove('coach304-open');toggle.setAttribute('aria-expanded','false');toggle.textContent='🏑 Träning';}else openTraining();});
  capture.addEventListener('click',()=>{
-  if(recording){stopRecording();return;}
+  if(recording){finishStep();return;}
   document.getElementById('stop')?.click();
   document.querySelector('#modes [data-mode="move"]')?.click();
-  recording=true;pending=false;moved=0;
   if(!total())captureStep();
-  update();
+  recording=true;pending=false;moved=0;update();
  });
- document.addEventListener('coach306-object-moved',()=>{if(!recording)return;pending=true;moved++;if(!multiMode)captureStep();else update();});
- document.addEventListener('coach30-multi-mode',e=>{flush();multiMode=!!e.detail.enabled;window.coach30MultiMode=multiMode;update();});
- multi.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('coach30-multi-mode',{detail:{enabled:!multiMode}})));
- next.addEventListener('click',flush);
+ // No per-player capture: any number of movements belong to the same destination frame.
+ document.addEventListener('coach306-object-moved',()=>{if(recording){pending=true;moved++;update();}});
+ undo.addEventListener('click',()=>{window.coachUndoAnimationStep?.(pending);pending=false;moved=0;recording=false;update();});
  frame?.addEventListener('click',()=>{pending=false;moved=0;update();});
- // Flush the final grouped step before any playback button starts the engine.
- document.getElementById('play')?.addEventListener('click',stopRecording,true);
- document.getElementById('stop')?.addEventListener('click',()=>{if(recording)stopRecording();});
- play.addEventListener('click',()=>{stopRecording();document.getElementById('play')?.click();update();});
- document.getElementById('framesClear')?.addEventListener('click',()=>{queueMicrotask(()=>{if(total()===0){recording=false;pending=false;moved=0;}update();});});
- if(frameCount)new MutationObserver(update).observe(frameCount,{childList:true,characterData:true,subtree:true});
+ document.getElementById('play')?.addEventListener('click',finishStep,true);
+ document.getElementById('stop')?.addEventListener('click',finishStep);
+ play.addEventListener('click',()=>{finishStep();document.getElementById('play')?.click();});
+ document.getElementById('framesClear')?.addEventListener('click',()=>queueMicrotask(()=>{if(!total()){recording=false;pending=false;moved=0;}update();}));
+ if(frameCount)new MutationObserver(update).observe(frameCount,{childList:true,subtree:true,characterData:true});
  document.addEventListener('coach-animation-step-undone',()=>{pending=false;moved=0;update();});
- document.dispatchEvent(new CustomEvent('coach30-multi-mode',{detail:{enabled:true}}));
- window.coach30MultiMode=true;
- window.coach304OpenTraining=function(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.textContent='×';update();};
+ window.coach30MultiMode=true;window.coach304OpenTraining=openTraining;
  update();
 })();
 </script>

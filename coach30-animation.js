@@ -51,6 +51,7 @@
   const observer=new MutationObserver(update);
   observer.observe(count,{subtree:true,childList:true,characterData:true});
   document.dispatchEvent(new CustomEvent('coach30-multi-mode',{detail:{enabled:multiMode}}));
+  multi.remove();multiInfo.remove();
   update();
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
