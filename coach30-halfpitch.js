@@ -16,7 +16,31 @@
    if(mode!=='full'&&board.getAttribute('viewBox')!==expected){changing=true;board.setAttribute('viewBox',expected);changing=false;}
    if(mode==='full'){const [w,h]=dimensions();const nativeView=`0 0 ${w} ${h}`;if(board.getAttribute('viewBox')!==nativeView){changing=true;board.setAttribute('viewBox',nativeView);changing=false;}}
    document.body.classList.toggle('coach30-half-active',mode!=='full');
+   requestAnimationFrame(fitBoard);
   }
+  function fitBoard(){
+   if(!document.body.classList.contains('board-fullscreen')){
+    for(const p of ['position','left','top','width','height','max-width','max-height','margin','transform','object-fit','z-index'])board.style.removeProperty(p);
+    return;
+   }
+   const viewport=window.visualViewport;
+   const vw=viewport?.width||window.innerWidth;
+   const vh=viewport?.height||window.innerHeight;
+   const [fw,fh]=dimensions();
+   const aspect=mode==='full'?fw/fh:(fw>fh?390/420:420/390);
+   const topSpace=44,bottomSpace=8;
+   const availableHeight=Math.max(200,vh-topSpace-bottomSpace);
+   const width=Math.min(vw-4,availableHeight*aspect);
+   const height=width/aspect;
+   const x=(vw-width)/2;
+   const y=topSpace+(availableHeight-height)/2;
+   const props={position:'fixed',left:x+'px',top:y+'px',width:width+'px',height:height+'px','max-width':'none','max-height':'none',margin:'0',transform:'none','object-fit':'fill','z-index':'152'};
+   for(const [k,v] of Object.entries(props))board.style.setProperty(k,v,'important');
+  }
+  window.addEventListener('resize',()=>requestAnimationFrame(fitBoard),{passive:true});
+  window.visualViewport?.addEventListener('resize',()=>requestAnimationFrame(fitBoard),{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(fitBoard,250),{passive:true});
+  new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(document.body,{attributes:true,attributeFilter:['class']});
   function insertControls(){
    if(!sheet.parentElement?.classList.contains('open')||sheet.parentElement.dataset.side!=='left')return;
    const grid=sheet.querySelector('.c212-grid');if(!grid||grid.querySelector('[data-coach30-pitch]'))return;
