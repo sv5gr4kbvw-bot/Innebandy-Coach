@@ -313,6 +313,12 @@ body.board-fullscreen #rotationPanel.open .rotation-controls {display:flex!impor
 body.board-fullscreen #rotationPanel.open .rotation-controls button {min-width:0!important;flex:1 1 0!important;min-height:45px!important;padding:6px 2px!important;font-size:12px!important;touch-action:manipulation}
 body.board-fullscreen #rotationPanel.open p {margin:0 0 8px!important;font-size:13px!important}
 </style>
+<style id="coach300-touch-stability">
+/* Keep finger drawing on the SVG independent of page scrolling and Safari gestures. */
+#board, #board *, .board-workspace .pitch, .board-workspace .pitch svg {touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+body.board-fullscreen{overscroll-behavior:none!important;overflow:hidden!important;position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important}
+body.board-fullscreen .board-workspace{overscroll-behavior:contain!important}
+</style>
 </head><body><details id="installCoachHelp" class="panel"><summary>📱 Installera som app på iPhone</summary><p>Öppna den publicerade adressen i Safari, tryck på Dela och välj <strong>Lägg till på hemskärmen</strong>. Starta sedan Innebandy Coach från ikonen. Grundfunktionerna kan användas offline efter att appen har laddats in; matchdelning kräver internet.</p><p>Vill du senare publicera en native iOS-app kan samma webbapp användas som grund, men App Store-publicering har egna krav och kostnader.</p></details><div class="wrap"><header><div><h1>🏑 Innebandy Coach <span style="color:#78b7ff">PRO</span></h1><small>Taktiktavla · träningspass · övningar</small></div><span class="pill">Offline-klar</span></header>
 <section class="coach-focus-toggle" aria-label="Fokusläge"><div><strong>🏑 Planen i fokus</strong><small>Dubbeltryck på planen för verktyg</small></div><div class="focus-actions"><button type="button" id="coachFocusUndo" aria-label="Ångra senaste ändringen" title="Ångra">↶ Ångra</button><button type="button" id="coachFocusRedo" aria-label="Gör om ändringen" title="Gör om">↷ Gör om</button><button type="button" id="coachFocusFullBoard" aria-label="Öppna helplansläge">⛶ Helplan</button><button type="button" id="coachFocusToggle" aria-pressed="true">Visa fler val</button></div></section><div class="toolbox" id="modes">
 <div class="tool-section"><div class="tool-label">Redigera</div><div class="tools"><button data-mode="move" class="active">✋ Flytta</button><button data-mode="draw">✏️ Rita</button><button data-mode="arrow">↗️ Pil</button><button data-mode="erase">🧽 Sudda</button></div></div>
@@ -1645,6 +1651,9 @@ $('smartAddSession').onclick=()=>{if(!smartLast){toast('Skapa en övning först'
   enter.setAttribute('aria-pressed',String(on));if(on){const s=document.getElementById('status');if(s)s.textContent='Helplan: dubbeltryck med Flytta valt eller tryck ☰ för verktyg.';}
  }
  enter.addEventListener('click',()=>setFull(true));
+ // Start directly in the main coaching workspace; all other views open from its menu.
+ const startInFullBoard=()=>{if(!document.body.classList.contains('board-fullscreen'))setFull(true)};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startInFullBoard,{once:true});else startInFullBoard();
  exit.addEventListener('click',()=>setFull(false));
  tools.addEventListener('click',()=>document.getElementById('toolMenuButton').click());
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('board-fullscreen'))setFull(false)});
