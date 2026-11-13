@@ -1,0 +1,34 @@
+/* Innebandy-Coach 30.0 — non-destructive mobile usability layer */
+@media (max-width: 600px) {
+  button, [role="button"], select { min-height: 44px; }
+  button { -webkit-tap-highlight-color: transparent; }
+  .tools { scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+  .tools button { scroll-snap-align: start; }
+  .panel { scroll-margin-top: 12px; }
+  .pitch { overflow: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+/* 30.0: concise tool feedback without covering the playing surface */
+.coach30-mode-status { margin: 2px 12px 8px; padding: 7px 10px; color: #d7eaff; background: #142b43; border: 1px solid #315574; border-radius: 9px; font-size: 12px; line-height: 1.4; }
+@media (max-width: 600px) { .coach30-mode-status { font-size: 11px; } }
+
+.coach30-animation-hint { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: #173653; color: #e1f0ff; font-size: 13px; line-height: 1.45; }
+
+.coach30-quick-move { margin: 0 12px 8px; min-height: 44px; padding: 8px 13px; border-color: #4f8cbb; background: #183d60; color: #f1f8ff; }
+.coach30-quick-move[hidden] { display: none !important; }
+
+.coach30-multi-toggle { display:block; margin:8px 0 0; min-height:44px; background:#21456a; border-color:#4c80ad; }
+.coach30-multi-toggle[aria-pressed="true"] { background:#17634f; border-color:#65c8a0; }
+.coach30-multi-info { margin:7px 0 0; padding:9px 11px; border-radius:9px; background:#122f3d; color:#d6f6e9; font-size:12px; line-height:1.45; }
+.coach30-multi-info[hidden] { display:none !important; }
+
+/* Full-screen half-pitch controls; no changes to object coordinates. */
+#coach30HalfBar{position:fixed;z-index:190;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;align-items:center;max-width:calc(100vw - 18px);padding:6px;border-radius:14px;background:#101f32ee;box-shadow:0 6px 20px #0006}
+#coach30HalfBar button{min-height:44px;white-space:nowrap;font-size:12px;padding:8px 10px;background:#20486b;color:#fff;border:1px solid #5084a8;border-radius:10px}
+#coach30HalfBar button[hidden]{display:none!important}
+body:not(.board-fullscreen) #coach30HalfBar{position:relative;bottom:auto;left:auto;transform:none;width:max-content;margin:8px auto;box-shadow:none}
+body.coach30-half-active .pitch svg{object-fit:contain!important}
