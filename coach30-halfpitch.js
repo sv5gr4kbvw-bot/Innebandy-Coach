@@ -8,8 +8,8 @@
   const viewFor=()=>{
    const [w,h]=dimensions();
    if(mode==='full')return `0 0 ${w} ${h}`;
-   if(w>h)return mode==='first'?'0 0 390 420':'370 0 390 420';
-   return mode==='first'?'0 0 420 390':'0 370 420 390';
+   if(w>h)return '0 0 390 420';
+   return '0 0 420 390';
   };
   function apply(){
    const expected=viewFor();
@@ -28,12 +28,12 @@
    const vh=viewport?.height||window.innerHeight;
    const [fw,fh]=dimensions();
    const aspect=mode==='full'?fw/fh:(fw>fh?390/420:420/390);
-   const topSpace=44,bottomSpace=8;
+   const topSpace=mode==='full'?16:4,bottomSpace=8;
    const availableHeight=Math.max(200,vh-topSpace-bottomSpace);
    const width=Math.min(vw-4,availableHeight*aspect);
    const height=width/aspect;
    const x=(vw-width)/2;
-   const y=topSpace+(availableHeight-height)/2;
+   const y=mode==='full'?topSpace+(availableHeight-height)/2:topSpace;
    const props={position:'fixed',left:x+'px',top:y+'px',width:width+'px',height:height+'px','max-width':'none','max-height':'none',margin:'0',transform:'none','object-fit':'fill','z-index':'152'};
    for(const [k,v] of Object.entries(props))board.style.setProperty(k,v,'important');
   }
@@ -44,7 +44,7 @@
   function insertControls(){
    if(!sheet.parentElement?.classList.contains('open')||sheet.parentElement.dataset.side!=='left')return;
    const grid=sheet.querySelector('.c212-grid');if(!grid||grid.querySelector('[data-coach30-pitch]'))return;
-   const labels=[['full','⛶ Helplan'],['first','🔍 Första planhalvan'],['second','🔍 Andra planhalvan']];
+   const labels=[['full','⛶ Helplan'],['half','🔍 Halvplan']];
    const buttons=labels.map(([value,label])=>{
     const b=document.createElement('button');b.type='button';b.dataset.coach30Pitch=value;b.textContent=label;
     b.setAttribute('aria-pressed',String(mode===value));
