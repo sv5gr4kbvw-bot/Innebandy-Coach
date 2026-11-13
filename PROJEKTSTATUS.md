@@ -74,3 +74,7 @@ Senast uppdaterad: 2026-11-13
 - Inbjudningslänk rensas från versionsparametrar. Mottagare bekräftar namn och Gå med; börjar som åskådare.
 - Matchchatten och länken rensas vid Lämna. Chattprenumerationen avslutas på samma query som startades.
 - Mocktester av rumsskapande, tidiga Firebase-callbacks, ren länk, lämna och manuell anslutning godkända. Verklig synk mellan två enheter återstår att verifiera.
+
+## Version 30.10
+- Rättar ReferenceError i delning: match.js använder coachMatchBoard.getItems/setItems i stället för privata items/render i tavlans IIFE.
+- Testmiljön saknar nu globala items/render, så samma åtkomstfel upptäcks av testet.

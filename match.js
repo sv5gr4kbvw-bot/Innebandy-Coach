@@ -4,6 +4,8 @@ const status=t=>{$('matchStatus').textContent=t;};
 let connectionPromise=null,busy=false;
 let db,auth,room='',board=null,chat=null,subs=[],remote=false,timer=null,ready=false,uid='',name='',lastSent='',presence=null,participantKey='';
 const conf=window.MATCH_FIREBASE_CONFIG;
+function getBoardItems(){const api=window.coachMatchBoard;if(!api?.getItems||!api?.setItems)throw Error('Tavlan är inte redo. Ladda om appen och försök igen.');return api.getItems();}
+function setBoardItems(next){window.coachMatchBoard.setItems(next);}
 let owner=false,canEdit=false,editorsRef=null,ownerId='',session=0;
 window.matchReadOnly=false;
 function applyReadOnly(){window.matchReadOnly=Boolean(room&&!canEdit);document.body.classList.toggle('match-readonly',window.matchReadOnly);const b=document.getElementById('matchReadOnlyNotice');if(b)b.hidden=!window.matchReadOnly;}
@@ -62,7 +64,7 @@ async function enterRoom(id,create){
  const ref=db.ref('rooms/'+id);board=ref.child('board');chat=ref.child('chat');
  if(activeSession!==session)return;
  if(create){
-  await ref.update({createdBy:uid,createdAt:firebase.database.ServerValue.TIMESTAMP,board:JSON.stringify(items)});
+  await ref.update({createdBy:uid,createdAt:firebase.database.ServerValue.TIMESTAMP,board:JSON.stringify(getBoardItems())});
  }
  const creator=await ref.child('createdBy').once('value');
  if(activeSession!==session)return;
@@ -82,7 +84,7 @@ async function enterRoom(id,create){
   if(activeSession!==session)return;
   if(!snap.exists()){ready=false;return;}
   try{const received=JSON.parse(snap.val());if(!Array.isArray(received)||received.length>3000)return;
-  if(window.matchLocalGestureActive&&window.matchLocalGestureActive()){return}const incoming=JSON.stringify(received);if(incoming===JSON.stringify(items)){lastSent=incoming;ready=true;return}remote=true;try{items=received;render()}finally{remote=false}lastSent=incoming;ready=true}catch(e){remote=false;status(e.message)}
+  if(window.matchLocalGestureActive&&window.matchLocalGestureActive()){return}const incoming=JSON.stringify(received);if(incoming===JSON.stringify(getBoardItems())){lastSent=incoming;ready=true;return}remote=true;try{setBoardItems(received)}finally{remote=false}lastSent=incoming;ready=true}catch(e){remote=false;status(e.message)}
  };
  board.on('value',onBoard,e=>status('Synkronisering: '+e.message));
  subs.push(()=>board.off('value',onBoard));
@@ -96,7 +98,7 @@ async function enterRoom(id,create){
 }
 window.matchScheduleSync=()=>{
  if(remote||!ready||!board||timer||!canEdit)return;
- timer=setTimeout(()=>{timer=null;if(!remote&&ready&&board&&canEdit){const payload=JSON.stringify(items);if(payload!==lastSent){lastSent=payload;board.set(payload).catch(e=>{lastSent='';status(e.message)})}}},180);
+ timer=setTimeout(()=>{timer=null;if(!remote&&ready&&board&&canEdit){const payload=JSON.stringify(getBoardItems());if(payload!==lastSent){lastSent=payload;board.set(payload).catch(e=>{lastSent='';status(e.message)})}}},180);
 };
 $('matchCreate').onclick=async()=>{
  try{const bytes=new Uint8Array(20);crypto.getRandomValues(bytes);
