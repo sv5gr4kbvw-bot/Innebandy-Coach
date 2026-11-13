@@ -2714,7 +2714,7 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Bottom{bottom:ca
  const multi=document.createElement('button');multi.id='coach304Multi';multi.type='button';dock.append(multi);
  const next=document.createElement('button');next.id='coach304Next';next.type='button';next.textContent='+ Steg';next.setAttribute('aria-label','Spara alla förflyttningar i samma animationssteg');dock.append(next);
  const undo=document.createElement('button');undo.type='button';undo.id='coach304Undo';undo.textContent='↶ Ångra steg';undo.setAttribute('aria-label','Ångra senaste animationssteget');dock.append(undo);
- undo.addEventListener('click',()=>{window.coachUndoAnimationStep?.(pending);pending=false;moved=0;update();});
+ undo.addEventListener('click',()=>{window.coachUndoAnimationStep?.(pending);pending=false;moved=0;if(!total())recording=false;update();});
  let recording=false,pending=false,multiMode=true,moved=0;
  const frame=document.getElementById('frame'),frameCount=document.getElementById('frameCount');
  const total=()=>parseInt(frameCount?.textContent,10)||0;
