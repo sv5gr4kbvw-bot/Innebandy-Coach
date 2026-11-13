@@ -2641,8 +2641,13 @@ html:has(body.board-fullscreen),body.board-fullscreen{height:100%;overflow:hidde
 </div>
 <script src="./coach294.js?v=298"></script>
 <style id="coach304-quick-animation-css">
-#coach304Anim{display:none;position:fixed;right:0;top:22%;z-index:2147483499;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
+#coach304Anim{display:none;position:fixed;right:0;top:15%;z-index:2147483499;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
 body.board-fullscreen #coach304Anim{display:flex}
+#coach304Anim #coach304Capture,#coach304Anim #coach304Play,#coach304Anim #coach304Count{display:none}
+#coach304Anim.coach304-open #coach304Capture,#coach304Anim.coach304-open #coach304Play,#coach304Anim.coach304-open #coach304Count{display:block}
+#coach304Anim #coach304Toggle{width:28px;min-height:86px;padding:6px 3px;writing-mode:vertical-rl;font-size:12px;border-radius:12px 0 0 12px}
+#coach304Anim.coach304-open #coach304Toggle{width:auto;min-height:42px;writing-mode:horizontal-tb;padding:8px 10px}
+#coach304Anim.coach304-open{background:#102d3ee8;border-radius:12px 0 0 12px;padding:5px 0 5px 5px}
 #coach304Anim button{pointer-events:auto;background:#123d53f2;color:white;border:1px solid #9cc6d6;border-radius:12px 0 0 12px;padding:10px 7px;font:700 12px system-ui;min-height:45px;max-width:95px;touch-action:manipulation}
 #coach304Anim button:active{background:#236c87}
 #coach304Anim .coach304-count{font:600 10px system-ui;color:white;background:#123d53f2;padding:3px 6px;border-radius:8px 0 0 8px}
@@ -2650,9 +2655,10 @@ body.board-fullscreen #coach304Anim{display:flex}
 <script id="coach304-quick-animation-js">
 (function(){
  const dock=document.createElement('div');dock.id='coach304Anim';
- dock.innerHTML='<button type="button" id="coach304Capture" aria-label="Spara animationssteg">⏺ Spela in</button><button type="button" id="coach304Play" aria-label="Spela upp övningen">▶ Spela</button><span class="coach304-count" id="coach304Count">0 steg</span>';
+ dock.innerHTML='<button type="button" id="coach304Toggle" aria-label="Öppna träning och animation" aria-expanded="false">🏑 Träning</button><button type="button" id="coach304Capture" aria-label="Spara animationssteg">⏺ Spela in</button><button type="button" id="coach304Play" aria-label="Spela upp övningen">▶ Spela</button><span class="coach304-count" id="coach304Count">0 steg</span>';
  document.body.append(dock);
- const capture=dock.querySelector('#coach304Capture'),play=dock.querySelector('#coach304Play'),count=dock.querySelector('#coach304Count');
+ const capture=dock.querySelector('#coach304Capture'),play=dock.querySelector('#coach304Play'),count=dock.querySelector('#coach304Count'),toggle=dock.querySelector('#coach304Toggle');
+ toggle.addEventListener('click',()=>{const opened=dock.classList.toggle('coach304-open');toggle.setAttribute('aria-expanded',String(opened));toggle.textContent=opened?'✕ Stäng':'🏑 Träning'});
  function update(){const n=document.getElementById('frameCount')?.textContent||'0 bildrutor';const v=parseInt(n,10)||0;count.textContent=v+' steg';capture.textContent=v?'＋ Nästa steg':'⏺ Spela in'}
  capture.addEventListener('click',()=>{document.getElementById('frame')?.click();update()});
  play.addEventListener('click',()=>{document.getElementById('play')?.click();update()});
