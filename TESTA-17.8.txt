@@ -1,0 +1,1 @@
+17.8: Öppna Träningspass, skapa pass, expandera en övningsskiss och tryck ▶ Visa rörelser. Gul markör visar passning/skott, grön löpning. Pausa/återställ. Testa på iPhone före publicering.

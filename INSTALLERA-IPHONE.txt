@@ -1,0 +1,8 @@
+INNEBANDY COACH PRO 9.9 – INSTALLERA PÅ IPHONE
+
+1. Publicera ZIP-paketet på din befintliga Netlify-sajt.
+2. Öppna webbplatsen i Safari på din iPhone.
+3. Tryck på Dela och välj Lägg till på hemskärmen.
+4. Starta appen från hemskärmen.
+
+OBS: Native App Store-app är en möjlig senare utvecklingsväg, inte något som detta ZIP-paket redan är. Firebase-samarbete behöver internet. Testa alltid säkerhetskopiering före större uppdateringar.

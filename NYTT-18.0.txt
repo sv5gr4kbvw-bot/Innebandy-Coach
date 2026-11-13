@@ -1,0 +1,1 @@
+Version 18.0: Samtidiga spelarlöpningar med kvarvarande slutpositioner och passningar i följd. Spela, pausa, starta om och ändra hastighet. Animationerna är pedagogiska och ännu inte verifierade i Safari.

@@ -1,0 +1,10 @@
+Innebandy Coach PRO 14.0 – Fokusläge
+
+1. Öppna på iPhone: verktyg på sidorna av planen syns.
+2. Tryck Visa fler val: fullständiga verktyg, klocka och inställningar visas.
+3. Tryck Dölj extra val: planen får mer plats.
+4. Stäng och öppna appen: valet ska kommas ihåg.
+5. Kontrollera flytta, rita, ångra, bollanimation och matchtavla.
+6. Testa både stående och liggande telefon.
+
+Obs: Firebase-behörigheter och synkronisering kräver separat test med två telefoner.

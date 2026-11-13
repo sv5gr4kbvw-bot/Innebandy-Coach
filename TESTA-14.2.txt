@@ -1,0 +1,1 @@
+14.2: Öppna fokusläge på iPhone. Rita en linje, tryck Ångra och Gör om. Kontrollera att knapparna blir grå när historiken är tom. Kontrollera Helplan och Visa fler val. Testa i stående och liggande läge. Safari- och Firebase-test återstår.

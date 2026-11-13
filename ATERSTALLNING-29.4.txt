@@ -1,0 +1,7 @@
+ÅTERSKAPAD VERSION 29.4 (inte originalfilen)
+Utgår från bevarad 23.5, inte från den förlorade 29.4-koden.
+Nytt: separat matchcenter i helskärmsvy, säsongsval, matcher, matchspecifik laguppställning, perioder, mål/assist, statistik per säsong, JSON-backup/import, CSV-export och timeralarm.
+Varning vid matchbyte när matchen har registrerade händelser. Skydd mot att ta bort spelare med mål/assist ur aktuell laguppställning.
+Befintliga appmoduler och Firebase-databas lämnas orörda. Den nya matchmodulen lagrar data lokalt på enheten, INTE i den befintliga Firebase-matchmodulen. Exportera säkerhetskopior.
+Övriga funktioner från originalversionerna 24–29.4 kan saknas.
+Publicera ENDAST i Cloudflare Preview tills funktionerna testats på iPhone. Låst skärm kan förhindra ljudlarm.

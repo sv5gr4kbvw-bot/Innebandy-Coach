@@ -1,0 +1,1 @@
+Version 18.2: sju övningar har förvald sekvensordning, övriga visas uttryckligen som schematiska. Nästa steg-knapp för manuell genomgång. Ingen Safari-test utförd.\n

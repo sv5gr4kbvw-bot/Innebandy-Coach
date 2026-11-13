@@ -1,0 +1,5 @@
+INNEBANDY COACH PRO 20.0 — HELPLANSFIX
+Inte publicerad på Netlify.
+Åtgärdat: helplanens verktygsrails har alltid en egen tryckbar yta och kan scrollas; den stora planen ligger i mittkolumnen. Avsluta och meny är över planen. Modalens tillstånd nollställs vid byte. En referens till en oåtkomlig smartFrames-variabel i helplanspanelen har ersatts med säker generering före uppspelning.
+Kontroller: syntaxkontroll av alla JS-skript, JSON, ZIP och webbläsartest i Chromium om tillgängligt.
+OBS: Inte testad i Safari på fysisk iPhone. Offline, Firebase och andra avancerade funktioner behöver fortfarande manuella tester.

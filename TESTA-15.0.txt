@@ -1,0 +1,10 @@
+INNEBANDY COACH PRO 15.0 – KVALITETSTEST
+
+1. Öppna appen i Safari på iPhone.
+2. Placera en spelare och en boll med verktygen vid planens kanter.
+3. Rita en kurvig linje, ångra och gör om – även i fokusläge.
+4. Öppna helplan och kontrollera att knapparna fungerar.
+5. Spela upp en sekvens med bollinnehav, passning och skott.
+6. Testa matchdelning på två telefoner och åskådarens behörighet.
+
+Obs: matchdelning kräver korrekt Firebase-konfiguration och publicerade databasregler.

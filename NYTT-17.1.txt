@@ -1,0 +1,1 @@
+Version 17.1: realistisk organisation för träningspass. Alla närvarande behöver inte vara aktiva. Aktivt antal, köer och rotation anpassas efter övningstyp. Ingen Netlify-publicering utförd.

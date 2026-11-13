@@ -1,0 +1,1 @@
+Version 18.5: Spola inom moment, döljer dubbla blå spelarsymboler under animation, och kontrollerar att förvalda sekvenser faktiskt har alla ritade vägar. Ej funktionstestad i iPhone Safari.

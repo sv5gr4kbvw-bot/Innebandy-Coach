@@ -1,0 +1,10 @@
+INNEBANDY COACH PRO 23.2 – INSTALLERA SOM IPHONE-APP
+
+1. Ladda upp ZIP-paketet på Cloudflare Pages (först Preview).
+2. Kontrollera att helplan och dubbeltryck fungerar.
+3. Öppna den publicerade webbadressen i Safari på iPhone.
+4. Tryck Dela (fyrkant med pil uppåt) och välj Lägg till på hemskärmen.
+5. Välj Öppna som webbapp om alternativet visas och tryck Lägg till.
+6. Öppna Coach PRO från ikonen på hemskärmen.
+
+OBS: Detta är en installerbar webbapp (PWA), inte en App Store-app. Tavlan kan starta offline efter första besöket, men chatt och realtidssamarbete kräver internet. Uppdateringar hämtas när du har nät och startar om appen. Publicera inte över en fungerande produktionsversion innan Preview är testad.

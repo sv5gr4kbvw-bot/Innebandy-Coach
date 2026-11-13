@@ -1,0 +1,14 @@
+MATCH – INSTALLATION (en gång)
+1. Öppna https://console.firebase.google.com och skapa ett projekt.
+2. Lägg till en webbapp och kopiera firebaseConfig.
+3. Aktivera Authentication > Sign-in method > Anonymous.
+4. Skapa Realtime Database (locked mode), kopiera databaseURL.
+5. Öppna firebase-config.js och ersätt null med firebaseConfig inklusive databaseURL.
+6. I Realtime Database > Rules klistra in database.rules.json och publicera.
+7. Packa om hela mappen till ZIP och ladda upp till Netlify.
+Dela Match-länken privat. Alla med länken kan se och ändra tavlan och chatten.
+Match kräver internet, men resten av appen fungerar offline. Kostnadsfri nivå har kvoter.
+
+Firebase databaseURL tillagd. Publicera databasreglerna från database.rules.json under Realtime Database > Rules innan Match används.
+
+Version 13.0: Publicera den uppdaterade database.rules.json i Firebase så deltagarlistan fungerar.

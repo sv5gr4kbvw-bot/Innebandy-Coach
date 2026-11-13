@@ -1,0 +1,1 @@
+Version 18.3: Föregående steg, nästa steg och välj valfritt moment. Spelarnas positioner återställs och tidigare moment räknas fram vid bakåthopp. Uppspelning ej testad i iPhone Safari.\n

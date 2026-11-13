@@ -1,0 +1,2010 @@
+
+(()=>{'use strict';
+const NS='http://www.w3.org/2000/svg',board=document.getElementById('board'),field=document.getElementById('field'),content=document.getElementById('content'),preview=document.getElementById('preview'),status=document.getElementById('status');
+let mode='move',items=[],history=[],future=[],seq=0,gesture=null,orientation='vertical',frames=[],playing=false,playTimer=null,drills=[],selectedPlayer=null,selectedRotation=null,rosterTab=0;
+// Explicit interface between the board's private state and Match.
+window.coachMatchBoard={getItems:()=>JSON.parse(JSON.stringify(items)),setItems:next=>{if(!Array.isArray(next))return;items=JSON.parse(JSON.stringify(next));seq=Math.max(seq,0,...items.map(it=>Number(it.id)||0));render()}};
+const $=id=>document.getElementById(id),node=(tag,attrs={},parent)=>{const el=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));if(parent)parent.appendChild(el);return el};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),copy=v=>JSON.parse(JSON.stringify(v)),uid=()=>++seq;
+function dimensions(){return orientation==='vertical'?{w:420,h:760}:{w:760,h:420}}
+function paintField(){
+ const {w,h}=dimensions();board.setAttribute('viewBox',`0 0 ${w} ${h}`);field.replaceChildren();
+ const vertical=orientation==='vertical';
+ node('rect',{x:0,y:0,width:w,height:h,fill:'#ffffff'},field);
+ const g=node('g',vertical?{}:{transform:'translate(760 0) rotate(90)'},field);
+ const ink='#37305f',stroke=2.8;
+ // Innebandytavla enligt referens: rundad sarg, tekningskryss, mittlinje och målområden.
+ node('rect',{x:24,y:27,width:372,height:706,rx:52,ry:52,fill:'#ffffff',stroke:ink,'stroke-width':stroke},g);
+ node('line',{x1:24,y1:380,x2:396,y2:380,stroke:ink,'stroke-width':stroke},g);
+ node('circle',{cx:210,cy:380,r:6.3,fill:ink},g);
+ for(const x of [62,358])node('line',{x1:x,y1:372,x2:x,y2:388,stroke:ink,'stroke-width':2.4},g);
+ for(const y of [82,678])for(const x of [66,354]){
+   node('line',{x1:x-8,y1:y,x2:x+8,y2:y,stroke:ink,'stroke-width':2.4},g);
+   node('line',{x1:x,y1:y-8,x2:x,y2:y+8,stroke:ink,'stroke-width':2.4},g);
+ }
+ for(const top of [true,false]){
+   const boxY=top?65:603;
+   node('rect',{x:154,y:boxY,width:112,height:92,fill:'none',stroke:ink,'stroke-width':2.7},g);
+   const goalY=top?82:665;
+   node('rect',{x:182,y:goalY,width:56,height:18,fill:'#fff',stroke:ink,'stroke-width':2.5},g);
+   node('line',{x1:189,y1:top?goalY-6:goalY+18,x2:189,y2:top?goalY:goalY+24,stroke:ink,'stroke-width':2},g);
+   node('line',{x1:231,y1:top?goalY-6:goalY+18,x2:231,y2:top?goalY:goalY+24,stroke:ink,'stroke-width':2},g);
+ }
+}
+function drawItem(it,parent=content){let g=node('g',{'data-id':it.id},parent),x=it.x,y=it.y;if(it.type==='draw'||it.type==='arrow'){let pts=it.points||[];if(pts.length<2)return;let d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');node('path',{d,fill:'none',stroke:it.color||'#ffdf55','stroke-width':it.width||4,'stroke-linecap':'round','stroke-linejoin':'round',...(it.type==='arrow'?{'marker-end':'url(#arrowhead)'}:{})},g);return}
+if(it.type.startsWith('player')||it.type.startsWith('goalie')){let a=it.type.endsWith('A'),goalie=it.type.startsWith('goalie');node('circle',{cx:x,cy:y,r:goalie?17:15,fill:a?'#2563eb':'#df3c4d',stroke:'#fff','stroke-width':2.3},g);if(goalie){node('circle',{cx:x,cy:y,r:20,fill:'none',stroke:'#fff','stroke-dasharray':'3 3','stroke-width':1.5},g)}let t=node('text',{x,y:y+5,'text-anchor':'middle','font-size':goalie?12:14,'font-weight':800,fill:'#fff','pointer-events':'none'},g);t.textContent=it.number!==undefined?it.number:(goalie?'MV':it.label||'1');if(it.name){let nt=node('text',{x,y:y+29,'text-anchor':'middle','font-size':11,'font-weight':800,fill:'#102333',stroke:'#fff','stroke-width':2,'paint-order':'stroke','pointer-events':'none'},g);nt.textContent=it.name.slice(0,18)}}
+if(it.type==='ball')node('circle',{cx:x,cy:y,r:7,fill:'#fff',stroke:'#1b2836','stroke-width':2},g);
+if(it.type==='cone'){let cg=node('g',{transform:`rotate(${it.rotation||0} ${x} ${y})`},g);node('path',{d:`M${x} ${y-15} L${x-13} ${y+12} L${x+13} ${y+12} Z`,fill:'#ff9d22',stroke:'#fff','stroke-width':2},cg)}
+if(it.type==='goal'){let gg=node('g',{transform:`rotate(${it.rotation||0} ${x} ${y})`},g);node('rect',{x:x-24,y:y-11,width:48,height:22,rx:2,fill:'#dce9ef',stroke:'#e23b3b','stroke-width':4},gg);for(let dx=-16;dx<=16;dx+=8)node('line',{x1:x+dx,y1:y-9,x2:x+dx,y2:y+9,stroke:'#879aa3','stroke-width':1},gg)}
+}
+function render(){content.replaceChildren();items.forEach(it=>drawItem(it));$('undo').disabled=!history.length;$('redo').disabled=!future.length;for(const id of ['coachFocusUndo','fullBoardUndo','quickUndo']){const el=$(id);if(el)el.disabled=!history.length}for(const id of ['coachFocusRedo','fullBoardRedo','quickRedo']){const el=$(id);if(el)el.disabled=!future.length}if(window.matchScheduleSync&&!gesture&&!window.coachPreviewActive)window.matchScheduleSync()}
+function checkpoint(){if(playing)stopPlayback();history.push(copy(items));if(history.length>70)history.shift();future=[]}
+function coords(e){let p=board.createSVGPoint();p.x=e.clientX;p.y=e.clientY;let c=board.getScreenCTM();if(!c)return{x:0,y:0};p=p.matrixTransform(c.inverse());const{w,h}=dimensions();return{x:clamp(p.x,0,w),y:clamp(p.y,0,h)}}
+function nearest(x,y){for(let i=items.length-1;i>=0;i--){let it=items[i];if(it.points){for(let j=1;j<it.points.length;j++){let a=it.points[j-1],b=it.points[j],dx=b[0]-a[0],dy=b[1]-a[1],t=clamp(((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1),0,1);if(Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)<12)return it}}else if(Math.hypot(x-it.x,y-it.y)<28)return it}return null}
+// Eraser removes only the ink underneath the finger, splitting paths at gaps.
+function eraseInkAt(x,y,radius=13){
+ let changed=false, next=[];
+ for(const it of items){
+  if(!['draw','arrow'].includes(it.type)||!it.points||it.points.length<2){next.push(it);continue}
+  const dense=[it.points[0]];
+  for(let k=1;k<it.points.length;k++){
+   const a=it.points[k-1],b=it.points[k],len=Math.hypot(b[0]-a[0],b[1]-a[1]);
+   const steps=Math.max(1,Math.ceil(len/3));
+   for(let n=1;n<=steps;n++)dense.push([a[0]+(b[0]-a[0])*n/steps,a[1]+(b[1]-a[1])*n/steps]);
+  }
+  if(!dense.some(q=>Math.hypot(q[0]-x,q[1]-y)<radius)){next.push(it);continue}
+  changed=true;let run=[],parts=[];
+  const flush=()=>{if(run.length>1)parts.push(run);run=[]};
+  for(const q of dense){if(Math.hypot(q[0]-x,q[1]-y)<radius)flush();else run.push(q)}
+  flush();
+  for(const part of parts)next.push({...it,id:uid(),type:'draw',points:part});
+ }
+ if(changed)items=next;
+ return changed;
+}
+function eraseObjectAt(x,y){
+ for(let i=items.length-1;i>=0;i--){
+  const it=items[i];
+  if(it.points||!Number.isFinite(it.x)||!Number.isFinite(it.y))continue;
+  const radius=it.type==='goal'?29:it.type==='ball'?13:it.type==='cone'?20:23;
+  if(Math.hypot(x-it.x,y-it.y)<=radius){
+   items.splice(i,1);render();return true;
+  }
+ }
+ return false;
+}
+function eraseAtPoint(x,y){
+ // Solid objects are erased whole, drawn strokes are erased locally.
+ return eraseObjectAt(x,y)||eraseInkAt(x,y);
+}
+function eraseInkAlong(a,b){
+ let changed=false,dist=Math.hypot(b.x-a.x,b.y-a.y),steps=Math.max(1,Math.ceil(dist/5));
+ for(let k=0;k<=steps;k++)changed=eraseAtPoint(a.x+(b.x-a.x)*k/steps,a.y+(b.y-a.y)*k/steps)||changed;
+ if(changed)render();
+ return changed;
+}
+function setMode(m){cancelPendingPlacement();mode=m;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));if(m==='rotateObject'){$('rotationPanel').classList.add('open');$('rotationTitle').textContent='Tryck på en kona eller ett mål på planen'}else{$('rotationPanel').classList.remove('open');selectedRotation=null}document.getElementById('currentMode').textContent=({move:'✋ Flytta',draw:'✏️ Rita',arrow:'↗️ Pil',erase:'🧽 Sudda',playerA:'🔵 Blå spelare',playerB:'🔴 Röd spelare',goalieA:'🧤 Blå målvakt',goalieB:'🧤 Röd målvakt',ball:'⚪ Boll',cone:'🔺 Kona',goal:'🥅 Mål',edit:'📝 Ändra spelare',rotateObject:'🔄 Rotera kona eller mål'})[m]||m;status.textContent={move:'Dra objekt med fingret. Dubbeltryck på tom plan för verktyg.',draw:'Dra fingret för att rita en fri linje.',arrow:'Dra från pilens start till slut.',erase:'Dra över linjer för att sudda delar. Tryck på eller dra över spelare, bollar, koner och mål för att ta bort dem.'}[m]||'Tryck på planen för att placera objektet.'}
+document.addEventListener('click',e=>{let b=e.target.closest('[data-mode]');if(b){setMode(mode===b.dataset.mode&&mode!=='move'?'move':b.dataset.mode);closeToolDrawer()}});
+const toolDrawer=$('toolDrawer'),toolDrawerGrid=$('toolDrawerGrid');
+function openToolDrawer(){toolDrawer.classList.add('open');toolDrawerGrid.replaceChildren();document.querySelectorAll('.board-workspace .rail button').forEach(b=>{let c=b.cloneNode(true);c.removeAttribute('id');c.classList.toggle('active',b.dataset.mode===mode);c.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(b.dataset.mode){setMode(mode===b.dataset.mode&&mode!=='move'?'move':b.dataset.mode)}else if(b.id==='quickRoster'){$('rosterPanel').open=true;$('rosterPanel').scrollIntoView({behavior:'smooth',block:'start'})}closeToolDrawer()});toolDrawerGrid.append(c)})}
+function closeToolDrawer(){toolDrawer.classList.remove('open')}
+$('toolMenuButton').onclick=()=>toolDrawer.classList.contains('open')?closeToolDrawer():openToolDrawer();
+$('toolDrawerClose').onclick=closeToolDrawer;
+let lastBoardTap=0,lastBoardX=0,lastBoardY=0,skipSecondTap=false;let customRouteDraft=null;let customRoutePending={};
+let pendingBoardPlacement=null;
+const placeModes=new Set(['playerA','playerB','goalieA','goalieB','ball','cone','goal']);
+function cancelPendingPlacement(){if(pendingBoardPlacement){clearTimeout(pendingBoardPlacement.timer);pendingBoardPlacement=null}}
+function showFullMenus(){
+ cancelPendingPlacement();
+ // 21.5: Always open the same visible, centered quick selector in both board modes.
+ // The legacy fullCoachSheet is not the quick selector and can otherwise hide it.
+ const legacy=document.getElementById('fullCoachSheet');
+ if(legacy){legacy.classList.remove('open');legacy.setAttribute('aria-hidden','true')}
+ const shade=document.getElementById('coach212Shade');
+ if(shade)shade.classList.remove('open');
+ document.getElementById('coach205Menu')?.dispatchEvent(new Event('coach-open-normal'));
+}
+
+board.addEventListener('pointerdown',e=>{if(window.matchReadOnly){e.preventDefault();e.stopImmediatePropagation();const n=document.getElementById('matchReadOnlyNotice');if(n){n.hidden=false;n.scrollIntoView({block:'nearest'});}}},true);
+// 22.3: single owner of the quick-menu gesture. Touch handling runs at
+// document capture phase, before SVG drawing and pointer capture.
+let coach223LastTap=null, coach223Start=null, coach223Swallow=false;
+function coach223InBoard(x,y){
+ const r=board.getBoundingClientRect();
+ if(!r.width||!r.height||x<r.left||x>r.right||y<r.top||y>r.bottom)return false;
+ const el=document.elementFromPoint(x,y);
+ return !el?.closest?.('#coach205Menu.visible,#coach212Shade.open,#fullCoachSheet.open,#toolDrawer.open,button,input,select,textarea,[role="dialog"]');
+}
+function coach223Open(){
+ cancelPendingPlacement();
+ if(gesture){gesture=null;render()}
+ coach223LastTap=null;
+ showFullMenus();
+}
+document.addEventListener('touchstart',function(e){
+ if(e.touches.length!==1){coach223Start=null;coach223LastTap=null;return}
+ const t=e.touches[0],x=t.clientX,y=t.clientY;
+ if(!coach223InBoard(x,y)){coach223Start=null;coach223LastTap=null;return}
+ const now=performance.now();
+ if(coach223LastTap&&now-coach223LastTap.time<440&&Math.hypot(x-coach223LastTap.x,y-coach223LastTap.y)<65){
+  coach223Swallow=true;coach223Start=null;
+  e.preventDefault();e.stopImmediatePropagation();
+  coach223Open();
+  return;
+ }
+ coach223Start={x,y,time:now};
+ coach223Swallow=false;
+}, {capture:true,passive:false});
+document.addEventListener('touchend',function(e){
+ if(coach223Swallow){e.preventDefault();e.stopImmediatePropagation();coach223Swallow=false;return}
+ if(!coach223Start)return;
+ const t=e.changedTouches[0],st=coach223Start;coach223Start=null;
+ if(!t)return;
+ if(performance.now()-st.time<380&&Math.hypot(t.clientX-st.x,t.clientY-st.y)<20){
+  coach223LastTap={x:t.clientX,y:t.clientY,time:performance.now()};
+ }else coach223LastTap=null;
+}, {capture:true,passive:false});
+document.addEventListener('touchcancel',()=>{coach223Start=null;coach223Swallow=false;coach223LastTap=null},true);
+board.addEventListener('dblclick',e=>{e.preventDefault();e.stopImmediatePropagation();coach223Open()},true);
+[['quickUndo','undo'],['quickRedo','redo'],['quickFrame','frame'],['quickSave','save'],['quickExport','export'],['quickClear','clear']].forEach(([a,b])=>$(a).addEventListener('click',()=>$(b).click()));$('quickOptions').onclick=()=>$('boardOptions').classList.toggle('open');$('quickRoster').onclick=()=>{$('rosterPanel').open=true;$('rosterPanel').scrollIntoView({behavior:'smooth',block:'start'})};$('quickRotate').onclick=()=>{$('orientation').value=$('orientation').value==='vertical'?'horizontal':'vertical';$('orientation').dispatchEvent(new Event('change'))};
+board.addEventListener('pointerdown',e=>{if(gesture||e.isPrimary===false||e.button!==undefined&&e.button!==0)return;e.preventDefault();let p=coords(e),hit=nearest(p.x,p.y);try{board.setPointerCapture(e.pointerId)}catch{};gesture={pointer:e.pointerId,start:p,last:p,moved:false,hit:hit?.id};if(mode==='route'){if(!hit||!(hit.type.startsWith('player')||hit.type.startsWith('goalie'))){toast('Börja med fingret på en spelare');gesture=null;return}gesture.routeId=hit.id;gesture.routePoints=[[hit.x,hit.y]];customRouteDraft={id:'route-preview',type:'draw',points:gesture.routePoints,color:'#16a34a',width:4};items.push(customRouteDraft);render();return}else if(mode==='rotateObject'){if(hit&&(hit.type==='cone'||hit.type==='goal')){selectedRotation=hit.id;$('rotationPanel').classList.add('open');$('rotationTitle').textContent=(hit.type==='cone'?'Kona':'Mål')+' · '+(hit.rotation||0)+'°'}else{toast('Tryck på en kona eller ett mål')}gesture=null;return}else if(mode==='edit'){if(hit&&(hit.type.startsWith('player')||hit.type.startsWith('goalie')))openPlayer(hit);gesture=null;return}else if(mode==='move'&&hit){checkpoint();gesture.item=hit;gesture.original=copy(hit);if(['playerA','playerB','goalieA','goalieB','ball'].includes(hit.type))gesture.motionPath=[[hit.x,hit.y]]}else if(mode==='erase'){checkpoint();gesture.erasing=true;gesture.changed=eraseInkAlong(p,p)}else if(mode==='draw'||mode==='arrow'){checkpoint();gesture.item={id:uid(),type:mode,points:[[p.x,p.y],[p.x,p.y]],color:$('ink').value,width:Number($('thick').value)};items.push(gesture.item);render()}else if(mode!=='move'&&mode!=='edit'&&mode!=='rotateObject'){
+ const place=()=>{checkpoint();let count=items.filter(i=>i.type===mode).length+1;items.push({id:uid(),type:mode,x:p.x,y:p.y,label:String(count)});render()};
+ if(placeModes.has(mode)){
+  // Wait until the double-tap window expires before placing anything.
+  // Otherwise the first tap creates an unwanted player/cone/ball.
+  cancelPendingPlacement();
+  const placementMode=mode, placementPoint={...p};
+  const timer=setTimeout(()=>{
+   if(pendingBoardPlacement?.timer!==timer)return;
+   pendingBoardPlacement=null;
+   if(mode!==placementMode)return;
+   checkpoint();
+   const count=items.filter(i=>i.type===placementMode).length+1;
+   items.push({id:uid(),type:placementMode,x:placementPoint.x,y:placementPoint.y,label:String(count)});
+   render();
+  },375);
+  pendingBoardPlacement={timer};
+ }else place();gesture=null
+}});
+board.addEventListener('pointermove',e=>{if(!gesture||gesture.pointer!==e.pointerId)return;e.preventDefault();let p=coords(e),g=gesture;g.moved=g.moved||Math.hypot(p.x-g.start.x,p.y-g.start.y)>3;if(mode==='erase'&&g.erasing){g.changed=eraseInkAlong(g.last,p)||g.changed}if(mode==='route'&&g.routeId){const pts=g.routePoints;if(Math.hypot(p.x-pts[pts.length-1][0],p.y-pts[pts.length-1][1])>2){pts.push([p.x,p.y]);const path=content.querySelector('[data-id="route-preview"] path');if(path)path.setAttribute('d',pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' '));}}if(g.item){if(mode==='move'){let dx=p.x-g.start.x,dy=p.y-g.start.y;if(g.item.points)g.item.points=g.original.points.map(q=>[q[0]+dx,q[1]+dy]);else{g.item.x=clamp(g.original.x+dx,8,dimensions().w-8);g.item.y=clamp(g.original.y+dy,8,dimensions().h-8);
+ if(g.motionPath){const last=g.motionPath[g.motionPath.length-1];if(Math.hypot(g.item.x-last[0],g.item.y-last[1])>=2)g.motionPath.push([g.item.x,g.item.y])}
+ }}else if(mode==='arrow'){g.item.points=[[g.start.x,g.start.y],[p.x,p.y]]}else if(mode==='draw'){let a=g.item.points;if(Math.hypot(p.x-a[a.length-1][0],p.y-a[a.length-1][1])>0.6)a.push([p.x,p.y])}if(mode==='draw'||mode==='arrow'){const path=content.querySelector('[data-id="'+g.item.id+'"] path');if(path){path.setAttribute('d',g.item.points.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' '))}else render()}else render()}g.last=p});
+function finish(e){if(!gesture||gesture.pointer!==e.pointerId)return;if(e.type==='pointercancel'){const g=gesture;if(g.routeId){items=items.filter(o=>o.id!=='route-preview');customRouteDraft=null;}else if(g.item&&(mode==='draw'||mode==='arrow')){items=items.filter(o=>o.id!==g.item.id);history.pop();}else if(g.item&&mode==='move'){Object.assign(g.item,g.original);history.pop();}else if(g.erasing){if(history.length){items=history.pop();}}gesture=null;render();return;}if(mode==='route'&&gesture.routeId){const pts=gesture.routePoints;if(pts.length>=3&&pts.slice(1).reduce((sum,q,i)=>sum+Math.hypot(q[0]-pts[i][0],q[1]-pts[i][1]),0)>15){customRoutePending[gesture.routeId]=pts.map(p=>p.slice());const player=items.find(o=>o.id===gesture.routeId);if(player){const end=pts[pts.length-1];player.x=end[0];player.y=end[1]}toast('Löpväg ritad – lägg till nästa steg')}else toast('Rita en längre löpväg');items=items.filter(o=>o.id!=='route-preview');customRouteDraft=null;gesture=null;render();return}if(mode==='move'&&gesture.motionPath&&gesture.moved){
+ const path=gesture.motionPath;
+ const last=path[path.length-1],obj=gesture.item;
+ if(obj&&Math.hypot(obj.x-last[0],obj.y-last[1])>0.5)path.push([obj.x,obj.y]);
+ const distance=path.slice(1).reduce((total,q,i)=>total+Math.hypot(q[0]-path[i][0],q[1]-path[i][1]),0);
+ if(distance>12&&path.length>=3){
+  customRoutePending[obj.id]=path.map(pt=>pt.slice());
+  toast('Rörelsebana inspelad – spara nästa filmsteg');
+ }
+}
+if(mode==='erase'&&!gesture.changed)history.pop();if(mode==='move'&&!gesture.moved&&gesture.item)history.pop();if((mode==='draw'||mode==='arrow')&&!gesture.moved){items=items.filter(it=>it.id!==gesture.item?.id);history.pop()}gesture=null;render()}
+window.matchLocalGestureActive=()=>!!gesture;board.addEventListener('pointerup',finish);board.addEventListener('pointercancel',finish);
+function openPlayer(it){selectedPlayer=it.id;$('editName').value=it.name||'';$('editNumber').value=it.number??it.label??'';$('editPosition').value=it.position|| (it.type.startsWith('goalie')?'Målvakt':'Center');$('playerEditor').classList.add('open')}
+function rotateSelected(degrees,reset=false){let it=items.find(x=>x.id===selectedRotation);if(!it||!['cone','goal'].includes(it.type)){toast('Välj först en kona eller ett mål');return}checkpoint();it.rotation=reset?0:((it.rotation||0)+degrees+360)%360;render();$('rotationTitle').textContent=(it.type==='cone'?'Kona':'Mål')+' · '+it.rotation+'°'}
+$('rotMinus').onclick=()=>rotateSelected(-15);$('rotPlus').onclick=()=>rotateSelected(15);$('rotQuarter').onclick=()=>rotateSelected(90);$('rotReset').onclick=()=>rotateSelected(0,true);$('rotClose').onclick=()=>setMode('move');
+$('editClose').onclick=()=>$('playerEditor').classList.remove('open');$('editApply').onclick=()=>{let it=items.find(x=>x.id===selectedPlayer);if(it){checkpoint();it.name=$('editName').value.trim();it.number=$('editNumber').value.trim().slice(0,2);it.position=$('editPosition').value;render()}$('playerEditor').classList.remove('open')};
+board.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation()});
+$('undo').onclick=()=>{if(!history.length)return;future.push(copy(items));items=history.pop();render()};
+$('redo').onclick=()=>{if(!future.length)return;history.push(copy(items));items=future.pop();render()};
+$('clear').onclick=()=>{if(!items.length)return;if(confirm('Tömma hela planen?')){checkpoint();items=[];render()}};
+$('orientation').onchange=e=>{checkpoint();let old=dimensions();orientation=e.target.value;let d=dimensions();items.forEach(it=>{if(it.points)it.points=it.points.map(p=>[p[1]/old.h*d.w,p[0]/old.w*d.h]);else{let x=it.x,y=it.y;it.x=y/old.h*d.w;it.y=x/old.w*d.h}});paintField();render()};
+function toast(s){let el=$('toast');el.textContent=s;el.style.display='block';setTimeout(()=>el.style.display='none',2600)}
+function download(blob,name){let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+function updateFrameCount(){$('frameCount').textContent=frames.length+' bildrutor'}
+$('frame').onclick=()=>{if(playing)return;frames.push(copy(items));updateFrameCount();toast('Bildruta '+frames.length+' sparad')};
+function stopPlayback(){playing=false;if(playTimer)clearInterval(playTimer);playTimer=null;render();$('play').disabled=false}
+$('stop').onclick=stopPlayback;
+$('framesClear').onclick=()=>{stopPlayback();frames=[];updateFrameCount()};
+$('play').onclick=()=>{if(frames.length<2){toast('Spara minst två bildrutor');return}stopPlayback();playing=true;$('play').disabled=true;let saved=copy(items),start=Date.now(),duration=1200;const animate=()=>{if(!playing)return;let elapsed=Date.now()-start,segment=Math.floor(elapsed/duration),t=(elapsed%duration)/duration;if(segment>=frames.length-1){items=saved;stopPlayback();return}let from=frames[segment],to=frames[segment+1],map=new Map(to.map(x=>[x.id,x]));items=from.map(a=>{let b=map.get(a.id);if(!b||a.points||b.points)return copy(a);return {...a,x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}});render()};animate();playTimer=setInterval(animate,35)};
+const SKEY='innebandy_coach_sessions_v1';function getSessions(){try{return JSON.parse(localStorage.getItem(SKEY)||'[]')}catch{return[]}}
+function renderDrills(){let el=$('sessionList');el.replaceChildren();let total=0;drills.forEach((d,i)=>{total+=d.minutes;let r=document.createElement('div');r.className='line';r.style.margin='6px 0';let t=document.createElement('span');t.style.flex='1';t.textContent=(i+1)+'. '+d.name+' · '+d.minutes+' min';let b=document.createElement('button');b.textContent='×';b.onclick=()=>{drills.splice(i,1);renderDrills()};r.append(t,b);el.append(r)});let t=document.createElement('small');t.textContent='Total tid: '+total+' minuter';el.append(t)}
+$('addDrill').onclick=()=>{let name=$('drillTitle').value.trim(),minutes=Number($('drillMinutes').value);if(!name||!Number.isFinite(minutes)||minutes<1){toast('Ange moment och minuter');return}drills.push({name,minutes});$('drillTitle').value='';renderDrills()};
+function renderSessions(){let el=$('savedSessions');el.replaceChildren();getSessions().forEach((v,i)=>{let r=document.createElement('div');r.className='line';r.style.margin='6px 0';let b=document.createElement('button');b.style.flex='1';b.textContent='📅 '+v.title;b.onclick=()=>{$('sessionTitle').value=v.title;drills=copy(v.drills);renderDrills()};let d=document.createElement('button');d.textContent='Ta bort';d.onclick=()=>{let a=getSessions();a.splice(i,1);localStorage.setItem(SKEY,JSON.stringify(a));renderSessions()};r.append(b,d);el.append(r)})}
+$('saveSession').onclick=()=>{let title=$('sessionTitle').value.trim();if(!title||!drills.length){toast('Ange namn och minst ett moment');return}try{let a=getSessions();a.unshift({title,drills:copy(drills)});localStorage.setItem(SKEY,JSON.stringify(a));renderSessions();toast('Träningspass sparat')}catch{toast('Kunde inte spara. Öppna i Safari.')}};
+renderDrills();renderSessions();
+function svgSource(){let clone=board.cloneNode(true);clone.setAttribute('xmlns',NS);clone.setAttribute('width',dimensions().w*2);clone.setAttribute('height',dimensions().h*2);return new XMLSerializer().serializeToString(clone)}
+$('export').onclick=()=>{let src=svgSource(),img=new Image(),url=URL.createObjectURL(new Blob([src],{type:'image/svg+xml'}));img.onload=()=>{let c=document.createElement('canvas'),d=dimensions();c.width=d.w*2;c.height=d.h*2;c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(b=>{if(b)download(b,'innebandy-ovning.png');else download(new Blob([src],{type:'image/svg+xml'}),'innebandy-ovning.svg')},'image/png');URL.revokeObjectURL(url)};img.onerror=()=>{download(new Blob([src],{type:'image/svg+xml'}),'innebandy-ovning.svg');URL.revokeObjectURL(url)};img.src=url};
+const KEY='innebandy_coach_pro_library_v1';function readLib(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}function writeLib(x){try{localStorage.setItem(KEY,JSON.stringify(x));return true}catch{toast('Kunde inte spara i den här visaren. Öppna i Safari.');return false}}
+function library(){let l=$('library');l.replaceChildren();let entries=readLib();if(!entries.length){let t=document.createElement('small');t.textContent='Inga sparade övningar ännu.';l.appendChild(t)}entries.forEach((v,i)=>{let row=document.createElement('div');row.className='line';let b=document.createElement('button');b.textContent='📋 '+v.name;b.style.flex='1';b.onclick=()=>{if(items.length&&!confirm('Öppna övningen och ersätta planen?'))return;checkpoint();items=copy(v.items);orientation=v.orientation||'vertical';$('orientation').value=orientation;seq=Math.max(seq,...items.map(it=>it.id||0));paintField();render();toast('Övning öppnad')};let del=document.createElement('button');del.textContent='Ta bort';del.className='danger';del.onclick=()=>{if(confirm('Ta bort sparad övning?')){entries.splice(i,1);writeLib(entries);library()}};row.append(b,del);l.appendChild(row)})}
+$('save').onclick=()=>{let name=prompt('Namn på övningen:','Ny innebandyövning');if(!name)return;let l=readLib();l.unshift({name:name.slice(0,80),items:copy(items),orientation,date:new Date().toISOString()});if(writeLib(l)){library();toast('Övningen sparad')}};
+$('backup').onclick=()=>download(new Blob([JSON.stringify(readLib(),null,2)],{type:'application/json'}),'innebandy-ovningar-backup.json');
+$('importBtn').onclick=()=>$('import').click();$('import').onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let data=JSON.parse(await f.text());if(!Array.isArray(data)||!data.every(x=>Array.isArray(x.items)&&typeof x.name==='string'))throw Error();if(writeLib([...data,...readLib()])){library();toast('Backup importerad')}}catch{toast('Ogiltig backupfil')}e.target.value=''};
+paintField();render();library();
+
+const POS=['Vänsterforward','Center','Högerforward','Vänsterback','Högerback'];
+const newRoster=()=>({lines:Array.from({length:4},()=>Array.from({length:5},()=>({name:'',number:''}))),goalies:[{name:'',number:''},{name:'',number:''}],reserves:[]});
+let roster;try{roster=JSON.parse(localStorage.getItem('ib-roster-current-v2'))||newRoster()}catch{roster=newRoster()}
+function storeRoster(){try{localStorage.setItem('ib-roster-current-v2',JSON.stringify(roster))}catch{toast('Lagring ej tillgänglig')}}
+function rosterRows(){return rosterTab<4?roster.lines[rosterTab]:rosterTab===4?roster.goalies:roster.reserves}
+function moveRosterPlayer(fromLine,fromIndex,targetLine,targetIndex){
+ if(fromLine===targetLine&&fromIndex===targetIndex)return;
+ const source=roster.lines[fromLine][fromIndex],dest=roster.lines[targetLine][targetIndex];
+ roster.lines[targetLine][targetIndex]=source;
+ roster.lines[fromLine][fromIndex]=dest;
+ storeRoster();renderRoster();toast('Spelaren flyttad – platserna har bytts');
+}
+function renderRoster(){
+ let tabs=$('rosterTabs');tabs.replaceChildren();
+ ['1:a femman','2:a femman','3:e femman','4:e femman','Målvakter','Reserver'].forEach((v,i)=>{
+ let b=document.createElement('button');b.textContent=v;b.classList.toggle('active',i===rosterTab);
+ b.onclick=()=>{rosterTab=i;renderRoster()};tabs.append(b)});
+ let fields=$('rosterFields');fields.replaceChildren();
+ rosterRows().forEach((p,i)=>{
+ let row=document.createElement('div');row.className='roster-grid';
+ let pos=document.createElement('small');pos.textContent=rosterTab<4?POS[i]:rosterTab===4?(i?'Reserv-MV':'Målvakt'):'Reserv '+(i+1);
+ let name=document.createElement('input');name.placeholder='Namn';name.value=p.name||'';
+ name.oninput=()=>{p.name=name.value;storeRoster()};
+ let number=document.createElement('input');number.placeholder='#';number.type='number';number.min='0';number.max='99';
+ number.value=p.number??'';number.oninput=()=>{p.number=number.value;storeRoster()};
+ row.append(pos,name,number);fields.append(row);
+ if(rosterTab<4&&(p.name||p.number)){
+ let move=document.createElement('select');move.className='roster-move';
+ let opt=document.createElement('option');opt.value='';opt.textContent='↔ Flytta / byt plats med spelare i annan femma';move.append(opt);
+ for(let li=0;li<4;li++)for(let pi=0;pi<5;pi++){
+ if(li===rosterTab&&pi===i)continue;
+ let o=document.createElement('option');o.value=li+':'+pi;
+ let other=roster.lines[li][pi];o.textContent=(li+1)+':a femman · '+POS[pi]+(other.name?' ('+other.name+')':' (ledig)');
+ move.append(o)}
+ move.onchange=()=>{if(!move.value)return;let [li,pi]=move.value.split(':').map(Number);moveRosterPlayer(rosterTab,i,li,pi)};
+ let holder=document.createElement('div');holder.style.marginBottom='10px';holder.append(move);fields.append(holder)
+ }
+ });
+ if(rosterTab===5){
+ let plus=document.createElement('button');plus.textContent='＋ Reservspelare';
+ plus.onclick=()=>{roster.reserves.push({name:'',number:''});storeRoster();renderRoster()};
+ let minus=document.createElement('button');minus.textContent='− Ta bort sista';
+ minus.onclick=()=>{roster.reserves.pop();storeRoster();renderRoster()};fields.append(plus,minus)
+ }
+}
+function placeRoster(all){
+ checkpoint();items=items.filter(it=>!it.rosterPlaced);
+ let d=dimensions(),vertical=orientation==='vertical';
+ const ls=all?[0,1,2,3]:[Math.min(rosterTab,3)];
+ // 3 forwards in a row, two backs behind and between forwards.
+ // Four lines get separate horizontal bands with space for readable names.
+ ls.forEach((line,j)=>{
+ const base=all?(vertical?92+j*159:100+j*157):0;
+ roster.lines[line].forEach((p,i)=>{
+ if(!p.name&&!p.number)return;
+ let x,y;
+ if(vertical){
+   x=d.w*[.20,.50,.80,.35,.65][i];
+   y=all?base+([0,0,0,67,67][i]):d.h*[.29,.29,.29,.46,.46][i];
+ }else{
+   x=all?base+([0,0,0,67,67][i]):d.w*[.29,.29,.29,.46,.46][i];
+   y=d.h*[.20,.50,.80,.35,.65][i];
+ }
+ items.push({id:uid(),type:'playerA',x,y,name:p.name,number:p.number,position:POS[i],rosterPlaced:true,rosterLine:line})
+ })
+ });
+ // A goalie is shown in the single-line view. Four-line view reserves the space for legible player names.
+ if(!all){let g=roster.goalies[0];if(g&&(g.name||g.number))items.push({id:uid(),type:'goalieA',
+ x:vertical?d.w/2:d.w*.82,y:vertical?d.h*.83:d.h/2,name:g.name,number:g.number,position:'Målvakt',rosterPlaced:true})}
+ render();toast(all?'Alla fyra femmor visas på planen':'Femman visas på planen')
+}
+$('rosterShow').onclick=()=>placeRoster(false);$('rosterAll').onclick=()=>placeRoster(true);
+$('rosterSave').onclick=()=>{let name=prompt('Namn på laguppställningen','Mitt lag');if(!name)return;let all={};try{all=JSON.parse(localStorage.getItem('ib-rosters-v2')||'{}')}catch{}all[name]=copy(roster);try{localStorage.setItem('ib-rosters-v2',JSON.stringify(all));toast('Laguppställning sparad')}catch{toast('Kunde inte spara')}};
+$('rosterLoad').onclick=()=>{let all={};try{all=JSON.parse(localStorage.getItem('ib-rosters-v2')||'{}')}catch{}let names=Object.keys(all);if(!names.length){toast('Inga sparade lag');return}let name=prompt('Ange lagets namn:\n'+names.join('\n'),names[0]);if(all[name]){roster=copy(all[name]);storeRoster();renderRoster();toast('Lag öppnat')}};
+$('rosterCopy').onclick=()=>{let txt=roster.lines.map((line,i)=>(i+1)+':a femman\n'+line.map((p,j)=>POS[j]+': '+(p.name||'–')+' #'+(p.number||'–')).join('\n')).join('\n\n')+'\n\nMålvakter\n'+roster.goalies.map(p=>(p.name||'–')+' #'+(p.number||'–')).join('\n')+'\nReserver\n'+roster.reserves.map(p=>(p.name||'–')+' #'+(p.number||'–')).join('\n');if(navigator.clipboard?.writeText)navigator.clipboard.writeText(txt).then(()=>toast('Kopierad')).catch(()=>prompt('Kopiera',txt));else prompt('Kopiera',txt)};
+renderRoster();
+
+// Smart offline exercise composer. Procedural layouts, not an external AI service.
+const SMART_LIBRARY={
+ pass:[['Passningstriangel med rotation','Tre stationer passar i triangel. Följ passningen till nästa station.','Titta upp före mottagning, öppna kroppen och använd både forehand och backhand.','Två tillslag per spelare; byt passningsriktning.'],['Passa – löp – erbjud','Spelare passar och tar ny fri yta. Mottagaren söker nästa passning.','Rörelse direkt efter passning, spelbar vinkel och kommunikation.','En touch i sista fem minuterna.',["Passning i diamant med väggspel", "Fyra hörn bildar en diamant. Passa via mitten och rotera ett steg efter varje pass.", "Öppen kropp, kommunikation och tajmad löpning mot ny yta.", "Spela med två bollar när tekniken sitter."],["Mottagning under press", "Två spelare passar genom en korridor medan en försvarare stör.", "Första tillslaget bort från press och tidig blick över axeln.", "Gör korridoren smalare eller begränsa tillslag."],["Snabbt uppspel via sarg", "Back spelar upp till forward vid sarg, som vänder in och hittar center.", "Passningsvinkel, stöd bakom boll och rörelse efter uppspel.", "Lägg till passiv försvarare som blir aktiv."]]],
+ shot:[['Passning och avslut i fart','Pass från kanten till spelare i rörelse som avslutar mot mål.','Skott i steget, målvaktens position och uppföljning på retur.','Byt sida efter varje avslut.'],['Avslut efter sidledsförflyttning','Passa över centrallinjen, flytta bollen i sidled och skjut.','Skapa skottlinje och skym inte egna avslut.','Lägg till försvarare som stör.',["Direktskott från slottet", "Kantspelare passar snett bakåt till avslutande spelare i slottet.", "Tajma insteget och håll bladet redo före passning.", "Byt till backhand eller direktskott från andra sidan."],["Skott och retur", "Första spelaren skjuter, nästa följer in och tar retur framför mål.", "Avsluta snabbt och följ skottet med kontroll.", "Lägg till en försvarare som skärmar av returen."],["Skymning och avslut", "Back tar skott medan forward skymmer målvakt och styr.", "Timing, säkert avstånd och uppföljning på retur.", "Byt roller efter varje serie."]]],
+ transition:[['2 mot 1 – snabb omställning','Två anfallare går mot en försvarare efter bollvinst.','Bredd, passningstiming och beslutsfattande.','Låt försvararen starta närmare bollen.'],['Vinn boll och ställ om','Försvarare bryter en passning och kontrar mot mål med stödspelare.','Första passningen framåt och omedelbar spelbarhet.','Sätt max fem sekunder till avslut.',["3 mot 2 i korridor", "Tre anfallare driver omställning mot två försvarare med fart.", "Bredd, passning på rätt sida och hot mot mål.", "Ge anfallarna sex sekunder till avslut."],["Backcheck till kontring", "Anfallaren tappar boll och måste snabbt jobba hem medan motståndarna kontrar.", "Direkt omställning från anfall till försvar och kommunikation.", "Starta backcheck-spelaren två meter efter."],["Spelvändning genom mitten", "Vinn boll i egen zon, spela center och vänd snabbt till bortre kant.", "Spelbar center, första passning framåt och bredd.", "Kräv att alla tre anfallare rör bollen."]]],
+ pressure:[['Press med understöd','En pressar bollhållaren medan en annan täcker passningsvägen.','Rätt avstånd, styra mot sarg och prata med varandra.','Byt vem som pressar efter 30 sekunder.'],['Försvara 2 mot 2','Två försvarare håller insidan och försöker vinna bollen.','Klubba i passningslinje och samarbete.','Ge anfallarna max tre passningar.',["Styr press mot sarg", "Första försvararen styr bollhållaren mot sarg och andra stänger mitten.", "Vinkel i press, klubba i passningslinjen och rätt avstånd.", "Låt bollhållaren försöka bryta in i mitten."],["Numerärt underläge 3 mot 4", "Tre försvarare tränar förflyttning och täckning mot fyra bollhållare.", "Hålla ihop triangeln, täcka skott och kommunicera.", "Minska ytan efter varje omgång."],["Återerövra på fem sekunder", "När laget tappar bollen försöker närmaste spelare vinna tillbaka den direkt.", "Snabb reaktion, pressunderstöd och beslutsfattande.", "Poäng för bollvinst inom fem sekunder."]]],
+ possession:[['Rondo med spelvändning','Fyra spelare håller bollen mot två pressande. Byt sida när läge uppstår.','Skanna före mottagning och skapa passningstrianglar.','Max två tillslag.'],['Smålagsspel med fri yta','Spela tre mot tre och få poäng när laget hittar fri yta med passning.','Bredd, djup och snabba beslut.','En bonuspoäng för spelvändning.',["Fyra hörn med spelvändning", "Fyra stationer håller bollen i rörelse och byter sida efter signal.", "Spela bort press med diagonal passning och skanna innan mottagning.", "Max två tillslag och två presspelare."],["Överlägesspel 4 mot 3", "Fyra anfallare håller bollen mot tre försvarare i begränsad yta.", "Skapa trianglar, spela på tredje spelare och växla tempo.", "Fem passningar ger poäng."],["Hitta tredje spelaren", "Spela A till B som lägger tillbaka eller vidare till C i fri yta.", "Rörelse utan boll, väggspel och tydliga passningsvinklar.", "En touch för mellanliggande spelare."]]]
+};
+let smartLast=null,smartVariation=0,smartFrames=[],smartStep=0,smartRaf=null,smartPaused=false,smartSegmentStart=0,smartElapsed=0,smartPreviewBackup=null;
+const smartSeek=$('smartSeek');
+function smartLabel(){if(!smartFrames.length)return;smartSeek.max=String(smartFrames.length-1);smartSeek.value=String(smartStep);$('smartStepInfo').textContent=`Steg ${smartStep+1} av ${smartFrames.length}\n${smartFrames[smartStep].text}`;}
+function smartSpeakStep(){if(!$('smartNarrate')?.checked||!('speechSynthesis' in window)||!smartFrames[smartStep])return;try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(smartFrames[smartStep].text||'');utter.lang='sv-SE';utter.rate=.93;speechSynthesis.speak(utter)}catch(e){console.warn('Uppläsning ej tillgänglig',e)}}
+
+function smartStop(){$('smartPlay').textContent='▶ Visa live';if('speechSynthesis' in window)try{speechSynthesis.cancel()}catch(e){};if(smartRaf!==null)cancelAnimationFrame(smartRaf);smartRaf=null;smartPaused=false;smartElapsed=0;window.coachPreviewActive=false;}
+function smartShowStep(n){smartStop();if(!smartFrames.length)return;smartStep=Math.max(0,Math.min(n,smartFrames.length-1));items=copy(smartFrames[smartStep].items);render();smartLabel();smartSpeakStep();}
+function smartAnimate(){if(smartFrames.length<2)return;if(smartRaf!==null)cancelAnimationFrame(smartRaf);smartRaf=null;smartPaused=false;window.coachPreviewActive=true;
+ let from=smartStep,to=from+1;if(to>=smartFrames.length){smartStep=0;from=0;to=1}const duration=Number($('smartSpeed').value)||2100,a=smartFrames[from].items,b=smartFrames[to].items,byId=new Map(b.map(o=>[o.id,o]));const useCurves=!!$('customCurve')?.checked;const frameRoutes=smartFrames[to].routes||{};const frameTiming=smartFrames[to].timing||{};
+ const actorProgress=(progress,kind,id)=>{const individual=frameTiming.actors&&Object.prototype.hasOwnProperty.call(frameTiming.actors,id)?frameTiming.actors[id]:undefined;const delay=Math.min(.95,Math.max(0,Number(individual===undefined?frameTiming[kind]:individual)||0));const f=Math.max(0,Math.min(1,(progress-delay)/(1-delay)));return f*f*(3-2*f);};
+ const possession=smartFrames[to].possession||smartFrames[from].possession;
+ const ballStart=a.find(o=>o.type==='ball');
+ const ballEnd=ballStart&&byId.get(ballStart.id);
+ const ownerStart=possession&&a.find(o=>String(o.id)===String(possession.owner));
+ const ownerEnd=ownerStart&&byId.get(ownerStart.id);
+ const targetEnd=possession&&byId.get(possession.target);
+ const curvedPoint=(start,end,progress,isBall)=>{
+   const route=frameRoutes[start.id];
+   if(Array.isArray(route)&&route.length>=2){
+     const pts=[[start.x,start.y],...route.slice(1).filter(q=>Array.isArray(q)&&q.length===2),[end.x,end.y]];
+     const lens=[];let total=0;
+     for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);lens.push(d);total+=d}
+     let distance=progress*total;
+     for(let i=0;i<lens.length;i++){if(distance<=lens[i]||i===lens.length-1){const f=lens[i]?Math.min(1,distance/lens[i]):1;return [pts[i][0]+(pts[i+1][0]-pts[i][0])*f,pts[i][1]+(pts[i+1][1]-pts[i][1])*f]}distance-=lens[i]}
+   }
+   const dx=end.x-start.x,dy=end.y-start.y,dist=Math.hypot(dx,dy);
+   if(isBall||!useCurves||dist<15)return [start.x+dx*progress,start.y+dy*progress];
+   const bend=Math.min(15,dist*.14),side=(String(start.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%2?1:-1);
+   const cx=(start.x+end.x)/2+(-dy/dist)*bend*side,cy=(start.y+end.y)/2+(dx/dist)*bend*side;
+   const t=progress,inv=1-t;
+   return [inv*inv*start.x+2*inv*t*cx+t*t*end.x,inv*inv*start.y+2*inv*t*cy+t*t*end.y];
+ };
+ smartElapsed=Number.isFinite(smartElapsed)?Math.max(0,Math.min(smartElapsed,duration)):0;smartSegmentStart=performance.now()-smartElapsed;let lastPaint=0;
+ function tick(now){if(smartPaused)return;if(now-lastPaint<28){smartRaf=requestAnimationFrame(tick);return}lastPaint=now;let t=Math.min(1,(now-smartSegmentStart)/duration),smooth=t*t*(3-2*t);items=a.map(o=>{let end=byId.get(o.id);if(end&&Number.isFinite(o.x)&&Number.isFinite(end.x)){const progress=actorProgress(t,o.type==='ball'?'ball':'players',o.id);const [x,y]=curvedPoint(o,end,progress,o.type==='ball');return {...o,x,y}};return copy(o)});if(possession&&ballStart&&ownerStart&&ownerEnd){
+ const ball=items.find(o=>o.id===ballStart.id);
+ const ownerP=actorProgress(t,'players',ownerStart.id);
+ const ownerXY=curvedPoint(ownerStart,ownerEnd,ownerP,false);
+ if(ball){
+  const release=Math.max(.05,Math.min(.95,Number(possession.release??.5)));
+  const action=possession.action;
+  if(action==='carry'||!targetEnd||t<=release){ball.x=ownerXY[0]+8;ball.y=ownerXY[1]+8}
+  else{
+   const releaseP=actorProgress(release,'players',ownerStart.id);
+   const origin=curvedPoint(ownerStart,ownerEnd,releaseP,false);
+   const q=Math.max(0,Math.min(1,(t-release)/(1-release)));
+   const receiverStart=a.find(o=>o.id===targetEnd.id),receiverEnd=targetEnd;
+   const targetXY=receiverStart&&['playerA','playerB','goalieA','goalieB'].includes(receiverEnd.type)?curvedPoint(receiverStart,receiverEnd,actorProgress(t,'players',receiverStart.id),false):[receiverEnd.x,receiverEnd.y];
+   ball.x=(origin[0]+8)*(1-q)+(targetXY[0]+(receiverEnd.type==='goal'?0:8))*q;
+   ball.y=(origin[1]+8)*(1-q)+(targetXY[1]+(receiverEnd.type==='goal'?0:8))*q;
+  }
+ }
+}
+for(let o of b)if(!a.some(x=>x.id===o.id)&&t>.6)items.push(copy(o));
+ // Rita rörelsepilar och bollens väg gradvis i stället för att visa allt på slutet.
+ const trails=[];
+ for(const start of a){
+  const end=byId.get(start.id);
+  if(!end||!Number.isFinite(start.x)||!Number.isFinite(end.x))continue;
+  const dx=end.x-start.x,dy=end.y-start.y;
+  if(Math.hypot(dx,dy)<8&&!Array.isArray(frameRoutes[start.id]))continue;
+  const isBall=start.type==='ball';
+  if(isBall&&possession&&ownerStart)continue;
+  if(!isBall&&!['playerA','playerB','goalieA','goalieB'].includes(start.type))continue;
+  const progress=actorProgress(t,isBall?'ball':'players',start.id);if(progress<=0)continue;const count=Math.max(2,Math.ceil(progress*12)),points=[];
+  for(let k=0;k<=count;k++)points.push(curvedPoint(start,end,progress*k/count,isBall));
+  trails.push({id:'live-trail-'+start.id,type:'arrow',points,color:isBall?'#f59e0b':'#2563eb'});
+ }
+ items.push(...trails);render();if(t<1)smartRaf=requestAnimationFrame(tick);else{smartRaf=null;smartElapsed=0;items=copy(b);if(possession&&ballStart){const ball=items.find(o=>o.id===ballStart.id);const receiver=items.find(o=>String(o.id)===String(possession.target));const owner=items.find(o=>String(o.id)===String(possession.owner));if(ball){const finalHolder=possession.action==='carry'?owner:receiver;if(finalHolder){ball.x=finalHolder.x+(finalHolder.type==='goal'?0:8);ball.y=finalHolder.y+(finalHolder.type==='goal'?0:8)}}}render();smartStep=to;smartLabel();smartSpeakStep();if(to<smartFrames.length-1)smartAnimate();else if($('smartRepeat')?.checked){smartStep=0;smartShowStep(0);smartAnimate()}else{window.coachPreviewActive=false;$('smartPlay').textContent='↻ Spela igen';}}}
+ smartRaf=requestAnimationFrame(tick);$('smartPlay').textContent='⏵ Spelar';}
+$('smartPlay').onclick=()=>{if(!smartFrames.length){toast('Skapa en övning först');return}if(smartRaf!==null){toast('Övningen spelas redan');return}if(smartPaused){smartPaused=false;smartAnimate()}else{smartElapsed=0;smartAnimate()}};
+window.addEventListener('pagehide',()=>{if(smartRaf!==null){cancelAnimationFrame(smartRaf);smartRaf=null;smartPaused=true;smartElapsed=Math.max(0,performance.now()-smartSegmentStart);$('smartPlay').textContent='▶ Fortsätt';}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&smartRaf!==null){cancelAnimationFrame(smartRaf);smartRaf=null;smartPaused=true;smartElapsed=Math.max(0,performance.now()-smartSegmentStart);$('smartPlay').textContent='▶ Fortsätt';}});
+$('smartPause').onclick=()=>{if(smartRaf!==null){cancelAnimationFrame(smartRaf);smartRaf=null;smartElapsed=Math.max(0,performance.now()-smartSegmentStart);smartPaused=true;$('smartPlay').textContent='▶ Fortsätt';toast('Pausad – tryck Fortsätt')}else if(smartPaused){smartPaused=false;smartAnimate()}else toast('Starta uppspelningen först')};
+['fullBoardPrev','fullBoardPlay','fullBoardNext'].forEach((id,i)=>{
+ const button=$(id);if(!button)return;
+ button.addEventListener('click',()=>{
+  if(!smartFrames.length){toast('Skapa eller öppna en övning först');return}
+  if(i===0)smartShowStep(smartStep-1);
+  else if(i===2)smartShowStep(smartStep+1);
+  else if(smartRaf!==null)$('smartPause').click();
+  else $('smartPlay').click();
+ });
+});
+$('smartFullView').onclick=()=>{const enter=$('enterFullBoard');if(enter)enter.click();else toast('Helplansläge saknas')};
+$('smartPrev').onclick=()=>smartShowStep(smartStep-1);$('smartNext').onclick=()=>smartShowStep(smartStep+1);$('smartReset').onclick=()=>smartShowStep(0);
+
+smartSeek.addEventListener('input',()=>smartShowStep(Number(smartSeek.value)));
+const STORY_KEY='ib-coach-storyboards-v7';
+function getSavedStories(){try{const a=JSON.parse(localStorage.getItem(STORY_KEY)||'[]');return Array.isArray(a)?a.filter(v=>v&&Array.isArray(v.frames)):[]}catch{return []}}
+function openSavedStory(entry){smartStop();smartFrames=copy(entry.frames);smartLast=entry.info||null;smartShowStep(0);$('smartResult').textContent=(entry.name||'Övning')+'\nSparad animation. Tryck Visa live eller välj steg.';$('smartDrills').open=true;toast('Animation öppnad')}
+function renderStoryCatalog(){const el=$('storyCatalog');if(!el)return;el.replaceChildren();const term=($('storySearch').value||'').toLocaleLowerCase('sv');const stories=getSavedStories();const matching=stories.map((entry,index)=>({entry,index})).filter(({entry})=>(entry.name||'').toLocaleLowerCase('sv').includes(term)||(entry.info?.focus||'').includes(term));if(!matching.length){const p=document.createElement('p');p.className='story-empty';p.textContent=stories.length?'Inga övningar matchar sökningen.':'Inga sparade övningsfilmer ännu. Skapa en övning och välj Spara animation.';el.append(p);return}
+matching.forEach(({entry,index})=>{const row=document.createElement('div');row.className='story-card';const info=document.createElement('div');info.className='story-card-info';const title=document.createElement('strong');title.textContent=entry.name||'Övning';const meta=document.createElement('small');meta.textContent=(entry.info?.minutes?entry.info.minutes+' min · ':'')+entry.frames.length+' steg'+(entry.date?' · '+new Date(entry.date).toLocaleDateString('sv-SE'):'');info.append(title,meta);const open=document.createElement('button');open.textContent='▶ Visa';open.onclick=()=>openSavedStory(entry);const del=document.createElement('button');del.textContent='Ta bort';del.setAttribute('aria-label','Ta bort '+(entry.name||'övning'));del.onclick=()=>{if(!confirm('Ta bort övningsfilmen '+(entry.name||'')+'?'))return;const current=getSavedStories();const target=current.findIndex(v=>v.date===entry.date&&v.name===entry.name);if(target<0)return;current.splice(target,1);try{localStorage.setItem(STORY_KEY,JSON.stringify(current));renderStoryCatalog()}catch{toast('Kunde inte ta bort')}};row.append(info,open,del);el.append(row)})}
+$('storySearch').addEventListener('input',renderStoryCatalog);
+
+// 8.6: coach-authored storyboard frames using the existing board editor.
+let customFrames=[];
+$('customRoute').onclick=()=>{setMode('route');toast('Dra från en spelare längs önskad löpväg')};
+$('customRouteClear').onclick=()=>{customRoutePending={};items=items.filter(o=>o.id!=='route-preview');render();toast('Osparade löpvägar rensade')};
+function customStatus(){ $('customStatus').textContent=customFrames.length?
+ `${customFrames.length} steg skapade. Flytta objekten på planen och lägg till nästa steg.`
+ :'Ingen egen övningsfilm påbörjad.'; }
+let customActorTiming={};
+function customRefreshActors(){
+ const select=$('customActor'),previous=select.value;
+ const actors=(window.coachMatchBoard?.getItems?.()||[]).filter(o=>o.type==='playerA'||o.type==='playerB');
+ select.replaceChildren(new Option('Välj spelare…',''));
+ actors.forEach((o,i)=>select.add(new Option(`${o.type==='playerA'?'Blå':'Röd'} spelare ${i+1} (${Math.round(o.x)}, ${Math.round(o.y)})`,String(o.id))));
+ if(actors.some(o=>String(o.id)===previous))select.value=previous;
+}
+function customActorStatus(){const n=Object.keys(customActorTiming).length;$('customActorStatus').textContent=n?`${n} individuella starttider klara för nästa steg.`:'Inga individuella starttider. Gruppens starttid används.';}
+$('customActor').addEventListener('focus',customRefreshActors);
+$('customActor').addEventListener('pointerdown',customRefreshActors);
+$('customAssignActor').onclick=()=>{const id=$('customActor').value;if(!id){toast('Välj en spelare först');return;}customActorTiming[id]=Number($('customActorDelay').value);customActorStatus();toast('Starttid sparad för spelaren');};
+$('customClearActors').onclick=()=>{customActorTiming={};customActorStatus();};
+let customEditing=-1;
+function customRefreshTimeline(){
+ const select=$('customEditStep'),strip=$('customStepList');const old=select.value;
+ select.replaceChildren();strip.replaceChildren();
+ if(!customFrames.length)select.add(new Option('Inga steg',''));
+ customFrames.forEach((frame,i)=>{
+  select.add(new Option(`${i+1}. ${(frame.text||'Steg').slice(0,55)}`,String(i)));
+  const b=document.createElement('button');b.type='button';b.textContent=String(i+1);b.title=frame.text||'Steg';b.style.cssText='flex:0 0 42px;min-height:42px;border-radius:10px';
+  b.setAttribute('aria-label',`Visa steg ${i+1}: ${frame.text||''}`);
+  b.onclick=()=>{select.value=String(i);$('customLoadStep').click()};strip.appendChild(b);
+ });
+ if([...select.options].some(o=>o.value===old))select.value=old;
+ else if(customFrames.length)select.value=String(customFrames.length-1);
+}
+function customChosen(){const n=Number($('customEditStep').value);return Number.isInteger(n)&&n>=0&&n<customFrames.length?n:-1}
+$('customLoadStep').onclick=()=>{
+ const i=customChosen();if(i<0){toast('Välj ett steg först');return}
+ smartStop();customEditing=i;smartFrames=copy(customFrames);smartShowStep(i);setMode('move');
+ const frame=customFrames[i];$('customStepText').value=frame.text||'';
+ $('customPlayerDelay').value=String(frame.timing?.players??0);$('customBallDelay').value=String(frame.timing?.ball??0);
+ customActorTiming=copy(frame.timing?.actors||{});customActorStatus();
+ customRoutePending=copy(frame.routes||{});customRefreshActors();posLoad(frame);
+ $('customEditStatus').textContent=`Redigerar steg ${i+1}. Flytta spelare, justera tider och tryck Ersätt steg.`;
+};
+function posRefresh(){
+ const all=window.coachMatchBoard?.getItems?.()||[],owner=$('posOwner'),target=$('posTarget'),prevOwner=owner.value,prevTarget=target.value;
+ const players=all.filter(o=>['playerA','playerB','goalieA','goalieB'].includes(o.type));
+ owner.replaceChildren(new Option('Ingen – fri boll',''));
+ players.forEach((o,i)=>owner.add(new Option(`${o.type==='playerA'?'Blå':'Röd'} spelare ${i+1}`,String(o.id))));
+ if(players.some(o=>String(o.id)===prevOwner))owner.value=prevOwner;
+ target.replaceChildren(new Option('Välj mottagare/mål',''));
+ players.filter(o=>String(o.id)!==owner.value).forEach((o,i)=>target.add(new Option(`Spelare ${i+1}`,String(o.id))));
+ all.filter(o=>o.type==='goal').forEach((o,i)=>target.add(new Option(`Målbur ${i+1}`,String(o.id))));
+ if([...target.options].some(o=>o.value===prevTarget))target.value=prevTarget;
+}
+['posOwner','posTarget'].forEach(id=>{ $(id).addEventListener('focus',posRefresh);$(id).addEventListener('pointerdown',posRefresh)});
+$('posOwner').addEventListener('change',posRefresh);
+function posSnapshot(){const owner=$('posOwner').value,action=$('posAction').value,target=$('posTarget').value;return owner?{owner,action:action==='carry'?'carry':target?action:'carry',target:target||null,release:Number($('posRelease').value)}:null}
+function posAlignBall(frame){if(!frame.possession)return;const actor=frame.items.find(o=>String(o.id)===frame.possession.owner),ball=frame.items.find(o=>o.type==='ball');if(ball){const target=frame.items.find(o=>String(o.id)===String(frame.possession.target));const holder=frame.possession.action==='carry'?actor:target;if(holder){ball.x=holder.x+(holder.type==='goal'?0:8);ball.y=holder.y+(holder.type==='goal'?0:8)}}}
+function posLoad(frame){$('posOwner').value='';posRefresh();$('posOwner').value=frame.possession?.owner||'';posRefresh();$('posAction').value=frame.possession?.action||'carry';$('posTarget').value=frame.possession?.target||'';$('posRelease').value=String(frame.possession?.release??.5)}
+function customSnapshot(){const frame={text:$('customStepText').value.trim()||'Steg',items:copy(window.coachMatchBoard.getItems().filter(o=>!String(o.id).startsWith('live-trail-')&&o.id!=='route-preview')),routes:copy(customRoutePending),timing:{players:Number($('customPlayerDelay').value),ball:Number($('customBallDelay').value),actors:copy(customActorTiming)},possession:posSnapshot()};posAlignBall(frame);return frame}
+$('customReplaceStep').onclick=()=>{
+ if(customEditing<0||customEditing>=customFrames.length){toast('Tryck först Redigera valt steg');return}
+ smartStop();const frame=customSnapshot();if(!frame.items.length){toast('Planen är tom');return}
+ customFrames[customEditing]=frame;customUnsaved=true;smartFrames=copy(customFrames);smartStep=customEditing;smartLabel();
+ customRefreshTimeline();customStatus();$('customEditStatus').textContent=`Steg ${customEditing+1} uppdaterat.`;toast('Steget uppdaterat');
+};
+$('customInsertStep').onclick=()=>{
+ const i=customChosen();if(i<0){toast('Skapa ett steg först');return}
+ const frame=customSnapshot();if(!frame.items.length){toast('Planen är tom');return}
+ smartStop();customFrames.splice(i+1,0,frame);customUnsaved=true;customEditing=i+1;smartFrames=copy(customFrames);smartStep=i+1;
+ customRefreshTimeline();$('customEditStep').value=String(i+1);customStatus();toast('Nytt steg infogat');
+};
+$('customDeleteStep').onclick=()=>{
+ const i=customChosen();if(i<0)return;if(!confirm(`Radera steg ${i+1}?`))return;
+ smartStop();customFrames.splice(i,1);customUnsaved=true;customEditing=-1;smartFrames=copy(customFrames);
+ if(customFrames.length)smartShowStep(Math.min(i,customFrames.length-1));
+ customRefreshTimeline();customStatus();$('customEditStatus').textContent='Steget raderat.';
+};
+let customUnsaved=false;
+window.addEventListener('beforeunload',e=>{if(customUnsaved){e.preventDefault();e.returnValue='';}});
+$('customNew').onclick=()=>{
+ if(customFrames.length&&!confirm('Börja om med en ny övningsfilm?'))return;
+ smartStop();customFrames=[];customUnsaved=false;customEditing=-1;customRefreshTimeline();customRoutePending={};customActorTiming={};customActorStatus();setMode('move');customStatus();
+ $('customStepText').value='Startuppställning';
+ toast('Placera objekten och tryck Lägg till steg');
+};
+$('customCapture').onclick=()=>{
+ smartStop();
+ const boardItems=window.coachMatchBoard.getItems().filter(o=>!String(o.id).startsWith('live-trail-')&&o.id!=='route-preview');
+ const note=$('customStepText').value.trim()||('Steg '+(customFrames.length+1));
+ if(!boardItems.length){toast('Placera först spelare eller boll på planen');return;}
+ const frame={text:note.slice(0,220),items:copy(boardItems),routes:copy(customRoutePending),timing:{players:Number($('customPlayerDelay').value),ball:Number($('customBallDelay').value),actors:copy(customActorTiming)},possession:posSnapshot()};posAlignBall(frame);customUnsaved=true;customFrames.push(frame);customActorTiming={};customActorStatus();customRoutePending={};setMode('move');
+ $('customStepText').value='';
+ smartFrames=copy(customFrames);smartStep=customFrames.length-1;smartLabel();
+ customEditing=-1;customRefreshTimeline();customStatus();toast('Steg '+customFrames.length+' sparat');
+};
+$('customUndo').onclick=()=>{
+ if(!customFrames.length)return;
+ customFrames.pop();smartStop();
+ if(customFrames.length){smartFrames=copy(customFrames);smartShowStep(customFrames.length-1);}
+ else smartFrames=[];
+ customEditing=-1;customRefreshTimeline();customStatus();
+};
+$('customPlay').onclick=()=>{
+ if(customFrames.length<2){toast('Skapa minst två steg först');return;}
+ smartStop();smartFrames=copy(customFrames);smartStep=0;smartShowStep(0);
+ $('smartPlay').click();
+};
+$('customImport').onclick=()=>{
+ let saved;
+ try{saved=JSON.parse(localStorage.getItem(STORY_KEY)||'[]')}catch(e){toast('Kunde inte läsa sparade filmer');return}
+ if(!Array.isArray(saved)||!saved.length){toast('Du har inga sparade övningsfilmer ännu');return}
+ const choices=saved.map((entry,i)=>`${i+1}. ${entry.name||'Övning'} (${Array.isArray(entry.frames)?entry.frames.length:0} steg)`).join('\n');
+ const raw=prompt('Vilken film vill du redigera? Ange nummer:\n'+choices,'1');
+ if(raw===null)return;
+ const n=Number(raw);
+ if(!Number.isInteger(n)||n<1||n>saved.length){toast('Välj ett nummer i listan');return}
+ const selected=saved[n-1];
+ if(!Array.isArray(selected.frames)||!selected.frames.every(f=>f&&Array.isArray(f.items))){toast('Filmen har ett ogiltigt format');return}
+ if(customFrames.length&&!confirm('Ersätta den pågående redigeringen? Osparade ändringar försvinner.'))return;
+ smartStop();customFrames=copy(selected.frames);customUnsaved=false;customEditing=-1;smartFrames=copy(customFrames);$('customStepText').value='';
+ customRoutePending={};customActorTiming={};customActorStatus();customRefreshTimeline();customStatus();
+ if(customFrames.length){smartShowStep(0);$('customEditStep').value='0';$('customLoadStep').click();}
+ $('customEditStatus').textContent=`Filmen ”${selected.name||'Övning'}” är inläst. Välj ett steg för att ändra det.`;
+ toast('Sparad film inläst för redigering');
+};
+// Portable film backups for iPhone: export and import independent of localStorage.
+$('customExport').onclick=()=>{
+ const saved=getSavedStories();
+ if(!saved.length){toast('Inga sparade filmer att exportera');return;}
+ const payload={format:'innebandy-coach-stories',version:1,exportedAt:new Date().toISOString(),stories:saved};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='innebandy-ovningsfilmer-'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),10000);
+ toast('Säkerhetskopian är skapad');
+};
+$('customImportFile').onclick=()=>$('customImportPicker').click();
+$('customImportPicker').onchange=async function(){
+ const file=this.files?.[0];if(!file)return;
+ try{
+  if(file.size>4*1024*1024)throw Error('Filen är för stor (max 4 MB)');
+  const payload=JSON.parse(await file.text());
+  if(payload?.format!=='innebandy-coach-stories'||payload.version!==1||!Array.isArray(payload.stories))throw Error('Fel filformat');
+  if(payload.stories.length>100)throw Error('För många filmer i filen');
+  const incoming=payload.stories.filter(e=>e&&typeof e.name==='string'&&Array.isArray(e.frames)&&e.frames.length>0&&e.frames.length<=150&&e.frames.every(f=>f&&Array.isArray(f.items)&&f.items.length<=250));
+  if(!incoming.length)throw Error('Inga giltiga övningsfilmer hittades');
+  const existing=getSavedStories();
+  // Deduplicate exact saved records so repeated imports do not fill the library.
+  const key=e=>JSON.stringify([e.name,e.date,e.frames]);
+  const seen=new Set(existing.map(key));
+  const fresh=[];
+  for(const entry of incoming){const k=key(entry);if(!seen.has(k)){seen.add(k);fresh.push(entry)}}
+  if(!fresh.length){toast('Alla filmer finns redan i biblioteket');return}
+  if(existing.length+fresh.length>30){
+    throw Error(`Biblioteket har plats för 30 filmer. ${existing.length} finns redan; försök med en mindre säkerhetskopia.`);
+  }
+  if(!confirm(`Importera ${fresh.length} nya filmer? Dina ${existing.length} befintliga filmer behålls.`))return;
+  const combined=[...fresh,...existing];
+  localStorage.setItem(STORY_KEY,JSON.stringify(combined));
+  renderStoryCatalog();toast(`${fresh.length} nya filmer importerade`);
+ }catch(e){toast('Import misslyckades: '+(e?.message||'okänt fel'))}
+ finally{this.value=''}
+};
+$('customSave').onclick=()=>{
+ if(!customFrames.length){toast('Lägg till minst ett steg först');return;}
+ smartStop();smartFrames=copy(customFrames);smartStep=0;
+ const before=getSavedStories().length;$('smartSaveStory').click();if(getSavedStories().length>before)customUnsaved=false;
+};
+$('smartSaveStory').onclick=()=>{
+ if(!smartFrames.length){toast('Skapa en övning först');return}
+ const name=prompt('Namn på animationen',smartLast?.name||'Min övning');if(!name?.trim())return;
+ try{
+  const saved=getSavedStories();
+  if(saved.length>=30){toast('Biblioteket är fullt (30 filmer). Exportera och ta bort en film innan du sparar fler.');return}
+  const frames=copy(smartFrames).map(f=>({...f,items:f.items.filter(o=>!String(o.id).startsWith('live-trail-')&&o.id!=='route-preview')}));
+  saved.unshift({name:name.trim().slice(0,90),frames,info:smartLast,date:new Date().toISOString()});
+  localStorage.setItem(STORY_KEY,JSON.stringify(saved));
+  renderStoryCatalog();toast('Animationen sparad på denna enhet');
+ }catch(e){toast('Kunde inte spara: kontrollera lagringsutrymmet')}
+};
+$('smartLoadStory').onclick=()=>{let saved=[];try{saved=JSON.parse(localStorage.getItem(STORY_KEY)||'[]')}catch{}if(!saved.length){toast('Inga sparade animationer');return}let names=saved.map((o,i)=>(i+1)+'. '+o.name).join('\n');let n=prompt('Välj nummer:\n'+names,'1');if(n===null)return;let entry=saved[Number(n)-1];if(!entry){toast('Ogiltigt nummer');return}openSavedStory(entry)};
+const drillShuffleBags={};
+function drillVariantIndex(key,length){
+ let bag=drillShuffleBags[key];
+ if(!bag||!bag.length){bag=Array.from({length},(_,i)=>i);for(let i=bag.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[bag[i],bag[j]]=[bag[j],bag[i]]}drillShuffleBags[key]=bag}
+ return drillShuffleBags[key].pop();
+}
+const CREATIVE_PASS=[
+ {name:'Roterande passningsdiamant',desc:'Fyra stationer bildar en diamant. Passa och följ bollen i en cirkel runt mitten.',coaching:'Orientering och tajming i rörelse.',progression:'Byt riktning och lägg till en försvarare.',spots:[[.5,.2],[.77,.43],[.5,.7],[.23,.43]],route:[0,1,2,3,0],goals:[]},
+ {name:'Detroit-inspirerad tvåmålsrotation',desc:'Två flyttade mål skapar en övningsyta i mitten. Passa mellan två grupper och avsluta på valfritt mål.',coaching:'Vända spelet, se nästa passning och avsluta efter förflyttning.',progression:'Spelarna byter sida efter avslut.',spots:[[.25,.35],[.5,.24],[.75,.35],[.5,.67]],route:[0,1,2,3,0],goals:[[.23,.57],[.77,.57]]},
+ {name:'HV-inspirerat stationsspel',desc:'Två flyttade mål på var sin sida av en mindre yta. Passa via mitten och byt snabbt anfallsriktning.',coaching:'Spelbarhet och omställning efter passning.',progression:'Lägg till en aktiv försvarare mellan målen.',spots:[[.27,.3],[.5,.47],[.73,.3],[.5,.7]],route:[0,1,2,1,3],goals:[[.18,.5],[.82,.5]]},
+ {name:'Åttan med väggspel',desc:'Spelarna löper i en åtta runt två koner och passar via en central väggspelare.',coaching:'Mottagning i fart och passning med rätt vinkel.',progression:'Kör med en touch på väggspelaren.',spots:[[.27,.32],[.5,.5],[.73,.32],[.5,.72]],route:[0,1,2,1,3],goals:[]},
+ {name:'Fyra hörn – diagonal förbjuden',desc:'Fyra hörnstationer passar via en mittspelare i stället för direkt diagonalt.',coaching:'Skapa nya vinklar när passningsvägen stängs.',progression:'En försvarare försöker bryta passningen i mitten.',spots:[[.2,.25],[.8,.25],[.8,.75],[.2,.75],[.5,.5]],route:[0,4,2,4,1,4,3],goals:[]},
+ {name:'Två bollar och sidbyte',desc:'Två passningsgrupper arbetar samtidigt och byter sida efter signal.',coaching:'Kommunikation, scanning och att undvika kollisioner.',progression:'Öka bolltempot och byt passningsriktning.',spots:[[.23,.25],[.42,.5],[.23,.75],[.77,.25],[.58,.5],[.77,.75]],route:[0,1,2,0],goals:[]},
+ {name:'Målgårdscirkel och avslut',desc:'Flytta målet till sidan av övningsytan. Spelarna roterar runt en central kona före passning och avslut.',coaching:'Löpning i båge och skott efter mottagning.',progression:'Lägg till försvarare som följer löpningen.',spots:[[.22,.35],[.48,.26],[.72,.48],[.43,.7]],route:[0,1,2,3],goals:[[.79,.65]]},
+ {name:'Triangel med överlapp',desc:'Tre stationer i triangel. Efter passning löper passaren runt mottagaren och får tillbaka bollen.',coaching:'Överlappande löpningar och att tajma återpassningen.',progression:'Avsluta mot ett flyttat mål.',spots:[[.25,.7],[.5,.3],[.75,.7]],route:[0,1,2,0],goals:[[.5,.14]]},
+ {"name":"Sargvändningen","desc":"Back spelar längs sargen, forward väggspelar och löper mot mitten.","coaching":"Passningsvinkel vid sarg och mottagning i fart.","progression":"Lägg till jagande försvarare.","spots":[[0.2,0.68],[0.2,0.36],[0.5,0.42],[0.74,0.24]],"route":[0,1,2,3],"goals":[]},
+ {"name":"Korsande forwards","desc":"Två forwards korsar varandras löpvägar och får passning i ny yta.","coaching":"Tajming och kommunikation vid korsning.","progression":"En försvarare markerar mitten.","spots":[[0.22,0.65],[0.38,0.37],[0.62,0.37],[0.78,0.65]],"route":[0,1,3,2,0],"goals":[]},
+ {"name":"Bakom mål till slottet","desc":"Spelare tar bollen bakom ett flyttat mål och spelar snett upp i slottet.","coaching":"Spela med blicken uppåt och tajma instick.","progression":"Lägg till direktskott.","spots":[[0.3,0.67],[0.48,0.75],[0.52,0.42],[0.7,0.3]],"route":[0,1,2,3],"goals":[[0.5,0.61]]},
+ {"name":"Tre korridorer","desc":"Tre passningskorridorer med växling mellan yttre och inre stationer.","coaching":"Bredd, öppna passningslinjer och tempo.","progression":"Försvarare stänger en korridor.","spots":[[0.2,0.25],[0.2,0.7],[0.5,0.5],[0.8,0.25],[0.8,0.7]],"route":[0,2,4,3,2,1],"goals":[]},
+ {"name":"Löpning runt mittkon","desc":"Passa in centralt och löp i en båge runt mittkon innan återpass.","coaching":"Bollmottagning efter riktningsändring.","progression":"Två bollar i motsatta riktningar.","spots":[[0.22,0.55],[0.5,0.25],[0.78,0.55],[0.5,0.78]],"route":[0,1,2,3,0],"goals":[]},
+ {"name":"Dubbla trianglar","desc":"Två trianglar kopplas ihop med en passning över mitten.","coaching":"Rätt kroppsställning och spelvändning.","progression":"Korta tiden för sidbyte.","spots":[[0.2,0.25],[0.42,0.22],[0.3,0.55],[0.7,0.45],[0.8,0.75],[0.56,0.76]],"route":[0,1,2,3,4,5,0],"goals":[]},
+ {"name":"Växla kant och mitt","desc":"Bollen går från kant via mittspelare till motsatt kant och tillbaka.","coaching":"Vänd spelet med få tillslag.","progression":"Aktiv press på mittspelaren.","spots":[[0.18,0.35],[0.5,0.5],[0.82,0.35],[0.5,0.75]],"route":[0,1,2,1,3,0],"goals":[]},
+ {"name":"Skottfint och sidopass","desc":"Spelare hotar med skott och passar i sidled till avslutande medspelare.","coaching":"Få försvararen att reagera på skottfint.","progression":"Flytta målet till andra sidan.","spots":[[0.23,0.62],[0.48,0.42],[0.76,0.45],[0.65,0.75]],"route":[0,1,2,3],"goals":[[0.82,0.23]]},
+ {"name":"Boxrotation fyra stationer","desc":"Fyra spelare roterar runt en kvadrat och passar medsols.","coaching":"Passa och följ, håll avstånd.","progression":"Byt till motsols på signal.","spots":[[0.27,0.28],[0.73,0.28],[0.73,0.72],[0.27,0.72]],"route":[0,1,2,3,0],"goals":[]},
+ {"name":"Tredjemanslöpning","desc":"A passar B, B spelar vidare till C som löper in i fri yta.","coaching":"Se tredje spelaren innan mottagning.","progression":"Aktiv försvarare skär av första passet.","spots":[[0.18,0.62],[0.45,0.4],[0.75,0.27],[0.68,0.72]],"route":[0,1,2,3],"goals":[]},
+ {"name":"Två mål – snabb vändning","desc":"Flyttade mål i var sin hörnyta. Anfallet växlar mål efter passningskombination.","coaching":"Beslut om vilket mål som är öppet.","progression":"Låt en försvarare välja vilket mål som skyddas.","spots":[[0.2,0.32],[0.45,0.5],[0.8,0.68],[0.6,0.25]],"route":[0,1,2,3,1],"goals":[[0.13,0.18],[0.87,0.82]]},
+ {"name":"Hästsko med avslut","desc":"Spelarna passar i hästskoform runt en konzon och avslutar mot flyttat mål.","coaching":"Första touch framåt och snabb avslutning.","progression":"Lägg till returspel.","spots":[[0.2,0.72],[0.2,0.36],[0.5,0.22],[0.8,0.36],[0.8,0.72]],"route":[0,1,2,3,4],"goals":[[0.5,0.83]]},
+ {"name":"Spelvändning på signal","desc":"Spelarna passar i en riktning och byter snabbt när tränaren ger signal.","coaching":"Lyssna, orientera och byt kroppsvinkel.","progression":"Byt riktning efter varje tredje passning.","spots":[[0.23,0.3],[0.5,0.2],[0.77,0.3],[0.77,0.7],[0.23,0.7]],"route":[0,1,2,3,4,0],"goals":[]},
+ {"name":"Slottet under press","desc":"Spelare hittar ett kort instick till slottet efter en diagonal väggpass.","coaching":"Våga spela genom yta och tajma mottagning.","progression":"Lägg till skymmande spelare.","spots":[[0.2,0.55],[0.45,0.72],[0.5,0.38],[0.8,0.55]],"route":[0,1,2,3],"goals":[[0.5,0.13]]},
+ {"name":"Vändningsstafett","desc":"Två köer passar till centrala stationer och följer sin passning runt koner.","coaching":"Högt tempo och precision i farten.","progression":"Två bollar, starta samtidigt.","spots":[[0.18,0.28],[0.42,0.45],[0.82,0.72],[0.58,0.55]],"route":[0,1,3,2,1],"goals":[]},
+ {"name":"Diagonal och retur","desc":"Lång diagonalpassning följs av kort returpass och ny diagonal.","coaching":"Passningsstyrka och öppet blad.","progression":"Passa på ett tillslag centralt.","spots":[[0.2,0.25],[0.8,0.68],[0.65,0.32],[0.35,0.75]],"route":[0,1,2,3,0],"goals":[]},
+ {"name":"Inverterad diamant","desc":"Diamant med två centrala väggspelare och snabba kantbyten.","coaching":"Rätt avstånd mellan stationerna.","progression":"En försvarare pressar centralt.","spots":[[0.5,0.15],[0.25,0.45],[0.5,0.52],[0.75,0.45],[0.5,0.82]],"route":[0,1,2,3,4,2,0],"goals":[]},
+ {"name":"Sicksack genom zoner","desc":"Passning följer en sicksackbana genom tre tydliga zoner.","coaching":"Bolltempo och riktningsförändring.","progression":"Kräv mottagning på backhand.","spots":[[0.18,0.75],[0.4,0.55],[0.22,0.3],[0.65,0.4],[0.82,0.18]],"route":[0,1,2,3,4],"goals":[]},
+ {"name":"Mål bakom mål","desc":"Flytta en målbur till mitten. Passa runt den och hitta en fri avslutningsyta.","coaching":"Använd målbur som visuellt hinder.","progression":"Tidsbegränsa sista passningen.","spots":[[0.2,0.65],[0.42,0.42],[0.72,0.3],[0.78,0.68]],"route":[0,1,2,3],"goals":[[0.52,0.58]]},
+ {"name":"Dubbel väggpass","desc":"Spelare gör två väggpass i följd innan sidbyte.","coaching":"Direktpassning och förflyttning efter pass.","progression":"Två försvarare som skuggar.","spots":[[0.18,0.6],[0.4,0.35],[0.62,0.65],[0.82,0.35]],"route":[0,1,0,2,3,2],"goals":[]},
+ {"name":"Kantöverbelastning","desc":"Tre stationer på samma sida drar in försvaret innan snabb passning till bortre kant.","coaching":"Spelvändning och uppfattning.","progression":"Aktiv försvarare på bollsidan.","spots":[[0.2,0.25],[0.27,0.5],[0.2,0.75],[0.78,0.45]],"route":[0,1,2,1,3],"goals":[]},
+ {"name":"Uppspel och överlapp","desc":"Back passar framåt och överlappar på utsidan för att få tillbaka bollen.","coaching":"Löpväg och tajmad returpass.","progression":"Lägg till mål för avslut.","spots":[[0.22,0.75],[0.42,0.42],[0.72,0.25],[0.75,0.72]],"route":[0,1,0,2,3],"goals":[[0.5,0.12]]},
+ {"name":"Rundeln","desc":"Spelarna passar runt en ring av stationer och byter sedan riktning.","coaching":"Kommunikation och mottagning på rätt sida.","progression":"En försvarare i mitten.","spots":[[0.5,0.18],[0.77,0.35],[0.77,0.65],[0.5,0.82],[0.23,0.65],[0.23,0.35]],"route":[0,1,2,3,4,5,0],"goals":[]},
+ {"name":"Dubbla mål med mittspelare","desc":"Två flyttade mål, mittspelaren avgör vilken sida som får avsluta.","coaching":"Blick före pass och snabba beslut.","progression":"Tränaren signalerar mål i sista sekund.","spots":[[0.2,0.35],[0.5,0.5],[0.8,0.35],[0.5,0.76]],"route":[0,1,2,1,3],"goals":[[0.16,0.72],[0.84,0.72]]}
+];
+let proceduralSerial=0,proceduralDifficulty=0,proceduralDefenders=0,proceduralMoveGoals=false;
+function interpretDrillRequest(){
+ const prompt=($('smartPrompt')?.value||'').toLocaleLowerCase('sv');
+ const countMatch=prompt.match(/(\d{1,2})\s*(?:spelare|personer)/);
+ const ballsMatch=prompt.match(/(\d{1,2})\s*(?:bollar|boll)/);
+ const goalsMatch=prompt.match(/(\d{1,2})\s*(?:målburar|mål|burar)/);
+ const durationMatch=prompt.match(/(\d{1,2})\s*(?:minuter|min\b)/);
+ if(countMatch)$('smartCount').value=clamp(Number(countMatch[1]),4,24);
+ if(durationMatch){let v=Number(durationMatch[1]);$('smartDuration').value=[10,15,20,25].reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a,10)}
+ const focus=/(skott|avslut|skjut)/.test(prompt)?'shot':/(försvar|press|bryt)/.test(prompt)?'pressure':/(kontring|omställ|spelvänd)/.test(prompt)?'transition':/(bolltempo|speluppfattning|possession)/.test(prompt)?'possession':/(pass|väggspel|triangel|detroit|hv)/.test(prompt)?'pass':$('smartFocus').value;
+ if(prompt.trim())$('smartFocus').value=focus;
+ return {prompt,balls:ballsMatch?clamp(Number(ballsMatch[1]),1,6):1,goals:goalsMatch?clamp(Number(goalsMatch[1]),0,4):null,defenders:/(försvarare|motståndare)/.test(prompt)?2:0,moveGoals:proceduralMoveGoals||/(flytta|flyttade|mitten|detroit|hv)/.test(prompt)};
+}
+function proceduralDrill(selected,request){
+ proceduralSerial++;
+ const patterns=['spiral','cross','diamond','horseshoe','double-triangle','switch','circle','overlap'];
+ const pattern=patterns[Math.floor(Math.random()*patterns.length)];
+ const count=clamp(Number($('smartCount').value)||12,4,24),n=Math.min(8,Math.max(3,Math.ceil(count/3)));
+ const phase=proceduralSerial*.73+Math.random()*1.5;
+ let spots=[];
+ for(let i=0;i<n;i++){
+  const t=i/(n-1),theta=2*Math.PI*i/n+phase;
+  let u,v;
+  if(pattern==='spiral'){const r=.12+.22*t;u=.5+Math.cos(theta*1.6)*r;v=.5+Math.sin(theta*1.6)*r}
+  else if(pattern==='cross'){u=.2+.6*t;v=i%2?.7:.3}
+  else if(pattern==='horseshoe'){u=.5+.32*Math.cos(Math.PI*(1+t));v=.55+.26*Math.sin(Math.PI*(1+t))}
+  else if(pattern==='double-triangle'){u=.28+(i>=n/2?.44:0)+.12*Math.cos(theta);v=.5+.23*Math.sin(theta)}
+  else if(pattern==='switch'){u=i%2?.78:.22;v=.2+.6*t}
+  else if(pattern==='overlap'){u=.2+.6*t;v=.5+.24*Math.sin(t*Math.PI*2)}
+  else {u=.5+.3*Math.cos(theta);v=.5+.28*Math.sin(theta)}
+  spots.push([clamp(u,.12,.88),clamp(v,.14,.86)]);
+ }
+ const route=Array.from({length:n},(_,i)=>pattern==='cross'?(i%2?Math.ceil(n/2)+Math.floor(i/2):Math.floor(i/2))%n:i);
+ if(pattern==='switch')route.reverse();
+ route.push(route[0]);
+ const goals=[];
+ const target=request.goals===null?(request.moveGoals?2:0):request.goals;
+ for(let i=0;i<target;i++)goals.push([clamp(.5+.29*Math.cos(2*Math.PI*i/Math.max(target,1)+phase),.12,.88),clamp(.5+.25*Math.sin(2*Math.PI*i/Math.max(target,1)+phase),.12,.88)]);
+ const names={spiral:'Spiralrotation',cross:'Korsande passningsbanor',diamond:'Roterande diamant',horseshoe:'Hästskorotation','double-triangle':'Dubbla trianglar',switch:'Snabbt sidbyte',circle:'Cirkulationsspel',overlap:'Överlappande löpningar'};
+ return {name:names[pattern]+' · '+proceduralSerial,desc:`${n} stationer med ${pattern==='cross'?'korsande löpningar':'förflyttningar och passningsväxlingar'}. ${goals.length?'Målburar placeras i nya ytor.':''}`,coaching:'Kommunikation, spelbarhet, passningsvinklar och tempo.',progression:proceduralDifficulty?'Högre tempo, aktiv press och färre tillslag.':'Lägg till försvarare eller öka bolltempot.',spots,route,goals,balls:request.balls,defenders:Math.max(request.defenders,proceduralDefenders),difficulty:proceduralDifficulty};
+}
+// Geometry-based safeguards for procedural floorball exercises.
+function drillQuality(drill){
+ const issues=[],pts=drill.spots,route=drill.route;
+ if(pts.length<3)issues.push('För få stationer');
+ for(let i=0;i<pts.length;i++){
+  const a=pts[i];if(a.some(v=>!Number.isFinite(v))||a[0]<.09||a[0]>.91||a[1]<.10||a[1]>.90)issues.push('Station utanför säker planyta');
+  for(let j=0;j<i;j++)if(Math.hypot((a[0]-pts[j][0])*1.2,a[1]-pts[j][1])<.105)issues.push('Stationer för nära varandra');
+ }
+ let total=0;
+ for(let i=1;i<route.length;i++){
+  const a=pts[route[i-1]],b=pts[route[i]];
+  if(!a||!b){issues.push('Passning saknar station');continue}
+  const d=Math.hypot(a[0]-b[0],a[1]-b[1]);total+=d;
+  if(d<.10)issues.push('För kort passningsavstånd');
+  if(d>.83)issues.push('För lång passning');
+ }
+ if(total<.75)issues.push('För lite variation i passningsvägar');
+ for(let i=0;i<drill.goals.length;i++){
+  const g=drill.goals[i];if(g[0]<.09||g[0]>.91||g[1]<.1||g[1]>.9)issues.push('Mål för nära kanten');
+  if(pts.some(a=>Math.hypot(a[0]-g[0],a[1]-g[1])<.105))issues.push('Mål för nära station');
+  if(drill.goals.slice(0,i).some(a=>Math.hypot(a[0]-g[0],a[1]-g[1])<.18))issues.push('Mål för nära varandra');
+ }
+ return {ok:issues.length===0,issues:[...new Set(issues)]};
+}
+function improveDrillGeometry(drill){
+ const d=copy(drill),spots=d.spots;
+ // Keep each station separated and inside the playable area.
+ for(let step=0;step<32;step++){
+  for(let i=0;i<spots.length;i++){
+   const a=spots[i];a[0]=clamp(a[0],.12,.88);a[1]=clamp(a[1],.15,.85);
+   for(let j=0;j<i;j++){
+    const b=spots[j];let dx=a[0]-b[0],dy=a[1]-b[1],dist=Math.hypot(dx*1.2,dy);
+    if(dist<.115){if(dist<.0001){dx=.015*(i%2?1:-1);dy=.015;dist=Math.hypot(dx*1.2,dy)}const push=(.118-dist)/dist*.55;a[0]=clamp(a[0]+dx*push,.12,.88);a[1]=clamp(a[1]+dy*push,.15,.85);b[0]=clamp(b[0]-dx*push,.12,.88);b[1]=clamp(b[1]-dy*push,.15,.85)}
+   }
+  }
+ }
+ // Choose a viable goal location, away from players and other goals.
+ d.goals=d.goals.map((goal,i)=>{
+  const options=[[.5,.15],[.5,.85],[.15,.5],[.85,.5],[.2,.2],[.8,.8],[.2,.8],[.8,.2],[.5,.5],goal];
+  const score=g=>Math.min(...spots.map(p=>Math.hypot(p[0]-g[0],p[1]-g[1])),...d.goals.slice(0,i).map(p=>Math.hypot(p[0]-g[0],p[1]-g[1])));
+  return options.reduce((best,g)=>score(g)>score(best)?g:best,options[0]);
+ });
+ // Remove zero-length passes and ensure route covers the station network.
+ let route=d.route.filter((idx,i,arr)=>i===0||idx!==arr[i-1]);
+ if(route.length<4||route.some(idx=>idx>=spots.length||idx<0))route=spots.map((_,i)=>i);
+ if(route[0]!==route[route.length-1])route.push(route[0]);
+ d.route=route;
+ return d;
+}
+function buildValidatedDrill(selected,request){
+ let candidate,report;
+ for(let attempt=0;attempt<12;attempt++){
+  candidate=improveDrillGeometry(proceduralDrill(selected,request));report=drillQuality(candidate);
+  if(report.ok)return {...candidate,quality:report};
+ }
+ // Fall back to a stable ring, preserving user-requested balls, goals and defenders.
+ const n=Math.min(8,Math.max(4,Math.ceil((Number($('smartCount').value)||12)/3)));
+ candidate.spots=Array.from({length:n},(_,i)=>[.5+.32*Math.cos(i*2*Math.PI/n),.5+.29*Math.sin(i*2*Math.PI/n)]);
+ candidate.route=Array.from({length:n+1},(_,i)=>i%n);
+ candidate.goals=candidate.goals.slice(0,2).map((_,i)=>i===0?[.5,.13]:[.5,.87]);
+ candidate=improveDrillGeometry(candidate);candidate.quality=drillQuality(candidate);
+ return candidate;
+}
+function smartExercise(){
+ const request=interpretDrillRequest();
+ const focus=$('smartFocus').value,keys=Object.keys(SMART_LIBRARY),selected=focus==='random'?keys[Math.floor(Math.random()*keys.length)]:focus;
+ const creative=selected==='pass'?buildValidatedDrill(selected,request):null;
+ const variants=selected==='pass'?null:SMART_LIBRARY[selected];
+ const variant=creative?[creative.name,creative.desc,creative.coaching,creative.progression]:variants[drillVariantIndex(selected,variants.length)];
+ const count=clamp(parseInt($('smartCount').value,10)||12,4,24),minutes=parseInt($('smartDuration').value,10)||15,level=$('smartLevel').value;
+ const {w,h}=dimensions(),vertical=orientation==='vertical';
+ const P=(u,v)=>vertical?{x:w*u,y:h*v}:{x:w*v,y:h*u};
+ let generated=[];
+ const add=(type,u,v,extra={})=>generated.push({id:uid(),type,...P(u,v),...extra});
+ const line=(a,b,arrow=true)=>{let p=P(...a),q=P(...b);generated.push({id:uid(),type:arrow?'arrow':'draw',points:[[p.x,p.y],[q.x,q.y]],color:arrow?'#dd7d1c':'#347ab6'});};
+ const spots=selected==='pass'?creative.spots:selected==='shot'?[[.24,.47],[.74,.47],[.48,.59],[.30,.67],[.70,.67]]:selected==='transition'?[[.30,.65],[.70,.65],[.50,.43],[.50,.18]]:selected==='pressure'?[[.30,.50],[.70,.50],[.42,.37],[.58,.37],[.50,.22]]:[[.22,.35],[.78,.35],[.25,.65],[.75,.65],[.50,.50]];
+ // Use the chosen number of players rather than always drawing only five.
+ for(let i=0;i<count;i++){
+  const base=spots[i%spots.length],row=Math.floor(i/spots.length);
+  const u=clamp(base[0]+(row%2?-.055:.055)*Math.ceil(row/2),.10,.90);
+  const v=clamp(base[1]+(row%3-1)*.048,.12,.88);
+  add((selected==='pressure'||selected==='transition')&&i%4===2?'playerB':'playerA',u,v,{number:String(i+1)});
+ }
+ if(selected==='pass'){
+  for(let i=1;i<creative.route.length;i++)line(spots[creative.route[i-1]],spots[creative.route[i]]);
+  creative.goals.forEach(([u,v])=>add('goal',u,v));
+ }
+ if(selected==='shot'){add('goal',.5,.14);add('goalieB',.5,.17);add('ball',.24,.45);line(spots[0],spots[2]);line(spots[2],[.50,.18]);}
+ if(selected==='transition'){add('goal',.5,.14);add('ball',.30,.63);line(spots[0],[.5,.36]);line(spots[1],[.64,.27]);}
+ if(selected==='pressure'){add('ball',.30,.50);line(spots[2],spots[0]);line(spots[3],spots[1]);}
+ if(selected==='possession'){add('ball',.22,.35);line(spots[0],spots[1]);line(spots[1],spots[3]);}
+ (selected==='pass'
+ ? creative.spots.slice(0,Math.min(creative.spots.length,5)).map(([u,v],i)=>[clamp(u+(i%2?.075:-.075),.08,.92),clamp(v+(i%2?-.075:.075),.08,.92)])
+ : [[.15,.20],[.85,.20],[.15,.78],[.85,.78]]
+ ).forEach(([u,v])=>add('cone',u,v));
+ if(selected==='pass'){
+  for(let i=1;i<creative.balls;i++)add('ball',.28+.11*(i%4),.46+.08*(i%3));
+  for(let i=0;i<creative.defenders;i++)add('playerB',.38+.15*(i%3),.4+.1*(i%4),{number:'F'+(i+1)});
+ }
+ // Build an animated, instructional storyboard for every generated drill.
+ smartStop();smartFrames=[];
+ const moving=generated.filter(o=>o.type==='playerA'||o.type==='playerB'||o.type==='ball');
+ const actor=moving.filter(o=>o.type==='playerA'||o.type==='playerB').slice(0,4);
+ const ball=moving.find(o=>o.type==='ball');
+ if(!ball){let pos=P(.30,.48);generated.push({id:uid(),type:'ball',...pos});}
+ const movingBall=generated.find(o=>o.type==='ball');
+ const base=copy(generated.filter(o=>o.type!=='arrow'&&o.type!=='draw'));
+ const arrow=(a,b,color='#f59e0b')=>({id:uid(),type:'arrow',points:[[a.x,a.y],[b.x,b.y]],color});
+ const scene=(description,mutate,paths=[])=>{let state=copy(smartFrames.length?smartFrames[smartFrames.length-1].items:base).filter(o=>o.type!=='arrow'&&o.type!=='draw');mutate(state);state.push(...paths);smartFrames.push({text:description,items:state})};
+ const get=(arr,obj)=>arr.find(o=>o.id===obj?.id);
+ scene('Start: visa spelarnas utgångspositioner och förklara uppgiften.',()=>{});
+ const textByFocus={pass:['1. Bollhållaren passar till nästa station. Följ passningen med blicken.','2. Mottagaren tar emot och spelar vidare. Passaren byter position.','3. Fortsätt runt stationerna och öka tempot.'],shot:['1. Spelaren passar in bollen till skytten.','2. Skytten tar ett steg framåt och avslutar mot mål.','3. Följ upp returen och byt kö.'],transition:['1. Bollvinst! Starta kontringen med en snabb förstapassning.','2. Anfallarna tar bredd och skapar 2 mot 1.','3. Avsluta anfallet och återgå till start.'],pressure:['1. Första försvararen går i press på bollhållaren.','2. Andra försvararen täcker passningsvägen.','3. Vinn bollen och spela ut från pressen.'],possession:['1. Bollhållaren hittar en fri medspelare.','2. Medspelarna flyttar sig för att skapa nya vinklar.','3. Spelvändning till fri yta och ny passning.']};
+ const descriptions=textByFocus[selected];
+ const targetIds=actor.map(o=>o.id),ballId=movingBall.id;
+ for(let k=0;k<3;k++){
+   let prev=smartFrames[smartFrames.length-1].items,changes=[];
+   scene(descriptions[k],arr=>{
+     for(let j=0;j<targetIds.length;j++){
+       let o=arr.find(x=>x.id===targetIds[j]);if(!o)continue;
+       let old={x:o.x,y:o.y};let dx=[.045,-.04,.025][k]*(j%2?1:-1),dy=[-.065,-.045,.07][k]*(j%2?-1:1);
+       let np=P(clamp((orientation==='vertical'?o.x/dimensions().w:o.y/dimensions().w)+dx,.12,.88),clamp((orientation==='vertical'?o.y/dimensions().h:o.x/dimensions().h)+dy,.12,.88));
+       o.x=np.x;o.y=np.y;if(j<2)changes.push(arrow(old,np,'#2563eb'));
+     }
+     let b=arr.find(x=>x.id===ballId);let receiver=arr.find(x=>x.id===targetIds[(k+1)%Math.max(1,targetIds.length)]);
+     if(b&&receiver){let old={x:b.x,y:b.y};b.x=receiver.x+8;b.y=receiver.y+8;changes.push(arrow(old,b,'#e88b16'));}
+     arr.push(...changes);
+   });
+ }
+
+ // Tactical choreography: use actual named actors and ball destinations rather
+ // than a generic diagonal motion for passing, finishing and 2-on-1 drills.
+ if(['pass','shot','transition'].includes(selected)){
+   const original=copy(base);
+   const players=original.filter(o=>o.type==='playerA'||o.type==='playerB');
+   const firstBall=original.find(o=>o.type==='ball');
+   const goal=original.find(o=>o.type==='goal');
+   const describe={
+     pass:['Start: visa de tre passningsstationerna och bollhållaren.',
+       'Passning 1: bollhållaren passar till station två.',
+       'Passning 2: station två spelar vidare till station tre. Första spelaren löper till ny yta.',
+       'Passning 3: tredje stationen spelar tillbaka. Rotera och upprepa.'],
+     shot:['Start: passare på kanten, skytt centralt och målvakt i mål.',
+       'Passning: bollen spelas från kanten till skytten i rörelse.',
+       'Avslut: skytten tar med bollen framåt och skjuter mot målet.',
+       'Retur: skytten följer upp och nästa spelare förbereder sig.'],
+     transition:['Start: två anfallare och en försvarare. Bollhållaren startar omställningen.',
+       'Bollvinst: första anfallaren driver framåt och söker sin medspelare.',
+       '2 mot 1: passning i sidled när försvararen tvingas välja.',
+       'Avslut: mottagaren går mot mål och avslutar.']
+   }[selected];
+   const stages=[];
+   const clone=()=>copy(stages.length?stages[stages.length-1].items:original).filter(o=>o.type!=='arrow'&&o.type!=='draw');
+   const put=(arr,id,x,y)=>{const o=arr.find(q=>q.id===id);if(o){o.x=x;o.y=y}};
+   const ballAt=(arr,player)=>{const b=arr.find(q=>q.id===firstBall?.id);if(b&&player){b.x=player.x+8;b.y=player.y+8}};
+   const addStage=(txt,fn)=>{const arr=clone();fn(arr);stages.push({text:txt,items:arr})};
+   if(players.length>=3&&firstBall){
+     const A=players[0],B=players[1],C=players[2];
+     addStage(describe[0],arr=>ballAt(arr,arr.find(q=>q.id===A.id)));
+     if(selected==='pass'){
+       addStage(describe[1],arr=>ballAt(arr,arr.find(q=>q.id===B.id)));
+       addStage(describe[2],arr=>{const a=arr.find(q=>q.id===A.id);put(arr,A.id,a.x+14,a.y+18);ballAt(arr,arr.find(q=>q.id===C.id))});
+       addStage(describe[3],arr=>ballAt(arr,arr.find(q=>q.id===A.id)));
+     }else if(selected==='shot'){
+       addStage(describe[1],arr=>ballAt(arr,arr.find(q=>q.id===C.id)));
+       addStage(describe[2],arr=>{const shooter=arr.find(q=>q.id===C.id);if(goal&&shooter){put(arr,C.id,shooter.x+(goal.x-shooter.x)*.28,shooter.y+(goal.y-shooter.y)*.28);const b=arr.find(q=>q.id===firstBall.id);b.x=goal.x;b.y=goal.y}});
+       addStage(describe[3],arr=>{const shooter=arr.find(q=>q.id===C.id);if(goal&&shooter)put(arr,C.id,shooter.x+(goal.x-shooter.x)*.35,shooter.y+(goal.y-shooter.y)*.35)});
+     }else{
+       addStage(describe[1],arr=>{const a=arr.find(q=>q.id===A.id);put(arr,A.id,a.x,a.y-22);ballAt(arr,arr.find(q=>q.id===A.id))});
+       addStage(describe[2],arr=>{const b=arr.find(q=>q.id===B.id);put(arr,B.id,b.x,b.y-28);ballAt(arr,arr.find(q=>q.id===B.id))});
+       addStage(describe[3],arr=>{const b=arr.find(q=>q.id===B.id);if(goal&&b){put(arr,B.id,b.x+(goal.x-b.x)*.35,b.y+(goal.y-b.y)*.35);const ball=arr.find(q=>q.id===firstBall.id);ball.x=goal.x;ball.y=goal.y}});
+     }
+     smartFrames=stages;
+   }
+ }
+ // Creative passing drills: individual routes, concurrent player motion, varied goal placement.
+ if(selected==='pass'&&creative){
+  const clean=copy(base),players=clean.filter(o=>o.type==='playerA').slice(0,Math.min(creative.spots.length,6));
+  const ballObj=clean.find(o=>o.type==='ball');
+  if(players.length>=3&&ballObj){
+   const frames=[{text:'Start: '+creative.name+'. '+creative.desc,items:copy(clean)}];
+   const route=creative.route,at=(arr,id)=>arr.find(o=>o.id===id);
+   const place=(o,xy)=>{o.x=xy.x;o.y=xy.y};
+   const pt=(index)=>P(...creative.spots[index%creative.spots.length]);
+   place(at(frames[0].items,ballObj.id),{x:players[0].x+8,y:players[0].y+8});
+   for(let k=1;k<Math.min(route.length,6);k++){
+    const prev=frames[frames.length-1].items,arr=copy(prev),routes={},timing={players:0,ball:0,actors:{}};
+    const receiver=at(arr,players[route[k]%players.length].id);
+    const sender=at(arr,players[route[k-1]%players.length].id);
+    if(receiver){const b=at(arr,ballObj.id);place(b,{x:receiver.x+8,y:receiver.y+8})}
+    // Two players move during the same step, with different starts.
+    for(let j=0;j<Math.min(2,players.length);j++){
+      const idx=(k+j-1)%players.length,o=at(arr,players[idx].id);
+      const origin=at(prev,o.id),dest=pt((route[k]+j+1)%creative.spots.length);
+      const dx=dest.x-origin.x,dy=dest.y-origin.y;
+      const factor=j===0?.35:.2;
+      const end={x:clamp(origin.x+dx*factor,12,w-12),y:clamp(origin.y+dy*factor,12,h-12)};
+      const bend={x:clamp((origin.x+end.x)/2-dy*.17,12,w-12),y:clamp((origin.y+end.y)/2+dx*.17,12,h-12)};
+      routes[o.id]=[[origin.x,origin.y],[bend.x,bend.y],[end.x,end.y]];
+      place(o,end);timing.actors[o.id]=j===0?0:.22;
+    }
+    frames.push({text:'Passning '+k+': hitta nästa station. Två spelare löper samtidigt i olika bågar.',items:arr,routes,timing});
+   }
+   smartFrames=frames;
+  }
+ }
+ checkpoint();items=copy(base);render();setMode('move');smartStep=0;smartLabel();
+ const levelText=level==='red'?'Röd nivå':level==='junior'?'Junior':'Senior';
+ const challenge=level==='red'?'Börja utan motstånd, höj sedan tempot.':level==='junior'?'Öka beslutstempot och använd aktivt motstånd.':'Högt tempo, matchlika beslut och kort vila.';
+ const name=variant[0],description=variant[1],coaching=variant[2],progression=variant[3];
+ smartLast={name,minutes,focus:selected,level,count,description,coaching,progression};
+ $('smartResult').textContent=`${name}\n${levelText} · ${count} spelare · ${minutes} min\n\nUpplägg: ${description}\n\nGeometrikontroll: ${creative?(creative.quality.ok?'Godkänd – stationer och passningsavstånd kontrollerade':'Kontrollera manuellt: '+creative.quality.issues.join(', ')):'Använd tränarens bedömning för momentet'}\n\nTränarfokus: ${coaching}\n\nStegring: ${progression} ${challenge}\n\nTryck ▶ Visa live för att se övningen animeras steg för steg, eller använd Nästa steg. Anpassa antalet stationer och spelare med verktygen. Spara sedan övningen som vanligt.`;
+ $('smartDrills').open=true;toast('Övningen skapad på planen');
+}
+
+// Matchlikt taktikbibliotek. Normaliserade koordinater är i stående plan
+// med eget anfall uppåt. I liggande plan roteras positionerna som planlinjerna.
+const tacticLibrary={
+ pp:[
+ {name:'1–3–1 · Grunduppställning',desc:'En spelare på point, tre i mellanlinjen och en framför mål. Flytta bollen snabbt mellan point och flank för att skapa skottsektor.',focus:'Hot från båda flankerna; spelaren framför mål skymmer och tar returer.',steps:['Starta i 1–3–1 med boll på point.','Flytta bollen till vänster flank och dra ut boxens översta försvarare.','Spela diagonalt till bortre flank medan spelaren i mitten hittar skottlinjen.','Avsluta eller spela in centralt framför mål.'],pattern:'cross'},
+ {name:'2–1–2 · Två backar',desc:'Två spelare högt, en centralt och två lågt. Bra för säkert bolltempo och skott från backposition.',focus:'Snabba sidledspassningar, skymning och returer.',steps:['Börja med två backar och två låga forwards.','Flytta bollen mellan backarna för att flytta boxen.','Sök spelaren centralt eller lågt i fickan.','Avsluta med skymning och returberedskap.'],pattern:'high'},
+ {name:'Överbelasta vänster',desc:'Tre spelare skapar passningstrianglar på vänster sida. Bortre spelaren hotar med direktskott.',focus:'Dra ihop försvaret och växla spel till bortre sidan.',steps:['Bygg en triangel på vänster sida.','Spela korta passningar för att locka press.','Vänd snabbt över till fri spelare på höger sida.','Direktskott eller passning in framför mål.'],pattern:'left'},
+ {name:'Överbelasta höger',desc:'Spegelvänd överbelastning där högerflanken styr bolltempot och vänsterflanken hotar.',focus:'Korta avstånd på bollsidan och snabb spelvändning.',steps:['Bygg triangel på höger sida.','Locka försvarare med två snabba passningar.','Vänd spelet till vänsterflanken.','Avsluta direkt eller spela in på bortre stolpen.'],pattern:'right'},
+ {name:'Point till diagonal',desc:'Point spelar till flank, som lägger en diagonal genom boxen till direktskott.',focus:'Passningsfönster, timing och bollmottagning i rörelse.',steps:['Point har boll och försvaret är samlat.','Passning till vänster flank.','Diagonal till höger flank när boxen flyttar sig.','Direktskott med skymning framför mål.'],pattern:'cross'}
+ ],
+ bp:[
+ {name:'Box 2–2 · Kompakt',desc:'Två höga och två låga försvarare håller centrala ytan stängd och styr skotten utifrån.',focus:'Korta förflyttningar, klubbor i passningslinjer och tydlig kommunikation.',steps:['Starta i kompakt box 2–2.','Flytta hela boxen mot bollhållaren på vänster sida.','Skydda diagonalen när bollen går tillbaka högt.','Flytta boxen åt andra hållet och rensa returen.'],pattern:'box'},
+ {name:'Diamant 1–2–1',desc:'En hög presspelare, två i mitten och en låg framför mål. Använd när point behöver störas.',focus:'Hög press utan att lämna fri spelare i slottet.',steps:['Starta i diamant med en spelare högt.','Hög spelare pressar point; mitten täcker diagonal.','När bollen går till flank sjunker närmaste mittspelare.','Återgå till diamant och säkra ytan framför mål.'],pattern:'diamond'},
+ {name:'Aggressiv kantpress',desc:'När bollen når sargen pressar närmaste spelare, övriga tre täcker passningsvägarna.',focus:'Pressignal, avstånd och gemensam återgång.',steps:['Starta i kompakt box.','Boll till vänster sarg: närmaste försvarare pressar.','Övriga tre flyttar in och stänger centrala passningen.','Vinn boll, spela säkert ut eller återgå till box.'],pattern:'press'},
+ {name:'Låg box · Skottblock',desc:'Låt motståndaren spela runt högt men skydda mitten och ytan framför målvakten.',focus:'Skottlinjer, täckning och första passning efter bollvinst.',steps:['Starta lågt framför eget mål.','Samla boxen mot bollsidan utan att tappa bortre stolpen.','Blockera skottlinjen och säkra returen.','Spela ut via fri kant efter bollvinst.'],pattern:'low'}
+ ],
+ free:[
+ {name:'Frislag · Kortpass och skott',desc:'En spelare petar bollen till skytt. Övriga skymmer och täcker returen. Följ gällande avstånds- och frislagregler.',focus:'Snabb kommunikation och direktskott efter korrekt igångsättning.',steps:['Placera boll, petare, skytt och två returspelare.','Petaren sätter bollen i spel till skytten.','Skytten avslutar medan medspelare skymmer.','Följ upp returen.'],pattern:'tap'},
+ {name:'Frislag · Väggspel',desc:'Bollhållaren spelar kort till medspelare, får tillbaka bollen och avslutar från ny vinkel.',focus:'Rätt tajming och rörelse utan boll.',steps:['Ställ upp två passningsalternativ nära bollen.','Spela kort passning till medspelaren.','Väggpass tillbaka till löpande skytt.','Avsluta i fri skottsektor.'],pattern:'wall'},
+ {name:'Frislag · Bortre stolpen',desc:'Spela kort ut till flank och sök en spelare som tajmar löpningen mot bortre stolpen.',focus:'Blick upp, passning genom ytan och tajmad löpning.',steps:['Ställ upp passare, flankspelare och spelare vid bortre stolpen.','Sätt igång med kort pass till flanken.','Spelaren på bortre sidan löper mot mål.','Slå passning för styrning eller avslut.'],pattern:'far'},
+ {name:'Frislag · Skottfint och sidled',desc:'Visa skotthot, flytta bollen sidledes till en ny skytt och avsluta.',focus:'Skottfint och skott innan försvararna hinner ställa om.',steps:['Starta med två skyttar och en petare.','Petaren sätter bollen i spel.','Första skytten fintar och passar sidledes.','Andra skytten avslutar direkt.'],pattern:'fake'}
+ ]
+};
+const tacticDictionary=[
+ ['Point','Den höga spelaren centralt i anfallszonen som styr passningsspelet och ofta hotar med skott. Kallas ibland pointspelare.'],
+ ['Centrallinjen','En tänkt längsgående linje genom planens mitt, från eget mål till motståndarnas mål. I taktik används den för att prata om mitten och spelvändningar. Det är inte samma sak som den markerade mittlinjen tvärs över planen.'],
+ ['Mittlinjen','Den markerade linjen tvärs över planen vid mittpunkten. Den delar planen i två halvor.'],
+ ['Diagonalpassning','En passning snett över planen, exempelvis från vänster flank till höger sida framför mål.'],
+ ['Stängd diagonal','Motståndarnas klubbor och positioner blockerar den sneda passningen genom mitten. Välj en säkrare passningsväg.'],
+ ['Flank','Ytan på vänster eller höger sida av planen, ofta nära sargen.'],
+ ['Box','Fyra försvarare i en fyrkant, vanligen två högre och två lägre, som skyddar mitten i boxplay.'],
+ ['Låg box','En box där försvararna ligger nära det egna målet för att skydda farliga ytor och skott.'],
+ ['Hög press','Försvarare kliver upp snabbt mot bollhållaren för att störa och försöka vinna bollen.'],
+ ['Powerplay','Spel i numerärt överläge, exempelvis fem utespelare mot fyra.'],
+ ['Boxplay','Spel i numerärt underläge, exempelvis fyra utespelare mot fem.'],
+ ['1–3–1','Powerplayuppställning med en spelare högt, tre i en mellanliggande linje och en nära motståndarmålet.'],
+ ['2–1–2','Uppställning med två höga spelare, en centralt och två längre ner mot mål.'],
+ ['Diamant','Försvarsuppställning med en hög spelare, två i mitten och en låg spelare framför målet.'],
+ ['Överbelastning','Flera anfallare samlas på en sida för att skapa passningsövertag och öppna den andra sidan.'],
+ ['Spelvändning','När laget snabbt flyttar spelet från en sida till den andra för att hitta en öppning.'],
+ ['Skottsektor','En fri väg från skytten mot målet där bollen kan passera utan att blockeras.'],
+ ['Skymning','En spelare står framför målvakten och begränsar sikten vid skott.'],
+ ['Bortre stolpen','Målstolpen längst bort från bollhållaren eller den sida bollen kommer från.'],
+ ['Retur','När bollen studsar ut från målvakt, målram eller annan spelare efter ett avslut.'],
+ ['Frislag','En fast situation där laget får sätta bollen i spel efter en regelöverträdelse. Följ aktuella regler om avstånd och utförande.'],
+ ['Understöd','En medspelare erbjuder en säker passningsmöjlighet nära bollhållaren.']
+];
+function tacticExplain(term){
+ const item=tacticDictionary.find(([name])=>name===term);
+ if(item)$('tacticTermExplanation').textContent=item[0]+' – '+item[1];
+}
+const termsContainer=$('tacticTerms');
+tacticDictionary.forEach(([term])=>{
+ const b=document.createElement('button');b.type='button';b.textContent=term;
+ b.style.cssText='min-height:38px;text-align:left;padding:8px 10px';
+ b.onclick=()=>tacticExplain(term);termsContainer.appendChild(b);
+});
+function tacticExplainInText(text){
+ const terms=tacticDictionary.filter(([term])=>new RegExp(term.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&'),'i').test(text));
+ if(terms.length){$('tacticGlossary').open=true;tacticExplain(terms[0][0])}
+}
+function tacticRefresh(){
+ const category=$('tacticCategory').value,select=$('tacticVariant');
+ select.replaceChildren();
+ tacticLibrary[category].forEach((v,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=v.name;select.append(o)});
+ $('tacticDescription').textContent='Välj en variant och tryck Visa uppställning.';
+}
+$('tacticCategory').onchange=tacticRefresh;tacticRefresh();
+function tacticBuild(){
+ const category=$('tacticCategory').value;
+ const tactic=tacticLibrary[category][Number($('tacticVariant').value)||0];
+ if(!tactic)return;
+ const P=(x,y)=>orientation==='vertical'?{x,y}:{x:760-y,y:x};
+ const actor=(type,x,y)=>({id:uid(),type,...P(x,y)});
+ const attack=category!=='bp';
+ const base=[];
+ const own=attack?[[210,265],[95,350],[210,355],[325,350],[210,125]]:[[150,570],[270,570],[150,650],[270,650]];
+ const other=attack?[[150,175],[270,175],[150,260],[270,260]]:[[210,180],[90,270],[210,280],[330,270],[210,110]];
+ if(category==='pp'&&tactic.pattern==='high'){own.splice(0,own.length,...[[140,275],[280,275],[210,380],[110,170],[310,170]])}
+ if(category==='pp'&&tactic.pattern==='left'){own.splice(0,own.length,...[[175,270],[90,340],[175,365],[320,340],[210,125]])}
+ if(category==='pp'&&tactic.pattern==='right'){own.splice(0,own.length,...[[245,270],[325,340],[245,365],[90,340],[210,125]])}
+ if(category==='bp'&&tactic.pattern==='diamond'){own.splice(0,own.length,...[[210,475],[125,565],[295,565],[210,660]])}
+ if(category==='bp'&&tactic.pattern==='low'){own.splice(0,own.length,...[[155,605],[265,605],[155,675],[265,675]])}
+ if(category==='free'){own.splice(0,own.length,...[[210,245],[165,255],[260,275],[120,175],[315,165]]);other.splice(0,other.length,...[[180,165],[240,165],[150,205],[270,205]])}
+ const ours=own.map(([x,y])=>actor('playerA',x,y));
+ const opponents=other.map(([x,y])=>actor('playerB',x,y));
+ base.push(...ours,...opponents,actor(attack?'goalieB':'goalieA',210,attack?94:665));
+ const ball=actor('ball',...(attack?[own[0][0]+9,own[0][1]-12]:[other[0][0]+9,other[0][1]-12]));
+ const setBall=(arr,holder)=>{const b=arr.find(q=>q.id===ball.id);const p=arr.find(q=>q.id===holder.id);if(b&&p){b.x=p.x+9;b.y=p.y-10}};
+ base.push(ball);
+ const alternate=!!window.tacticAlternate;
+ const defense=$('tacticDefense').value;
+ const closed=defense==='closed';
+ const pressed=defense==='press';
+ const lowDefense=defense==='low';
+ const stages=[{text:tactic.steps[0],items:copy(base)}];
+ const passes={
+  cross:alternate?[3,1,4]:[1,3,4],
+  high:alternate?[1,2,4]:[0,2,4],
+  left:alternate?[3,0,4]:[1,3,4],
+  right:alternate?[3,0,4]:[1,3,4],
+  box:alternate?[2,0,4]:[1,0,3],
+  diamond:alternate?[3,0,2]:[1,0,3],
+  press:alternate?[2,0,4]:[1,0,3],
+  low:alternate?[3,0,2]:[1,0,3],
+  tap:alternate?[2,1,3]:[1,2,3],
+  wall:alternate?[2,0,3]:[1,0,3],
+  far:alternate?[1,4,3]:[1,2,3],
+  fake:alternate?[1,3,2]:[1,2,3]
+ };
+ let order=passes[tactic.pattern]||[1,2,4];
+ // Stängd diagonal: bollhållaren måste hitta en kort säker passning via
+ // understöd i stället för att försöka spela igenom försvararnas klubbor.
+ if(closed){
+  order=category==='bp'?[1,0,2]:category==='free'?[1,0,2]:[1,0,2];
+ }
+ if(pressed)order=alternate?[2,0,3]:[0,3,4];
+ if(lowDefense)order=alternate?[2,3,4]:[1,0,4];
+ const closedSteps={
+  pp:[
+   'Motståndarna stänger diagonalen. Håll bredd och erbjud understöd.',
+   'Spela kort till närmaste flank i stället för genom boxen.',
+   'Spela tillbaka till point och flytta boxen i sidled.',
+   'Spela via mitten till fri skottsektor; avsluta med skymning.'
+  ],
+  bp:[
+   'Motståndarnas powerplay hotar diagonalt. Boxen skyddar mitten.',
+   'Bollen går ut till flank. Närmaste spelare styr utåt, övriga täcker diagonalen.',
+   'När bollen går tillbaka till point återgår boxen centralt.',
+   'Stäng nytt instick och säkra retur eller bryt passningen.'
+  ],
+  free:[
+   'Försvaret stänger diagonalpassningen vid frislaget.',
+   'Sätt igång bollen med en säker kort passning längs kanten.',
+   'Spela tillbaka och byt skottvinkel utan att passera genom täckningen.',
+   'Avsluta från öppet läge och följ upp returen.'
+  ]
+ };
+ if(closed)stages[0].text=closedSteps[category][0];
+ const scenarioSteps={
+  press:{
+   pp:['Försvaret pressar bollhållaren högt. Skapa en fri understödsvinkel.','Spela snabbt bakåt till point för att komma ur pressen.','Vänd spelet till motsatt flank innan försvaret hinner flytta.','Avsluta från fri sida med skymning framför mål.'],
+   bp:['Motståndarna flyttar upp två spelare för att stressa vår box.','Håll ihop boxen och styr bollhållaren mot sargen.','När bollen går tillbaka högt, återta positionerna i mitten.','Bryt sidledspassningen eller blockera skott och rensa.'],
+   free:['Försvaret rusar mot frislagets bollhållare.','Sätt igång kort till en fri spelare på utsidan.','Spela bakåt för att komma ur pressen och byt sida.','Avsluta snabbt innan försvararna hinner ställa om.']
+  },
+  low:{
+   pp:['Motståndarna står i låg box och skyddar målområdet.','Spela mellan point och flank för att få boxen att flytta.','Sök skott från högt läge med skymning framför mål.','Ta returen eller hitta en fri spelare vid bortre stolpen.'],
+   bp:['Motståndarna spelar lågt och försöker skapa skott från utsidan.','Behåll kompakt box och täck de centrala passningslinjerna.','Låt bollen gå runt utsidan men blockera skottlinjen.','Säkra returen och spela ut bollen kontrollerat.'],
+   free:['Motståndarna står lågt och skyddar centrala skottsektorn.','Sätt igång kort och flytta bollen åt sidan.','Locka ut en försvarare med skottfint från ny vinkel.','Avsluta från utsidan och följ upp returen.']
+  }
+ };
+ const scenarioText=closed?closedSteps[category]:(scenarioSteps[defense]?.[category]||tactic.steps);
+ const scenarioLabel=closed?'Stängd diagonal':pressed?'Hög press':lowDefense?'Låg box':'';
+ if(defense!=='normal')stages[0].text=scenarioText[0];
+
+
+ // För varje taktiskt steg: flytta boll och spelare i en meningsfull ordning.
+ // Alla rörelser utgår från samma id, så animationsmotorn interpolerar dem.
+ for(let i=1;i<tactic.steps.length;i++){
+  const state=copy(stages[i-1].items);
+  const ownState=ours.map(o=>state.find(q=>q.id===o.id));
+  const oppState=opponents.map(o=>state.find(q=>q.id===o.id));
+  if(category==='pp'){
+   // PP: boll från point till flank, därefter diagonal och avslut nära mål.
+   const receiver=ownState[order[i-1]??4];
+   if(receiver)setBall(state,receiver);
+   const shifts=i===1?[[0,-8],[-9,-9],[0,-7],[6,-7],[0,-9]]:i===2?[[7,-8],[0,-3],[4,-7],[-9,-5],[0,-5]]:[[0,-4],[0,-4],[0,-9],[0,-4],[0,-18]];
+   ownState.forEach((q,j)=>{if(!q)return;const [dx,dy]=shifts[j];const d=P(dx,dy),zero=P(0,0);q.x+=d.x-zero.x;q.y+=d.y-zero.y});
+   // Försvaret glider mot bollhållaren.
+   oppState.forEach((q,j)=>{if(!q)return;const dx=i%2?-(j%2?7:11):(j%2?7:11);const a=P(dx,0),b=P(0,0);q.x+=a.x-b.x;q.y+=a.y-b.y});
+  }else if(category==='bp'){
+   // BP: boll flyttas av anfallarna; box/diamant reagerar samlat.
+   const receiver=oppState[order[i-1]??0];if(receiver)setBall(state,receiver);
+   const dx=i%2?-24:24;
+   ownState.forEach((q,j)=>{if(!q)return;const a=P(dx*(j%2?.8:1),i===2?9:-5),b=P(0,0);q.x+=a.x-b.x;q.y+=a.y-b.y});
+  }else{
+   // Frislag: igångsättning -> pass -> löpning -> avslut.
+   const receiver=ownState[order[i-1]??2];if(receiver)setBall(state,receiver);
+   ownState.forEach((q,j)=>{if(!q)return;const dx=j===3?12:j===4?-12:0,dy=j===3||j===4?-17:j===2?-12:0;const a=P(dx,dy),b=P(0,0);q.x+=a.x-b.x;q.y+=a.y-b.y});
+  }
+  if(closed){
+   // Täck diagonalen med försvararnas förflyttning, men håll fri yta
+   // vid sarg för det korta uppspelet. Bollen går alltid via understöd.
+   const blockers=category==='bp'?ownState:oppState;
+   blockers.forEach((q,j)=>{
+    if(!q)return;
+    const d=P(j%2===0?-5:5,i===1?8:i===2?-8:4),origin=P(0,0);
+    q.x+=d.x-origin.x;q.y+=d.y-origin.y;
+   });
+  }
+  if(pressed||lowDefense){
+   const defenders=category==='bp'?ownState:oppState;
+   defenders.forEach((q,j)=>{
+    if(!q)return;
+    const dx=pressed?(j%2?-10:10):(j%2?5:-5);
+    const dy=pressed?(i===1?-14:6):(i===1?12:4);
+    const a=P(dx,dy),zero=P(0,0);
+    q.x+=a.x-zero.x;q.y+=a.y-zero.y;
+   });
+  }
+  if(i===tactic.steps.length-1&&category!=='bp'){
+   // Sista steget visar avslut mot mål, inte en boll som sitter fast på skytten.
+   const b=state.find(q=>q.id===ball.id);
+   const target=P(210,112);if(b){b.x=target.x;b.y=target.y}
+  }
+  stages.push({text:(scenarioLabel?scenarioLabel+' · ':'')+(alternate?'Alternativ B · ':'')+scenarioText[i],items:state});
+ }
+ smartStop();checkpoint();smartFrames=stages;smartStep=0;window.tacticLoaded=true;
+ smartLast={name:tactic.name+(scenarioLabel?' – '+scenarioLabel.toLowerCase():''),minutes:10,focus:category,level:'junior',count:ours.length+opponents.length,description:tactic.desc,coaching:tactic.focus,progression:'Repetera i matchtempo och anpassa efter motstånd.'};
+ items=copy(base);render();setMode('move');smartLabel();
+ $('tacticDescription').textContent=tactic.name+(scenarioLabel?' – MOTDRAG: '+scenarioLabel.toUpperCase():'')+'\n\nUpplägg: '+(closed?'Spela säkert via kant och understöd. Undvik riskfylld diagonal genom täckningen.':tactic.desc)+'\n\nTränarfokus: '+tactic.focus+'\n\n'+scenarioText.map((x,i)=>(i+1)+'. '+x).join('\n')+'\n\nVälj ▶ Spela från början för hela sekvensen eller 🔀 Alternativt uppspel för en annan passningsväg. Bollen rör sig mellan spelare och mot mål i avslutet. Ändra positioner på planen och använd Snabbfilm för att skapa en egen version.';
+ toast(alternate?'Alternativ B visas på planen':'Taktiken visas på planen');
+}
+$('tacticLoad').onclick=()=>{window.tacticAlternate=false;tacticBuild()};
+$('tacticAlternative').onclick=()=>{window.tacticAlternate=!window.tacticAlternate;tacticBuild();smartShowStep(0);smartAnimate()};
+$('tacticCategory').addEventListener('change',()=>{window.tacticLoaded=false});
+$('tacticVariant').addEventListener('change',()=>{window.tacticLoaded=false});
+$('tacticDefense').addEventListener('change',()=>{window.tacticLoaded=false});
+$('tacticPlay').onclick=()=>{if(!window.tacticLoaded)tacticBuild();smartShowStep(0);smartAnimate()};
+$('tacticPause').onclick=()=>{$('smartPause').click()};
+$('tacticNext').onclick=()=>{if(!window.tacticLoaded)tacticBuild();smartShowStep(Math.min(smartStep+1,smartFrames.length-1))};
+
+$('tacticFull').onclick=()=>{$('smartFullView').click()};
+// Kostnadsfri, lokal regelbaserad taktikassistent. Ingen extern språkmodell används.
+const aiTacticInput=$('aiTacticInput'),aiTacticAnswer=$('aiTacticAnswer');
+let aiTacticChoice=null,aiSpeech=null,aiListening=false;
+const aiClean=t=>(t||'').toLocaleLowerCase('sv-SE').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function aiTacticAnalyze(){
+ const raw=aiTacticInput.value.trim();
+ if(raw.length<12){aiTacticAnswer.textContent='Beskriv lite mer: vilket spelformat gäller och vad gör motståndarna?';$('aiTacticAnimate').disabled=true;return}
+ const t=aiClean(raw);
+ const includes=(...words)=>words.some(w=>t.includes(aiClean(w)));
+ let category=$('tacticCategory').value;
+ if(includes('boxplay','numerart underlage','vi ar en mindre','fyra mot fem','4 mot 5','4v5'))category='bp';
+ else if(includes('frislag','fast situation','fasta situationer'))category='free';
+ else if(includes('powerplay','numerart overlage','fem mot fyra','5 mot 4','5v4'))category='pp';
+ const closed=includes('stang','block','diagonal','passningsvag','skarmar mitten');
+ const press=includes('press','jagar','kliver upp','hogt','aggressiv','stressar');
+ const low=includes('lag box','ligger lagt','backar hem','packar ihop','framfor mal','kompakt','sjunker');
+ const defense=closed?'closed':press?'press':low?'low':'normal';
+ const reasons=[];
+ if(closed)reasons.push('diagonalpassningen verkar blockerad');
+ if(press)reasons.push('motståndarna sätter press på bollhållaren');
+ if(low)reasons.push('motståndarna skyddar ytan nära mål');
+ if(!reasons.length)reasons.push('beskrivningen saknar tydliga uppgifter om försvarssättet');
+ const plans={
+ pp:{closed:['Spela via kanten och tillbaka till point i stället för att forcera diagonalen.','Flytta bollen till motsatt sida när försvaret glider över.','Sök avslut först när en fri skottsektor uppstår.'],press:['Ge bollhållaren ett kort understöd och spela ur pressen.','Vänd snabbt via point till den fria flanken.','Sök skott eller inspel efter spelvändningen.'],low:['Flytta bollen med tålamod mellan flank och point.','Hot med skott och skymning för att flytta boxen.','Sök retur eller bortre stolpen.'],normal:['Behåll bredd och flera passningsalternativ.','Flytta bollen tills en lucka öppnas.','Avsluta med trafik framför målvakten.']},
+ bp:{closed:['Håll klubborna i diagonala passningsvägar.','Flytta boxen tillsammans mot bollsidan utan att överge mitten.','Styr avslut mot mindre farliga ytor och rensa returen.'],press:['Låt närmaste spelare störa bollhållaren kontrollerat.','Övriga tre täcker mitten och bortre sidan.','Återgå snabbt till kompakt box när bollen spelas vidare.'],low:['Behåll en tät box framför mål.','Prioritera skottlinjer och spelare i slottet.','Rensa bollen när möjlighet ges.'],normal:['Håll avstånden korta mellan försvararna.','Flytta samlat med bollen.','Skydda skottsektorn och bortre stolpen.']},
+ free:{closed:['Använd en kort igångsättning i stället för en blockerad diagonal.','Låt en spelare löpa till ny skottvinkel.','Spela till fri yta och avsluta snabbt.'],press:['Spela igång bollen kort till en fri medspelare.','Utnyttja att försvararen kliver fram.','Avsluta från ny vinkel eller spela till bortre stolpen.'],low:['Placera en spelare för skymning eller retur.','Använd en kort sidledspassning för bättre skottvinkel.','Avsluta när skottsektorn öppnas.'],normal:['Visa två passningsalternativ.','Använd en enkel kombination för att skapa rörelse.','Avsluta snabbt från fri yta.']}
+ };
+ const names={pp:'Powerplay',bp:'Boxplay',free:'Frislag'};
+ const defenseNames={closed:'Stängd diagonal',press:'Hög press',low:'Låg box',normal:'Allmänt försvar'};
+ aiTacticChoice={category,defense};
+ const steps=plans[category][defense];
+ aiTacticAnswer.replaceChildren();
+ const heading=document.createElement('strong');heading.textContent=names[category]+' · '+defenseNames[defense];aiTacticAnswer.append(heading);
+ const reason=document.createElement('p');reason.textContent='Tolkning: '+reasons.join('; ')+'.';aiTacticAnswer.append(reason);
+ const list=document.createElement('ol');steps.forEach(step=>{const li=document.createElement('li');li.textContent=step;list.append(li)});aiTacticAnswer.append(list);
+ const caution=document.createElement('p');caution.className='hint';caution.textContent='Förslaget är regelbaserat, inte en fullständig AI-bedömning. Anpassa efter spelarnas nivå och vad som faktiskt händer på planen. Om flera försvarssätt nämns prioriteras stängd diagonal, därefter press.';aiTacticAnswer.append(caution);
+ $('aiTacticAnimate').disabled=false;
+}
+$('aiTacticAnalyze').onclick=aiTacticAnalyze;
+$('aiTacticAnimate').onclick=()=>{
+ if(!aiTacticChoice)return;
+ $('tacticCategory').value=aiTacticChoice.category;tacticRefresh();
+ $('tacticDefense').value=aiTacticChoice.defense;
+ window.tacticAlternate=false;window.tacticLoaded=false;
+ tacticBuild();smartShowStep(0);
+ document.getElementById('aiBoardPlayback').classList.add('active');
+ document.getElementById('aiBoardPlaybackTitle').textContent='🎯 '+(aiTacticChoice.category==='pp'?'Powerplay':aiTacticChoice.category==='bp'?'Boxplay':'Frislag')+' · '+(aiTacticChoice.defense==='closed'?'Stängd diagonal':aiTacticChoice.defense==='press'?'Hög press':aiTacticChoice.defense==='low'?'Låg box':'Grundläge');
+ document.getElementById('aiBoardPlayback').scrollIntoView({behavior:'smooth',block:'start'});
+ $('aiTacticSpeechStatus').textContent='Taktiken är redo på planen. Tryck ▶ Spela / pausa ovanför planen, eller välj ⛶ Helplan.';
+};
+// Uppspelningsknappar precis vid planen – inga animationer startar under scrollning.
+$('aiBoardRestart').onclick=()=>{if(!smartFrames.length)return toast('Välj en taktik först');smartShowStep(0);smartAnimate()};
+$('aiBoardToggle').onclick=()=>{if(!smartFrames.length)return toast('Välj en taktik först');if(smartRaf!==null)$('smartPause').click();else $('smartPlay').click()};
+$('aiBoardNext').onclick=()=>{if(!smartFrames.length)return toast('Välj en taktik först');smartShowStep(Math.min(smartStep+1,smartFrames.length-1))};
+$('aiBoardFullscreen').onclick=()=>$('enterFullBoard').click();
+$('aiFullRestart').onclick=()=>{if(!smartFrames.length)return toast('Välj en taktik först');smartShowStep(0);smartAnimate()};
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SpeechRecognition){
+ $('aiTacticMic').textContent='🎙️ Diktera med iPhone';
+ $('aiTacticMic').onclick=()=>{aiTacticInput.focus();$('aiTacticSpeechStatus').textContent='Tryck på mikrofonen på iPhones tangentbord och prata. Texten hamnar i rutan. Tryck sedan Föreslå motdrag.'};
+ $('aiTacticSpeechStatus').textContent='På iPhone: tryck 🎙️ Diktera med iPhone och använd mikrofonen på tangentbordet. Safari stöder inte alltid webbappens egen taligenkänning.';
+}
+else{
+ $('aiTacticMic').onclick=()=>{
+  if(aiListening)return;
+  try{
+   aiSpeech=new SpeechRecognition();aiSpeech.lang='sv-SE';aiSpeech.interimResults=false;aiSpeech.continuous=false;
+   aiSpeech.onresult=e=>{const said=Array.from(e.results).map(r=>r[0].transcript).join(' ').trim();aiTacticInput.value=(aiTacticInput.value.trim()+' '+said).trim();$('aiTacticSpeechStatus').textContent='Uppfattat: '+said+'. Tryck Föreslå motdrag.'};
+   aiSpeech.onerror=e=>{$('aiTacticSpeechStatus').textContent='Taligenkänningen misslyckades ('+e.error+'). Tryck i textrutan och använd mikrofonen på iPhones tangentbord.';aiTacticInput.focus()};
+   aiSpeech.onend=()=>{aiListening=false;$('aiTacticMic').disabled=false;$('aiTacticStop').disabled=true};
+   aiSpeech.start();aiListening=true;$('aiTacticMic').disabled=true;$('aiTacticStop').disabled=false;
+   $('aiTacticSpeechStatus').textContent='Lyssnar… Beskriv vad motståndarna gör.';
+  }catch(e){$('aiTacticSpeechStatus').textContent='Kunde inte starta mikrofonen. Skriv din beskrivning i stället.'}
+ };
+ $('aiTacticStop').onclick=()=>{if(aiSpeech)aiSpeech.stop()};
+}
+
+
+$('smartHarder').onclick=()=>{proceduralDifficulty=Math.min(3,proceduralDifficulty+1);$('smartFocus').value='pass';smartExercise()};
+$('smartDefenders').onclick=()=>{proceduralDefenders=Math.min(6,proceduralDefenders+2);$('smartFocus').value='pass';smartExercise()};
+$('smartMoveGoals').onclick=()=>{proceduralMoveGoals=true;$('smartFocus').value='pass';smartExercise()};
+$('smartGenerate').onclick=smartExercise;
+$('smartAgain').onclick=smartExercise;
+renderStoryCatalog();
+// Separate drill timeline: frame zero is the start, final frame is the finish.
+let timeline=[],timelineTimer=null,timelineActive=false,timelineSaved=null;
+function timelineStatus(){document.getElementById('timelineStatus').textContent=timeline.length?`${timeline.length} lägen sparade · Start: 1 · Slut: ${timeline.length}`:'Inga steg sparade ännu.'}
+function timelineStop(){if(timelineTimer)cancelAnimationFrame(timelineTimer);timelineTimer=null;if(timelineActive&&timelineSaved){items=copy(timelineSaved);render()}timelineActive=false;timelineSaved=null;window.coachPreviewActive=false}
+function timelineCapture(reset=false){
+ timelineStop();if(reset)timeline=[];
+ timeline.push(copy(items));timelineStatus();
+ toast(reset?'Startläget sparat':'Steg '+timeline.length+' sparat');
+}
+$('timelineStart').onclick=()=>timelineCapture(true);
+$('timelineNext').onclick=()=>{if(!timeline.length){toast('Spara startläget först');return}timelineCapture()};
+$('timelineEnd').onclick=()=>{if(!timeline.length){toast('Spara startläget först');return}timelineCapture();toast('Slutläget sparat')};
+$('timelinePause').onclick=timelineStop;
+$('timelineReset').onclick=()=>{timelineStop();if(timeline.length){checkpoint();items=copy(timeline[0]);render()}};
+$('timelineFinish').onclick=()=>{timelineStop();if(timeline.length){checkpoint();items=copy(timeline[timeline.length-1]);render()}};
+$('timelinePlay').onclick=()=>{
+ if(timeline.length<2){toast('Spara minst start och slut');return}
+ timelineStop();timelineSaved=copy(items);timelineActive=true;window.coachPreviewActive=true;
+ const duration=Number($('timelineSpeed').value)||1200,begin=performance.now();
+ function tick(now){
+  if(!timelineActive)return;
+  let progress=(now-begin)/duration,segment=Math.floor(progress);
+  if(segment>=timeline.length-1){items=copy(timeline[timeline.length-1]);render();timelineActive=false;timelineSaved=null;timelineTimer=null;window.coachPreviewActive=false;return}
+  let t=Math.max(0,Math.min(1,progress-segment)),a=timeline[segment],b=timeline[segment+1];
+  let byId=new Map(b.map(it=>[it.id,it]));
+  items=a.map(it=>{let end=byId.get(it.id);return end&&Number.isFinite(it.x)&&Number.isFinite(end.x)?{...it,x:it.x+(end.x-it.x)*t,y:it.y+(end.y-it.y)*t}:copy(it)});
+  for(const it of b)if(!a.some(old=>old.id===it.id)&&t>.5)items.push(copy(it));
+  render();timelineTimer=requestAnimationFrame(tick);
+ }
+ timelineTimer=requestAnimationFrame(tick);
+};
+$('smartAddSession').onclick=()=>{if(!smartLast){toast('Skapa en övning först');return}drills.push({name:smartLast.name,minutes:smartLast.minutes});renderDrills();toast('Övningen tillagd i träningspasset')};
+})();
+
+
+(function(){
+ document.getElementById('immersiveMenu').addEventListener('click',()=>{if(document.body.classList.contains('board-fullscreen'))document.getElementById('toolMenuButton').click();});
+ document.getElementById('immersiveExit').addEventListener('click',()=>{const exit=document.getElementById('exitFullBoard');if(exit)exit.click();else document.body.classList.remove('board-fullscreen')});
+ document.querySelectorAll('.board-workspace .rail button[data-mode]').forEach(b=>b.addEventListener('click',()=>{if(document.body.classList.contains('board-fullscreen'))document.body.classList.remove('coach201-tools-open')}));
+ const enter=document.getElementById('enterFullBoard');
+ const exit=document.getElementById('exitFullBoard');
+ const tools=document.getElementById('fullBoardTools');
+ const drawer=document.getElementById('toolDrawer');
+ let priorY=0;
+ function setFull(on){
+  if(on){priorY=window.scrollY;document.body.classList.add('board-fullscreen');document.body.classList.remove('coach201-tools-open');drawer.classList.remove('open');document.getElementById('fullCoachSheet')?.classList.remove('open');document.getElementById('fullCoachSheet')?.setAttribute('aria-hidden','true');}
+  else {document.body.classList.remove('board-fullscreen','coach201-tools-open');drawer.classList.remove('open');document.getElementById('fullCoachSheet')?.classList.remove('open');document.getElementById('fullCoachSheet')?.setAttribute('aria-hidden','true');window.scrollTo(0,priorY);}
+  enter.setAttribute('aria-pressed',String(on));if(on){const s=document.getElementById('status');if(s)s.textContent='Helplan: dubbeltryck med Flytta valt eller tryck ☰ för verktyg.';}
+ }
+ enter.addEventListener('click',()=>setFull(true));
+ exit.addEventListener('click',()=>setFull(false));
+ tools.addEventListener('click',()=>document.getElementById('toolMenuButton').click());
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('board-fullscreen'))setFull(false)});
+})();
+
+
+(function(){
+ const face=document.getElementById('coachClockFace'), select=document.getElementById('coachClockMinutes'),start=document.getElementById('coachClockStart'),reset=document.getElementById('coachClockReset'),status=document.getElementById('coachClockStatus');
+ let remaining=300,deadline=0,ticker=null;
+ const display=()=>{const n=Math.max(0,Math.ceil(remaining/1000));face.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
+ function stop(){if(ticker!==null)clearInterval(ticker);ticker=null;start.textContent='▶ Start'}
+ function tick(){remaining=Math.max(0,deadline-Date.now());display();if(remaining===0){stop();status.textContent='Klart! Byt övning eller ta paus.';if(navigator.vibrate)navigator.vibrate([200,100,200])}}
+ start.addEventListener('click',()=>{if(ticker!==null){tick();stop();status.textContent='Pausad';return}if(remaining<=0)remaining=Number(select.value)*60000;deadline=Date.now()+remaining;ticker=setInterval(tick,200);start.textContent='Ⅱ Pausa';status.textContent='Pågår';tick()});
+ reset.addEventListener('click',()=>{stop();remaining=Number(select.value)*60000;status.textContent='';display()});
+ select.addEventListener('change',()=>reset.click());display();
+ document.getElementById('fullBoardUndo').addEventListener('click',()=>document.getElementById('quickUndo').click());
+ document.getElementById('fullBoardRedo').addEventListener('click',()=>document.getElementById('quickRedo').click());
+ document.querySelectorAll('[data-jump]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.jump;let el=id==='board'?document.querySelector('.board-view-controls'):id==='match'?document.querySelector('[id*="matchPanel"], [id="matchSection"], [id="matchRoom"]'):document.getElementById(id);
+  if(!el&&id==='match')el=Array.from(document.querySelectorAll('summary')).find(x=>/match|gemensam tavla/i.test(x.textContent));
+  if(!el)return;
+  const details=el.closest('details');if(details)details.open=true;
+  if(el.tagName==='SUMMARY')el.parentElement.open=true;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+ }));
+})();
+
+
+/* Innebandy Coach PRO 8.0: offline practice planner, independent from board state */
+(()=>{'use strict';
+const key='innebandy-coach-planner-v8';const $=id=>document.getElementById(id);
+const safe=(v,min,max,def)=>{const n=Number(v);return Number.isFinite(n)?Math.max(min,Math.min(max,Math.round(n))):def};
+const library={
+ warm:['Uppvärmning med boll','Parvis bollkontroll och rörelse, låg belastning.'],
+ pass:['Passningsspel i rörelse','Passning, mottagning och nytt spelbart läge.'],
+ finish:['Avslut efter förflyttning','Avsluta i fart och följ upp returer.'],
+ defend:['Försvar och spelvändning','Jobba med avstånd, styrning och snabb omställning.'],
+ game:['Smålagsspel','Små ytor, många bollkontakter och korta byten.'],
+ close:['Nedvarvning och reflektion','Lugn avslutning, återkoppling och frågor.']
+};
+let state={items:[],level:'red',players:12,goalies:1,minutes:60};
+function save(){try{localStorage.setItem(key,JSON.stringify(state))}catch(e){$('coach80Summary').textContent='Kunde inte spara lokalt – kontrollera lagringsutrymmet.'}}
+function summary(){const total=state.items.reduce((s,i)=>s+i.minutes,0),done=state.items.filter(i=>i.done).length;$('coach80Summary').textContent=`${total} minuter · ${state.items.length} moment · ${done} klara`}
+function render(){const list=$('coach80List');list.replaceChildren();state.items.forEach((item,index)=>{
+ const li=document.createElement('li');li.className=item.done?'done':'';
+ const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!item.done;cb.setAttribute('aria-label','Klart: '+item.name);cb.addEventListener('change',()=>{item.done=cb.checked;save();render()});
+ const desc=document.createElement('div');desc.className='coach80-name';const title=document.createElement('strong');title.textContent=item.name;const sub=document.createElement('small');sub.textContent=`${item.minutes} min · ${item.type?'Tryck för skiss och tränartips':item.detail}`;desc.append(title,sub);
+ if(item.type){
+   const brief=document.createElement('div');brief.className='coach175-brief';
+   const info=exerciseBank[item.type]?.find(e=>e[0]===item.name);
+   if(info){
+    const focus=document.createElement('span');focus.textContent='🎯 '+info[2];
+    const organizationLine=document.createElement('span');organizationLine.textContent='👥 '+organization(item.type,state.players,state.goalies,item.name);
+    brief.append(focus,organizationLine);
+    const progression=document.createElement('details');progression.className='coach175-more';
+    const heading=document.createElement('summary');heading.textContent='Tränartips och svårare variant';
+    const tip=document.createElement('p');tip.textContent='Genomförande: '+info[1]+' Progression: '+info[3];
+    progression.append(heading,tip);brief.append(progression);
+   }
+   desc.append(brief);
+ }
+ // Skiss visas först vid behov så att träningspasset förblir kompakt.
+ if(item.type&&item.type!=='close'){
+  const details=document.createElement('details');details.className='coach173-sketch';
+  const heading=document.createElement('summary');heading.textContent='Visa övningen på planen';
+  details.append(heading);const drillLabel=document.createElement('p');drillLabel.className='coach173-legend';drillLabel.textContent='Skiss för: '+item.name;details.append(drillLabel);details.append(makeExerciseSketch(item.type,item.name,state.players,state.goalies));desc.append(details);
+ }
+ const minus=document.createElement('button');minus.textContent='−';minus.title='Minska tid';minus.setAttribute('aria-label','Minska tid för '+item.name);minus.onclick=()=>{item.minutes=Math.max(1,item.minutes-1);save();render()};
+ const plus=document.createElement('button');plus.textContent='+';plus.title='Öka tid';plus.setAttribute('aria-label','Öka tid för '+item.name);plus.onclick=()=>{item.minutes=Math.min(120,item.minutes+1);save();render()};
+ const del=document.createElement('button');del.textContent='×';del.title='Ta bort moment';del.setAttribute('aria-label','Ta bort '+item.name);del.onclick=()=>{state.items.splice(index,1);save();render()};li.append(cb,desc,minus,plus,del);list.append(li);
+ });summary()}
+function makeExerciseSketch(type,name,players,goalies){
+ const ns='http://www.w3.org/2000/svg';
+ const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 360 200');svg.setAttribute('role','img');svg.setAttribute('aria-label','Schematisk innebandyplan med startpositioner och rörelsevägar');svg.classList.add('coach173-pitch');
+ function el(tag,attrs,text){const n=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs||{}))n.setAttribute(k,v);if(text!==undefined)n.textContent=text;svg.append(n);return n}
+ el('rect',{x:5,y:5,width:350,height:190,rx:20,fill:'#d9eef4',stroke:'#e74b52','stroke-width':3});
+ el('line',{x1:180,y1:6,x2:180,y2:194,stroke:'#d75a60','stroke-width':2});
+ el('circle',{cx:180,cy:100,r:27,fill:'none',stroke:'#d75a60','stroke-width':2});
+ for(const x of [18,342]){el('rect',{x:x-5,y:79,width:10,height:42,fill:'none',stroke:'#444','stroke-width':3});el('path',{d:`M ${x===18?38:322} 65 Q ${x===18?62:298} 100 ${x===18?38:322} 135`,fill:'none',stroke:'#d75a60','stroke-width':2});}
+ const mark=(x,y,color='#1769b0',label='')=>{el('circle',{cx:x,cy:y,r:10,fill:color,stroke:'white','stroke-width':2});if(label)el('text',{x,y:y+4,'font-size':11,'text-anchor':'middle',fill:'white','font-weight':'bold'},label)};
+ const ball=(x,y)=>el('circle',{cx:x,cy:y,r:4,fill:'#fff',stroke:'#333','stroke-width':1.5});
+ const cone=(x,y)=>el('path',{d:`M${x} ${y-9} l-8 16 h16 z`,fill:'#f49a22',stroke:'#ad5410'});
+ const path=(points,dashed=false)=>el('polyline',{points,fill:'none',stroke:dashed?'#e27624':'#087e6f','stroke-width':3,'stroke-dasharray':dashed?'6 5':'none','stroke-linecap':'round','stroke-linejoin':'round'});
+ // Each drill has its own layout. Coordinates are in the 360 x 200 rink viewBox.
+ const drills={
+ 'Bolljägare med skydd':{blue:[[90,60],[140,60],[210,70],[270,130],[110,135]],red:[[180,100],[235,110]],balls:[[102,60],[152,60],[222,70],[282,130],[122,135]],run:['90,60 115,85 90,105','180,100 150,90 135,65'],cones:[[65,35],[295,35],[65,165],[295,165]]},
+ 'Färgportar i rörelse':{blue:[[65,95],[155,140],[255,55]],balls:[[77,95],[167,140],[267,55]],cones:[[105,65],[125,65],[185,115],[205,115],[265,140],[285,140],[225,45],[245,45]],run:['65,95 115,65 195,115 275,140','155,140 235,45']},
+ 'Spegeln två och två':{blue:[[85,65],[85,125],[190,65],[190,125]],balls:[[97,65],[202,65]],run:['85,65 125,50 155,65','85,125 125,110 155,125','190,65 230,50 260,65','190,125 230,110 260,125']},
+ 'Tre zoner – tre uppgifter':{blue:[[75,80],[175,120],[280,75]],balls:[[88,80],[188,120]],cones:[[115,60],[115,140],[235,60],[235,140]],run:['75,80 95,100 75,120','175,120 195,100 175,80','280,75 300,100 280,125']},
+ 'Tredjemanslöpning i trianglar':{blue:[[80,55],[165,145],[265,55]],balls:[[92,55]],passes:['92,60 155,135','175,135 255,65'],run:['80,68 125,100 165,125','165,145 215,120 265,70']},
+ 'Fyra hörn med spelvändning':{blue:[[75,45],[75,155],[285,45],[285,155]],balls:[[87,45],[273,155]],passes:['87,45 273,145','273,155 87,55'],run:['75,45 110,75 145,90','285,155 250,125 215,110']},
+ 'Rondo 4 mot 2 med utgång':{blue:[[105,50],[105,150],[255,50],[255,150]],red:[[165,85],[205,115]],balls:[[117,50]],passes:['117,50 243,50','255,62 255,138','243,150 117,150'],run:['165,85 140,65','205,115 230,140'],cones:[[85,35],[275,35],[85,165],[275,165]]},
+ 'Väggspel genom två korridorer':{blue:[[75,65],[155,65],[75,135],[155,135]],balls:[[87,65],[87,135]],passes:['87,65 145,65','145,65 210,65','87,135 145,135','145,135 210,135'],run:['75,65 130,45 205,45','75,135 130,155 205,155'],cones:[[60,95],[300,95]]},
+ 'Pass – diagonal – direktskott':{blue:[[85,65],[170,140],[245,65]],balls:[[97,65]],passes:['97,65 160,130','180,130 235,75','255,65 320,100'],run:['85,65 110,85 145,110']},
+ '2 mot 1 från mittlinjen':{blue:[[175,60],[175,140]],red:[[250,100]],balls:[[187,60]],passes:['187,60 215,125'],run:['175,60 225,60 285,80','175,140 225,130 285,115','250,100 270,110']},
+ 'Returkamp från två vinklar':{blue:[[215,55],[215,145],[290,100]],balls:[[227,55],[227,145]],passes:['227,55 320,90','227,145 320,110'],run:['290,100 310,100']},
+ 'Skott efter riktningsbyte':{blue:[[130,55],[130,145]],balls:[[142,55],[142,145]],cones:[[220,70],[220,130]],run:['130,55 205,70 235,50 290,85','130,145 205,130 235,150 290,115'],passes:['290,85 322,95','290,115 322,105']},
+ '1 mot 1 – styra mot sarg':{blue:[[140,95]],red:[[230,95]],balls:[[152,95]],run:['140,95 190,90 245,65','230,95 245,75 260,55']},
+ '2 mot 2 – vinn och vänd':{blue:[[125,70],[125,130]],red:[[220,70],[220,130]],balls:[[137,70]],passes:['137,70 180,120'],run:['220,70 185,85 155,95','220,130 185,115 155,105']},
+ 'Pressignal vid sargen':{blue:[[110,45],[110,100],[110,155]],red:[[205,65],[205,125]],balls:[[122,45]],passes:['122,45 110,90','110,110 122,145'],run:['205,65 160,55 135,45','205,125 165,105']},
+ 'Bryt passning och kontra':{blue:[[100,65],[100,135],[230,100]],red:[[170,95]],balls:[[112,65]],passes:['112,65 220,100'],run:['170,95 215,80 300,95']},
+ '3 mot 3 – poäng för spelvändning':{blue:[[110,55],[110,100],[110,145]],red:[[245,55],[245,100],[245,145]],balls:[[122,100]],passes:['122,100 145,55','145,55 185,145'],run:['245,55 215,70','110,145 160,145']},
+ '4 mot 4 – återerövra på fem':{blue:[[100,50],[100,95],[100,140],[155,100]],red:[[255,50],[255,95],[255,140],[205,100]],balls:[[167,100]],run:['155,100 180,85 205,100','255,95 220,95 185,95']},
+ 'Zonspel med fria stödspelare':{blue:[[135,65],[135,100],[135,135],[180,25],[180,175]],red:[[225,65],[225,100],[225,135]],balls:[[147,100]],passes:['147,100 180,25','180,25 147,65'],run:['225,100 200,90']},
+ 'Tvåmålsspel med bonusuppdrag':{blue:[[120,55],[120,100],[120,145]],red:[[235,55],[235,100],[235,145]],balls:[[132,100]],passes:['132,100 160,55','160,55 220,85'],run:['120,145 175,125','235,100 200,110']}
+ };
+ const d=drills[name];
+ if(d){
+  (d.cones||[]).forEach(p=>cone(...p));
+  (d.run||[]).forEach(p=>path(p,false));
+  (d.passes||[]).forEach(p=>path(p,true));
+  (d.blue||[]).forEach((p,i)=>mark(...p,'#1769b0',String(i+1)));
+  (d.red||[]).forEach((p,i)=>mark(...p,'#d45a50',String(i+1)));
+  (d.balls||[]).forEach(p=>ball(...p));
+  // Queue markers represent waiting players; not all players must be on the rink.
+  const organizationText=organization(type,Number(players)||12,Number(goalies)||0,name);
+  const activeMatch=organizationText.match(/Aktiva: (\d+) av/);
+  const active=activeMatch?Number(activeMatch[1]):Number(players)||12;
+  const waiting=Math.max(0,(Number(players)||12)-active);
+  if(waiting>0){el('rect',{x:8,y:8,width:117,height:21,rx:7,fill:'#123047'});el('text',{x:66,y:22,'font-size':10,'text-anchor':'middle',fill:'white'},(type==='game'?'Avbytare: ':'I led: ')+waiting+' spelare');}
+ }else{
+  [[85,60],[145,130],[220,55],[280,135]].forEach(([x,y])=>{mark(x,y);ball(x+13,y);cone(x+28,y+22)});path('90,75 125,90 150,115 200,100 245,70');
+ }
+ const legend=document.createElement('div');legend.className='coach173-legend';legend.textContent='Blå = anfallare · Röd = försvarare · Orange streckad = passning/skott · Grön = löpning · Triangel = kona. Positionerna är pedagogiska exempel; antal väntande spelare följer övningens organisation.';
+ const wrap=document.createElement('div');wrap.append(svg,legend);return wrap;
+}
+const exerciseBank={
+ warm:[
+ ['Bolljägare med skydd','Alla driver varsin boll inom markerad yta. Två jagare försöker peta ut bollar. Den som tappar bollen gör en snabb vändning och återgår.','Blicken upp, täck bollen med kroppen.','Minska ytan efter tre minuter.'],
+ ['Färgportar i rörelse','Ställ fyra färgade konportar. Spelarna driver boll och passerar den färg tränaren ropar.','Riktningsförändring och boll nära klubban.','Låt spelarna välja en fri port efter scanning.'],
+ ['Spegeln två och två','En spelare leder med boll, den andra speglar rörelser och tempo på två meters avstånd. Byt efter 45 sekunder.','Små riktningsändringar och kontroll i fart.','Lägg till riktningsbyte på signal.'],
+ ['Tre zoner – tre uppgifter','Dela planen i tre zoner: bollkontroll, snabba fötter och riktningsförändring. Byt zon varannan minut.','Aktivitet utan köer.','Öka tempot men behåll kontrollen.']],
+ pass:[
+ ['Tredjemanslöpning i trianglar','Tre spelare per triangel, en boll. A passar B, B spelar direkt till C som löper till ny yta. Alla byter position efter passning.','Titta före mottagning, öppna kroppen, passa framför mottagaren.','Lägg in en passiv försvarare som stänger ett alternativ.'],
+ ['Fyra hörn med spelvändning','Fyra stationer med två bollar. Passning till motsatt hörn, följ passningen och fyll ny position. På signal byter grupperna håll.','Passningsvinkel, timing och kommunikation.','Max två tillslag eller lägg till mittförsvarare.'],
+ ['Rondo 4 mot 2 med utgång','Fyra bollhållare mot två försvarare i en kvadrat. Efter fyra passningar får laget spela ut till en fri stödspelare.','Skapa två passningsalternativ, flytta efter passning.','Minska ytan eller kräv passning på ett tillslag.'],
+ ['Väggspel genom två korridorer','Två parallella korridorer med spelare i par. Spela vägg med medspelare, ta ny löpväg och byt korridor vid mittlinjen.','Spela på rätt sida och accelerera efter passning.','Lägg till en styrande försvarare i varje korridor.']],
+ finish:[
+ ['Pass – diagonal – direktskott','Tre stationer: back, flank och skytt. Back passar flank, flank slår diagonal till skytt i fart. Följ skott och ta retur.','Tajming, blad mot mål, avsluta snabbt.','En försvarare stör passningslinjen.'],
+ ['2 mot 1 från mittlinjen','Två anfallare startar mot en försvarare. Anfallarna måste skapa ett passningsläge innan avslut. Rotera roller efter varje anfall.','Bredd, rätt passningsögonblick, avslut i fart.','Sätt fem sekunders tidsgräns.'],
+ ['Returkamp från två vinklar','Två köfria stationer skjuter växelvis från olika vinklar. En spelare tar returen, övriga fyller på med bollar.','Snabb reaktion på retur och målvaktens position.','Andra avslutet ska tas på ett tillslag.'],
+ ['Skott efter riktningsbyte','Spelare driver mot kona, gör en tydlig riktningsändring och avslutar från ny vinkel. Växla höger och vänster.','Bollen nära kroppen och skott direkt efter vändning.','Lägg till jagande försvarare.']],
+ defend:[
+ ['1 mot 1 – styra mot sarg','Anfallare driver från mittlinjen. Försvarare ska styra mot sargen utan att kasta sig. Byt roller efter varje försök.','Avstånd, fotarbete och klubbans position.','Gå vidare till 2 mot 2 med understöd.'],
+ ['2 mot 2 – vinn och vänd','Två lag startar i begränsad yta. Vid bollvinst ska laget hitta en stödspelare på andra sidan inom tre sekunder.','Kommunicera vem som pressar och vem som täcker.','Lägg till tredje anfallare efter bollvinst.'],
+ ['Pressignal vid sargen','Tre anfallare spelar runt mot två försvarare. När bollen når sargen ska närmaste försvarare pressa och den andre täcka mitten.','Gemensam pressignal och korta avstånd.','Byt till 3 mot 3 med mål.'],
+ ['Bryt passning och kontra','Två passare försöker hitta en tredje spelare. En försvarare läser linjen, bryter och kontrar mot småmål.','Klubbposition, speluppfattning och första passningen.','Gör kontringen till 2 mot 1.']],
+ game:[
+ ['3 mot 3 – poäng för spelvändning','Spela på två små planer. Mål räknas dubbelt efter en tydlig spelvändning. Byt efter 75 sekunder.','Bredd och att upptäcka fri yta.','Begränsa bollhållaren till tre sekunder.'],
+ ['4 mot 4 – återerövra på fem','Spela 4 mot 4. Laget som tappar bollen försöker vinna tillbaka den inom fem sekunder.','Direkt omställning och gemensam press.','Ge extrapoäng för mål efter snabb återerövring.'],
+ ['Zonspel med fria stödspelare','3 mot 3 i mitten med två neutrala spelare längs sidorna. Använd stödspelarna för att skapa överläge.','Rättvänd mottagning och tredje spelaren.','Neutral spelare får endast spela på ett tillslag.'],
+ ['Tvåmålsspel med bonusuppdrag','Smålagsspel där tränaren byter bonusuppdrag var tredje minut: diagonalpassning, skott efter väggspel eller mål efter bollvinst.','Omsätt övningens fokus i matchlika beslut.','Spela sista omgången utan bonusregler.']],
+ close:[
+ ['Avslutande teknikduell','Två och två: lugna passningar på valfri yta, avsluta med en gemensam reflektion om dagens fokus.','Hög kvalitet i lugnt tempo.','Varje spelare berättar en sak de lärt sig.'],
+ ['Lugn bollkontroll och återkoppling','Egen boll i låg fart, rörlighet och kort samtal i grupp om vilka beslut som fungerade.','Avsluta med god bollkänsla.','Låt spelarna välja en teknik att visa.']]
+};
+// Additional match-relevant exercises. Every entry has purpose, execution and progression.
+exerciseBank.pass.push(
+ ['Passningsdiamant med riktningsbyte','Fyra positioner i diamant. Passa medsols två varv, byt riktning på signal. Spelaren följer sin passning till nästa position.','Mottagning i rörelse, öppen kroppsställning.','En passning måste gå genom mitten innan spelvändning.'],
+ ['Två bollar i Y-formation','Tre led formar ett Y. Spelaren längst ner startar med passning åt valfri sida och löper sedan mot motsatt led. Två bollar hålls i gång.','Orientering innan pass och tydlig kommunikation.','Lägg in försvarare som skär av ena grenen.'],
+ ['Spel genom mittzon','Två lag om tre spelar på varsin sida av en smal mittzon. Poäng när laget hittar en rättvänd mottagare genom zonen.','Vinklar, tålamod och spelbarhet bakom första press.','Begränsa antal tillslag i mittzonen.']);
+exerciseBank.finish.push(
+ ['Vinkelbyte och skott från slottet','Två passningsled på varsin kant. Skytten startar centralt, visar sig i ny vinkel och får passning till direktskott. Byt skytt efter avslut.','Skapa skottlinje med en kort förflyttning.','Lägg till försvarare som täcker skottlinjen.'],
+ ['Skymning och returtagning','En skytt vid mittlinjen, en spelare framför mål och en returtagare. Skott, skymning och andra avslut följs upp. Rotera roller varje försök.','Placering framför målvakten utan att hindra rörelse.','Låt försvarare boxa ut returtagaren.'],
+ ['3 mot 2 med andra våg','Tre anfallare anfaller mot två försvarare. Efter första avslut kommer en ny passning bakifrån för ett andra anfall.','Bredd, avslut i första läget och återerövring.','Tidsbegränsa båda anfallen till sammanlagt tio sekunder.']);
+exerciseBank.defend.push(
+ ['Backcheck från halva planen','En anfallare startar med boll och en försvarare två meter bakom. Försvararen jagar hem och styr avslutet utåt.','Löpväg, klubba i passningslinje och undvik frislag.','Låt en andra anfallare komma in på bortre sidan.'],
+ ['3 mot 2 – täck mitten','Tre anfallare bygger anfall mot två försvarare. Försvararna ska prioritera slottet och tvinga fram avslut från sämre vinkel.','Kommunikation och prioritering av farlig yta.','Lägg till hemjobbande tredje försvarare efter tre sekunder.'],
+ ['Bollvinst och första pass','Två anfallare försöker hålla bollen i en begränsad zon mot två försvarare. Vid bollvinst ska försvararna hitta en fri mottagare utanför zonen.','Första passningen efter erövring och rörelse ur press.','Ge fem sekunder att spela ut ur zonen.']);
+exerciseBank.game.push(
+ ['3 mot 3 med omställningsmål','Två lag spelar på kortplan. Efter bollvinst har laget sex sekunder på sig att försöka avsluta för bonuspoäng.','Snabbt beslut mellan kontring och bollkontroll.','Gör omställningstiden fyra sekunder.'],
+ ['4 mot 4 med joker bakom mål','Två lag spelar med en neutral joker bakom varje mål. Anfallande lag får använda jokern för att byta anfallssida.','Spelbarhet bakom försvarslinjen och rörelse mot slottet.','Jokern får bara spela direktpassning.'],
+ ['Tre zoner – spela igenom','Dela planen i tre längsgående zoner. Laget ska använda minst två zoner innan mål får räknas.','Bredd och att flytta motståndarna.','Kräv passning mellan samtliga tre zoner.']);
+// Realistic participation: attendance is not the number active in every repetition.
+const organizationProfiles={
+ warm:{active:'all',queues:0,rotation:'Alla arbetar samtidigt eller i två fria grupper.'},
+ pass:{active:4,queues:2,rotation:'Två led, spelarna fyller på och byter position efter sin passning.'},
+ finish:{active:3,queues:2,rotation:'Två led; en till tre spelare utför momentet medan övriga väntar på sin tur. Byt led efter avslut.'},
+ defend:{active:3,queues:2,rotation:'En duell eller ett 2 mot 1 i taget. Försvarare och anfallare roterar efter varje försök.'},
+ game:{active:8,queues:0,rotation:'Spela 4 mot 4; resterande spelare byter in i korta intervaller.'},
+ close:{active:'all',queues:0,rotation:'Samla hela gruppen.'}
+};
+function organization(type,players,goalies,name){
+ const p=organizationProfiles[type];
+ if(type==='warm'||type==='close')return `Aktiva: ${players} av ${players}. ${p.rotation}`;
+ if(type==='game'){
+  const target=/3 mot 3/i.test(name)?6:8;const active=Math.min(players,target),waiting=Math.max(0,players-active);
+  return `Aktiva: ${active} av ${players}${waiting?`; ${waiting} avbytare`:''}. ${players>=target?`${target/2} mot ${target/2} med byten.`:`${Math.floor(players/2)} mot ${Math.ceil(players/2)} på mindre yta.`} ${waiting?'Byt 2–4 spelare var 60–90 sekund.':'Anpassa ytan efter antalet spelare.'}`;
+ }
+ let active=Math.min(players,p.active),waiting=players-active;
+ if(type==='pass'&&/Rondo 4 mot 2/i.test(name))active=Math.min(players,6);
+ if(type==='pass'&&/trianglar/i.test(name))active=Math.min(players,3);
+ if(type==='finish'&&/2 mot 1/i.test(name))active=Math.min(players,3);
+ if(type==='finish'&&/3 mot 2/i.test(name))active=Math.min(players,5);
+ if(type==='finish'&&/Skymning/i.test(name))active=Math.min(players,3);
+ if(type==='defend'&&/2 mot 2/i.test(name))active=Math.min(players,4);
+ if(type==='defend'&&/1 mot 1/i.test(name))active=Math.min(players,2);
+ if(type==='defend'&&/Pressignal/i.test(name))active=Math.min(players,5);
+ if(type==='defend'&&/3 mot 2/i.test(name))active=Math.min(players,5);
+ if(type==='defend'&&/Bollvinst/i.test(name))active=Math.min(players,4);
+ if(type==='game'&&/3 mot 3/i.test(name))active=Math.min(players,6);
+ waiting=Math.max(0,players-active);
+ const lines=p.queues&&waiting?` Fördela väntande spelare i ${p.queues} led (${Math.floor(waiting/p.queues)}–${Math.ceil(waiting/p.queues)} per led).`:'';
+ return `Aktiva: ${active} av ${players}; ${waiting} väntar på sin tur.${lines} ${p.rotation}${goalies&&type==='finish'?' Målvakt deltar i målet.':''}`;
+}
+let generationCounter=0;
+function choose(type,used){
+ let recent=[];try{const value=JSON.parse(localStorage.getItem("ib-recent-exercises-v176")||"[]");if(Array.isArray(value))recent=value}catch(e){}
+ const options=exerciseBank[type].filter(x=>!used.has(x[0])&&!recent.includes(x[0]));
+ const pool=options.length?options:exerciseBank[type].filter(x=>!used.has(x[0]));
+ const chosen=pool[Math.floor(Math.random()*pool.length)];
+ used.add(chosen[0]);return chosen;
+}
+function generate(){
+ const minutes=safe($('coach80Minutes').value,30,120,60),players=safe($('coach80Players').value,4,30,12),goalies=safe($('coach80Goalies').value,0,4,1),level=$('coach80Level').value;
+ const focus=$('coach80Focus').value,intensity=$('coach80Intensity').value;
+ if(state.items.length&&!confirm('Ersätta nuvarande träningspass?'))return;
+ const patterns={
+ mix:['warm','pass','finish','defend','game','close'],
+ pass:['warm','pass','pass','game','pass','close'],
+ finish:['warm','pass','finish','finish','game','close'],
+ defend:['warm','defend','defend','game','defend','close'],
+ game:['warm','pass','game','defend','game','close']
+ };
+ const types=patterns[focus]||patterns.mix;
+ const weights=[.12,.18,.2,.18,.25,.07];
+ let times=weights.map(w=>Math.max(3,Math.floor(minutes*w)));
+ times[4]+=minutes-times.reduce((a,b)=>a+b,0);
+ const used=new Set();
+ let items=types.map((type,i)=>{
+   const [name,detail,coaching,progression]=choose(type,used);
+   let setup=organization(type,players,goalies,name);
+   if(type==='finish'&&!goalies)setup+=' Använd småmål eller markerade målzoner utan målvakt.';
+   const levelNote=level==='red'?'Börja utan aktiv press och lägg på motstånd när tekniken sitter.':level==='junior'?'Kräv beslut under tidspress.':'Höj matchtempo och komplexitet.';
+   const intensityNote=intensity==='high'?'Korta intensiva omgångar med tydliga vilopauser.':intensity==='tech'?'Prioritera teknik och kvalitet framför tempo.':'Växla arbete och återhämtning.';
+   return {name,type,detail:detail+' Fokus: '+coaching+' Progression: '+progression+' Organisation: '+setup+' '+levelNote+' '+intensityNote,minutes:times[i],done:false};
+ });
+ const signature=items.map(x=>x.name).join('|');
+ let previous='';try{previous=localStorage.getItem('ib-last-plan-signature')||''}catch(e){}
+ if(signature===previous){const alternative=exerciseBank[types[1]][(exerciseBank[types[1]].findIndex(x=>x[0]===items[1].name)+1)%exerciseBank[types[1]].length];items[1].name=alternative[0];items[1].detail=alternative[1]+' Fokus: '+alternative[2]+' Progression: '+alternative[3]+' Organisation: '+organization(types[1],players,goalies,alternative[0]);}
+ try{localStorage.setItem('ib-last-plan-signature',items.map(x=>x.name).join('|'))}catch(e){}
+ let history=[];try{const value=JSON.parse(localStorage.getItem('ib-recent-exercises-v176')||'[]');if(Array.isArray(value))history=value}catch(e){}
+ try{localStorage.setItem('ib-recent-exercises-v176',JSON.stringify([...items.map(x=>x.name),...history].slice(0,12)))}catch(e){}
+ generationCounter++;
+ state={minutes,players,goalies,level,focus,intensity,items};
+ save();render();
+ $('coach80Summary').textContent+=` · Variant ${generationCounter} · ${focus==='mix'?'allsidigt':focus}`;
+}
+
+$('coach80Generate').onclick=generate;
+$('coach80Add').onclick=()=>{const name=prompt('Namn på momentet:');if(!name||!name.trim())return;state.items.push({name:name.trim().slice(0,70),detail:'Eget moment',minutes:5,done:false});save();render()};
+$('coach80Reset').onclick=()=>{if(!state.items.length||confirm('Nollställa träningspasset?')){state.items=[];save();render()}};
+$('coach80Copy').onclick=async()=>{if(!state.items.length){alert('Skapa ett pass först.');return}const str=`Innebandy Coach PRO – träningspass\n${state.players} spelare, ${state.goalies} målvakter\n`+state.items.map((i,n)=>`${n+1}. ${i.name} – ${i.minutes} min: ${i.detail}`).join('\n');try{await navigator.clipboard.writeText(str);alert('Träningspasset kopierat!')}catch{prompt('Kopiera träningspasset:',str)}};
+try{const loaded=JSON.parse(localStorage.getItem(key)||'null');if(loaded&&Array.isArray(loaded.items)&&loaded.items.length<=100){state={...state,...loaded,items:loaded.items.filter(i=>i&&typeof i.name==='string'&&Number.isFinite(i.minutes)).map(i=>({...i,name:i.name.slice(0,70),minutes:safe(i.minutes,1,120,5)}))}}}catch(e){}
+$('coach80Level').value=['red','junior','senior'].includes(state.level)?state.level:'red';$('coach80Players').value=safe(state.players,4,30,12);$('coach80Goalies').value=safe(state.goalies,0,4,1);$('coach80Minutes').value=[45,60,75,90].includes(state.minutes)?state.minutes:60;render();
+})();
+
+
+if ('serviceWorker' in navigator) {
+ window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(console.warn));
+}
+
+
+/* 7.1: export/import of locally stored coach data, no cloud credentials */
+(function(){
+ const keys=['innebandy_coach_pro_library_v1','innebandy_coach_sessions_v1','ib-roster-current-v2','ib-rosters-v2','ib-coach-storyboards-v7','innebandy-coach-planner-v8'];
+ // Include other local animation keys from the app, without copying unrelated site storage.
+ const animationKeys=Object.keys(localStorage).filter(k=>/^innebandy.*(story|anim|frame)/i.test(k));
+ const allKeys=[...new Set([...keys,...animationKeys])];
+ const downloadBtn=document.getElementById('backupAll');
+ const importBtn=document.getElementById('restoreAll');
+ const picker=document.getElementById('restoreAllFile');
+ downloadBtn.onclick=()=>{
+  const data={format:'innebandy-coach-backup',version:1,createdAt:new Date().toISOString(),data:{}};
+  for(const k of allKeys){const v=localStorage.getItem(k);if(v!==null)data.data[k]=v;}
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='innebandy-coach-full-backup.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
+ importBtn.onclick=()=>picker.click();
+ picker.onchange=async()=>{
+  const file=picker.files?.[0];picker.value='';if(!file)return;
+  if(file.size>5_000_000){alert('Filen är för stor.');return;}
+  try{
+   const parsed=JSON.parse(await file.text());
+   if(parsed.format!=='innebandy-coach-backup'||parsed.version!==1||!parsed.data||typeof parsed.data!=='object'||Array.isArray(parsed.data))throw Error('Fel format');
+   const entries=Object.entries(parsed.data).filter(([k])=>allKeys.includes(k));
+   if(!entries.length||entries.some(([,v])=>typeof v!=='string'))throw Error('Ingen giltig data');
+   entries.forEach(([,v])=>JSON.parse(v));
+   if(!confirm('Återställa '+entries.length+' datagrupper? Befintliga uppgifter i dessa grupper ersätts. Exportera gärna en backup först.'))return;
+   const originals=entries.map(([k])=>[k,localStorage.getItem(k)]);
+   try{entries.forEach(([k,v])=>localStorage.setItem(k,v));}
+   catch(e){originals.forEach(([k,v])=>v===null?localStorage.removeItem(k):localStorage.setItem(k,v));throw e;}
+   alert('Säkerhetskopian är återställd. Appen laddas om.');location.reload();
+  }catch(e){alert('Kunde inte läsa säkerhetskopian: '+e.message);}
+ };
+})();
+
+(()=>{document.addEventListener('keydown',e=>{if(!window.matchReadOnly)return;const key=e.key.toLowerCase();const modifier=e.ctrlKey||e.metaKey;const typing=e.target.closest?.('input,textarea,[contenteditable="true"]');if(typing)return;if((modifier&&['z','y','x','v'].includes(key))||['delete','backspace'].includes(key)){e.preventDefault();e.stopImmediatePropagation();const n=document.getElementById('matchReadOnlyNotice');if(n)n.hidden=false;}},true)})();
+(()=>{const editingIds=new Set(['undo','redo','quickUndo','quickRedo','fullBoardUndo','fullBoardRedo','quickClear','clear','quickRotate','rotMinus','rotPlus','rotQuarter','rotReset','filmQuickCapture','filmQuickUndo','timelineStart','timelineNext','timelineEnd','customNew','customCapture','customNext','customClear','aiApply','aiGenerate','smartExercise','quickRoster','filmQuickAdd','filmQuickDelete','filmQuickSave','customPlay','customStop','smartApply']);document.addEventListener('click',event=>{if(!window.matchReadOnly)return;const button=event.target.closest('button');if(!button)return;if(button.dataset.mode||editingIds.has(button.id)){event.preventDefault();event.stopImmediatePropagation();const notice=document.getElementById('matchReadOnlyNotice');if(notice)notice.hidden=false;}},true);document.addEventListener('change',event=>{if(!window.matchReadOnly)return;if(event.target.id==='orientation'){event.stopImmediatePropagation();}},true);})();
+
+(()=>{'use strict';
+ const $=id=>document.getElementById(id),dock=$('filmDock'),status=$('filmDockStatus');
+ const refresh=()=>{
+  const steps=$('customStepList')?.querySelectorAll('[data-step]')?.length;
+  const txt=$('customStepList')?.textContent||'';
+  const match=txt.match(/Steg\s*(\d+)/gi);
+  const count=steps||match?.length||0;
+  status.textContent=count?`${count} steg i filmen`:'Dra spelare eller boll längs önskad bana, även i cirklar. Tryck sedan Nästa steg';
+ };
+ const act=id=>{const el=$(id);if(!el){return false}el.click();return true};
+ $('filmQuickCapture').addEventListener('click',()=>{
+  const panel=$('customStoryboard');
+  if(panel)panel.open=true;
+  // One tap saves the starting formation, subsequent taps save each new position.
+  if(!$('customStepText').value.trim())$('customStepText').value='Steg '+(Number(($('customStepList')?.querySelectorAll('[data-step]')||[]).length)+1);
+  act('customCapture');refresh();
+ });
+ $('filmQuickPlay').addEventListener('click',()=>{act('customPlay');refresh()});
+ $('filmQuickPause').addEventListener('click',()=>act('smartPause'));
+ $('filmQuickUndo').addEventListener('click',()=>{act('customUndo');refresh()});
+ $('filmQuickSave').addEventListener('click',()=>{act('customSave');refresh()});
+ $('filmQuickMore').addEventListener('click',()=>{
+  if(document.body.classList.contains('board-fullscreen'))act('exitFullBoard');
+  const panel=$('customStoryboard');panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'start'});
+ });
+ $('filmDockToggle').addEventListener('click',()=>{dock.classList.toggle('collapsed');$('filmDockToggle').textContent=dock.classList.contains('collapsed')?'▴':'▾'});
+ $('customCapture').addEventListener('click',()=>setTimeout(refresh,0));
+ $('customUndo').addEventListener('click',()=>setTimeout(refresh,0));
+ $('customNew').addEventListener('click',()=>setTimeout(refresh,0));
+ refresh();
+})();
+// Helplanscenter 11.0: alla åtgärder använder appens befintliga funktioner.
+(()=>{
+ const dock=document.getElementById('fullCoachDock'),sheet=document.getElementById('fullCoachSheet'),content=document.getElementById('fcSheetContent'),title=document.getElementById('fcSheetTitle');
+ const q=id=>document.getElementById(id);
+ const button=(label,fn,parent=content)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);parent.appendChild(b);return b};
+ const group=()=>{const el=document.createElement('div');el.className='fc-grid';content.appendChild(el);return el};
+ const actions=()=>{const el=document.createElement('div');el.className='fc-actions';content.appendChild(el);return el};
+ const note=t=>{const p=document.createElement('p');p.className='fc-note';p.textContent=t;content.appendChild(p)};
+ const labelSelect=(name,options,value)=>{const l=document.createElement('label');l.textContent=name;const sel=document.createElement('select');options.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o)});if(value!==undefined)sel.value=value;l.append(sel);content.append(l);return sel};
+ const close=()=>{sheet.classList.remove('open');sheet.setAttribute('aria-hidden','true')};
+ const click=id=>{const el=q(id);if(el){el.click();return true}return false};
+ const show=(tab)=>{
+  content.replaceChildren();sheet.classList.add('open');sheet.setAttribute('aria-hidden','false');
+  if(tab==='tools'){
+   title.textContent='🧰 Planverktyg';note('Välj ett verktyg. Panelen stängs så du kan använda fingret direkt på planen.');const g=group();
+   [['✋ Flytta','move'],['🔵 Spelare','playerA'],['🔴 Motståndare','playerB'],['🧤 Målvakt','goalieA'],['⚪ Boll','ball'],['🔺 Kona','cone'],['🥅 Mål','goal'],['✏️ Rita','draw'],['↗️ Pil','arrow'],['🧽 Sudda','erase'],['📝 Redigera','edit'],['🔄 Rotera','rotateObject']].forEach(([t,m])=>button(t,()=>{const target=document.querySelector('#modes [data-mode="'+m+'"]');if(target&&!target.classList.contains('active'))target.click();close()},g));
+   const a=actions();button('↶ Ångra',()=>click('undo'),a);button('↷ Gör om',()=>click('redo'),a);button('↔ Vänd plan',()=>click('quickRotate'),a);
+  }else if(tab==='tactics'){
+   title.textContent='🛡️ Taktik och motdrag';
+   const cat=labelSelect('Spelform',[['pp','Powerplay'],['bp','Boxplay'],['free','Frislag']],q('tacticCategory').value);
+   const variant=labelSelect('Uppställning',[],q('tacticVariant').value);
+   const def=labelSelect('Motståndarnas försvar',[['normal','Normalt'],['press','Hög press'],['low','Låg box'],['closed','Stängd diagonal']],q('tacticDefense').value);
+   const variants=()=>{q('tacticCategory').value=cat.value;q('tacticCategory').dispatchEvent(new Event('change'));variant.replaceChildren();Array.from(q('tacticVariant').options).forEach(o=>variant.add(new Option(o.text,o.value)));};
+   cat.addEventListener('change',variants);variants();variant.value=q('tacticVariant').value;
+   const load=()=>{q('tacticCategory').value=cat.value;q('tacticCategory').dispatchEvent(new Event('change'));q('tacticVariant').value=variant.value;q('tacticDefense').value=def.value;click('tacticLoad');close()};
+   const a=actions();button('🏑 Visa på plan',load,a);button('▶ Spela sekvens',()=>{load();click('tacticPlay')},a);button('🔀 Alternativ',()=>{load();click('tacticAlternative')},a);
+   note('Använd ◀ ▶ i överkanten för stegvis uppspelning. Ändra spelarna med Flytta när filmen är pausad.');
+  }else if(tab==='ai'){
+   title.textContent='🎙️ Smart taktikassistent';note('Beskriv vad motståndarna gör. På iPhone: tryck i textfältet och använd mikrofonen på tangentbordet.');
+   const l=document.createElement('label');l.textContent='Vad gör motståndarna?';const input=document.createElement('textarea');input.placeholder='Exempel: De stänger diagonalen och pressar vår point i powerplay.';input.value=q('aiTacticInput').value;l.append(input);content.append(l);
+   const answer=document.createElement('div');answer.className='fc-note';answer.setAttribute('aria-live','polite');content.append(answer);
+   const a=actions();button('🎙️ Diktera',()=>{input.focus();answer.textContent='Tryck på mikrofonen på iPhones tangentbord och prata.'},a);
+   button('🧠 Föreslå motdrag',()=>{q('aiTacticInput').value=input.value;click('aiTacticAnalyze');answer.textContent=q('aiTacticAnswer').innerText||q('aiTacticAnswer').textContent},a);
+   button('▶ Visa på planen',()=>{q('aiTacticInput').value=input.value;click('aiTacticAnalyze');if(!q('aiTacticAnimate').disabled){click('aiTacticAnimate');close()}else answer.textContent='Beskriv situationen lite mer först.'},a);
+   note('Assistenten är regelbaserad och fungerar utan betalt AI-konto.');
+  }else if(tab==='drills'){
+   title.textContent='📚 Skapa en övning';
+   const level=labelSelect('Nivå',[['red','Röd nivå'],['junior','Junior'],['senior','Senior']],q('smartLevel').value);
+   const focus=labelSelect('Fokus',[['random','Överraska mig'],['pass','Passningar'],['shot','Avslut'],['transition','Spelvändningar'],['pressure','Press och försvar'],['possession','Bolltempo']],q('smartFocus').value);
+   const a=actions();button('✨ Skapa på planen',()=>{q('smartLevel').value=level.value;q('smartFocus').value=focus.value;click('smartGenerate');close()},a);
+   button('▶ Spela upp',()=>{q('smartLevel').value=level.value;q('smartFocus').value=focus.value;click('smartGenerate');close();click('smartReset');click('smartPlay')},a);
+   button('📂 Mina filmer',()=>{close();click('exitFullBoard');q('smartDrills').open=true;q('storyCatalog').scrollIntoView({behavior:'smooth',block:'start'})},a);
+   note('Förhandsvisning och uppspelning sker direkt på planen. Mina filmer öppnas i normalläge.');
+  }else if(tab==='save'){
+   title.textContent='💾 Spara och dela';note('Spara tavlan eller filmen. För avancerad redigering kan du öppna filmredigeraren.');const a=actions();
+   button('💾 Spara tavlan',()=>{click('quickSave');close()},a);button('📤 Exportera bild',()=>{click('quickExport');close()},a);
+   button('🎬 Spara film',()=>{click('smartSaveStory');close()},a);button('🎥 Filmredigerare',()=>{close();click('exitFullBoard');q('customStoryboard').open=true;q('customStoryboard').scrollIntoView({behavior:'smooth',block:'start'})},a);
+  }
+ };
+ document.querySelectorAll('[data-fc-open]').forEach(b=>b.addEventListener('click',()=>{sheet.dataset.tab=b.dataset.fcOpen;show(b.dataset.fcOpen)}));
+ dock.querySelectorAll('[data-fc-tab]').forEach(b=>b.addEventListener('click',()=>{const tab=b.dataset.fcTab;if(sheet.classList.contains('open')&&sheet.dataset.tab===tab){close();return}sheet.dataset.tab=tab;show(tab)}));
+ q('fcSheetClose').addEventListener('click',close);q('exitFullBoard').addEventListener('click',close);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+})();
+
+
+(function(){
+  const key='icp-focus-v14';
+  const toggle=document.getElementById('coachFocusToggle');
+  if(!toggle)return;
+  let focused=true;
+  try{const stored=localStorage.getItem(key);if(stored!==null)focused=stored==='1'}catch(e){}
+  function update(){
+    document.body.classList.toggle('coach-focus',focused);
+    toggle.textContent=focused?'Visa fler val':'Dölj extra val';
+    toggle.setAttribute('aria-pressed',String(focused));
+    toggle.setAttribute('aria-expanded',String(!focused));
+  }
+  // Delegate to the existing history engine; never maintain a second undo stack.
+  [['coachFocusUndo','undo'],['coachFocusRedo','redo']].forEach(function(pair){
+    const shortcut=document.getElementById(pair[0]);
+    const original=document.getElementById(pair[1]);
+    if(!shortcut||!original)return;
+    const sync=function(){shortcut.disabled=original.disabled;};
+    shortcut.addEventListener('click',function(){if(!original.disabled)original.click();sync();});
+    new MutationObserver(sync).observe(original,{attributes:true,attributeFilter:['disabled']});
+    sync();
+  });
+  const full=document.getElementById('coachFocusFullBoard');
+  if(full)full.addEventListener('click',function(){const entry=document.getElementById('enterFullBoard');if(entry)entry.click()});
+  toggle.addEventListener('click',function(){focused=!focused;try{localStorage.setItem(key,focused?'1':'0')}catch(e){}update()});
+  update();
+})();
+
+(function(){
+ if(!new URLSearchParams(location.search).has('test'))return;
+ window.addEventListener('load',()=>{
+  const b=document.createElement('div');b.id='coachDiagnostics';b.style.cssText='position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:9999;background:#10304b;color:white;padding:8px 12px;border:1px solid #4cb;border-radius:9px;font:12px system-ui;pointer-events:none';
+  document.body.appendChild(b);
+  const check=()=>{const svg=document.getElementById('board'),r=svg?.getBoundingClientRect();b.textContent='TEST · '+(document.body.classList.contains('board-fullscreen')?'Helplan':'Normalläge')+' · Plan '+Math.round(r?.width||0)+'×'+Math.round(r?.height||0)+' · verktyg '+document.querySelectorAll('.board-workspace .rail button').length;};
+  setInterval(check,500);check();
+ });
+})();
+
+(()=>{const ready=()=>{
+ const wrap=document.querySelector('.wrap');const board=document.getElementById('board');const planner=document.getElementById('coach80Planner');const smart=document.getElementById('smartDrills');if(!wrap||!board||!planner||!smart)return;
+ const nav=document.createElement('nav');nav.className='coach174-nav';nav.setAttribute('aria-label','Huvudvyer');
+ const views=[['plan','🏑 Plan'],['pass','📋 Träningspass'],['ovningar','✨ Övningar']];
+ function show(which){document.body.dataset.screen=which;nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.screen===which;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false')});if(which==='ovningar')smart.open=true;window.scrollTo(0,0)}
+ views.forEach(([id,label])=>{const b=document.createElement('button');b.type='button';b.dataset.screen=id;b.textContent=label;b.addEventListener('click',()=>show(id));nav.append(b)});
+ wrap.prepend(nav);document.body.classList.add('coach174');show('plan');
+};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
+})();
+
+
+(()=>{
+ const NS='http://www.w3.org/2000/svg',states=new WeakMap();
+ const make=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));parent.append(e);return e};
+ function setup(details){
+  if(states.has(details))return;
+  const svg=details.querySelector('svg.coach173-pitch');if(!svg)return;
+  const all=[...svg.querySelectorAll('polyline')].filter(p=>{try{return p.getTotalLength()>1}catch{return false}});
+  if(!all.length)return;
+  const runs=all.filter(p=>p.getAttribute('stroke-dasharray')==='none');
+  const passes=all.filter(p=>p.getAttribute('stroke-dasharray')!=='none');
+  // Exercise-specific sequence definitions: indexes refer to the drill's drawn run/pass paths.
+  // Unmapped drills remain explicitly schematic rather than claiming tactical accuracy.
+  const drillName=(details.querySelector('.coach173-legend')?.textContent||'').replace(/^Skiss för:\s*/,'').trim();
+  const timelines={
+   'Tredjemanslöpning i trianglar':[['pass',0,'Första passningen'],['run',0,'Tredjeman löper'],['pass',1,'Spela vidare'],['run',1,'Fortsatt rörelse']],
+   'Väggspel genom två korridorer':[['pass',0,'Passa till väggspelare'],['run',0,'Löp i första korridoren'],['pass',1,'Tillbaka i löpvägen'],['pass',2,'Starta andra korridoren'],['run',1,'Löp i andra korridoren'],['pass',3,'Tillbaka i andra korridoren']],
+   'Pass – diagonal – direktskott':[['pass',0,'Passa diagonalt'],['run',0,'Löp för understöd'],['pass',1,'Spela fram skytten'],['pass',2,'Direktskott']],
+   '2 mot 1 från mittlinjen':[['run',0,'Anfallare tar djup'],['run',1,'Andra anfallaren breddar'],['pass',0,'Passa till medspelaren'],['run',2,'Försvararen styr']],
+   'Returkamp från två vinklar':[['pass',0,'Första skottet'],['run',0,'Gå på retur'],['pass',1,'Andra skottet']],
+   'Bryt passning och kontra':[['pass',0,'Passning att bryta'],['run',0,'Bryt och kontra']],
+   '3 mot 3 – poäng för spelvändning':[['pass',0,'Första passningen'],['run',0,'Försvararen flyttar'],['pass',1,'Vänd spelet'],['run',1,'Anfallaren breddar']]
+  };
+  const candidate=timelines[drillName];
+  const spec=candidate&&candidate.every(([kind,index])=>Boolean((kind==='run'?runs:passes)[index]))?candidate:null;
+  const incomplete=Boolean(candidate&&!spec);
+  const phases=[];
+  if(spec){
+   spec.forEach(([kind,index,title])=>{const path=(kind==='run'?runs:passes)[index];if(path)phases.push({title,paths:[path],kind:kind==='run'?'run':'pass'})});
+  }else{
+   if(runs.length)phases.push({title:'Schematisk spelarlöpning',paths:runs,kind:'run'});
+   passes.forEach((path,i)=>phases.push({title:'Schematisk passning/skott '+(i+1),paths:[path],kind:'pass'}));
+  }
+  if(!phases.length)return;
+  const controls=document.createElement('div');controls.className='coach179-controls';
+  const play=document.createElement('button');play.type='button';play.textContent='▶ Spela';
+  const restart=document.createElement('button');restart.type='button';restart.textContent='↺ Börja om';
+  const speed=document.createElement('select');speed.setAttribute('aria-label','Animationshastighet');
+  [['3000','Långsam'],['1900','Normal'],['1000','Snabb']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;o.selected=v==='1900';speed.append(o)});
+  const status=document.createElement('span');status.className='coach179-status';status.setAttribute('aria-live','polite');
+  const progress=document.createElement('input');progress.type='range';progress.min='0';progress.max='100';progress.step='1';progress.value='0';progress.setAttribute('aria-label','Spola inom aktuellt moment');progress.className='coach185-progress';
+  const prev=document.createElement('button');prev.type='button';prev.textContent='‹ Föregående';
+  const next=document.createElement('button');next.type='button';next.textContent='Nästa steg ›';
+  const choose=document.createElement('select');choose.setAttribute('aria-label','Välj steg i övningen');
+  phases.forEach((ph,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=`${i+1}. ${ph.title}`;choose.append(option)});
+  controls.append(play,restart,prev,next,speed,choose,progress,status);svg.insertAdjacentElement('afterend',controls);
+  const note=document.createElement('p');note.className='coach173-legend';
+  const audit=document.createElement('p');audit.className='coach186-audit';audit.setAttribute('role','status');
+  const explain=document.createElement('details');explain.className='coach186-explain';
+  const explainSummary=document.createElement('summary');explainSummary.textContent='Kontrollera övningens moment';
+  const explainList=document.createElement('ol');
+  phases.forEach((ph,i)=>{const li=document.createElement('li');li.textContent=`${i+1}. ${ph.title} (${ph.kind==='run'?'spelarrörelse':'boll'})`;explainList.append(li)});
+  explain.append(explainSummary,explainList);controls.insertAdjacentElement('afterend',explain);
+  note.textContent=spec?'Stegvis övningssekvens – förvald ordning, ännu inte taktiskt verifierad.':incomplete?'Övningssekvensen saknar ritade rörelser och visas därför schematiskt.':'Schematisk uppspelning – ordningen är inte taktiskt verifierad.';
+  controls.insertAdjacentElement('afterend',note);note.insertAdjacentElement('afterend',audit);
+  const overlay=make('g',{'class':'coach181-overlay','pointer-events':'none'},svg);
+  const state={phase:0,elapsed:0,last:0,raf:0,playing:false,markers:[],finished:false,ball:null,ballHolder:null,players:[]};states.set(details,state);
+  // Track all visible blue player icons, preserving their final positions after each running phase.
+  const baseIcons=[...svg.querySelectorAll('circle[fill="#1769b0"]')];
+  const originalPlayers=baseIcons.map(c=>({x:Number(c.getAttribute('cx')),y:Number(c.getAttribute('cy'))}));
+  // Report paths that cannot be linked to a drawn player. Do not imply that
+  // an animation is complete when it only moves the ball or has missing players.
+  const unlinked=runs.filter(path=>{
+   const start=path.getPointAtLength(0);
+   return !originalPlayers.some(pl=>Math.hypot(pl.x-start.x,pl.y-start.y)<=32);
+  });
+  audit.textContent=unlinked.length?`⚠ ${unlinked.length} löpväg(ar) saknar spelare nära startpunkten. Animationen är ofullständig.`:`${phases.length} ritade moment identifierade (teknisk kontroll, inte taktiskt godkännande).`;
+  // Keep the static diagram untouched when closed; hide duplicate blue symbols while animating.
+  baseIcons.forEach(c=>c.style.opacity='0');
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const nearest=(pos,arr,limit=25)=>{let idx=-1,best=limit;arr.forEach((v,i)=>{const d=dist(pos,v);if(d<best){best=d;idx=i}});return idx};
+  function init(){
+   overlay.replaceChildren();state.players=originalPlayers.map((pos,i)=>{
+    const c=make('circle',{cx:pos.x,cy:pos.y,r:9,fill:'#1769b0',stroke:'#fff','stroke-width':2},overlay);
+    const label=make('text',{x:pos.x,y:pos.y+3.5,'font-size':9,'text-anchor':'middle',fill:'#fff','font-weight':'bold'},overlay);label.textContent=String(i+1);
+    return {...pos,c,label};
+   });
+   const balls=[...svg.querySelectorAll('circle[fill="#fff"]')].filter(c=>Number(c.getAttribute('r'))===4);
+   const first=balls[0];const start=first?{x:Number(first.getAttribute('cx')),y:Number(first.getAttribute('cy'))}:originalPlayers[0]||{x:180,y:100};
+   state.ball=make('circle',{cx:start.x,cy:start.y,r:5,fill:'#ffe04b',stroke:'#222','stroke-width':1.5},overlay);
+   state.ballHolder=nearest(start,state.players,27);
+  }
+  function movePlayer(i,pt){const player=state.players[i];if(!player)return;player.x=pt.x;player.y=pt.y;player.c.setAttribute('cx',pt.x);player.c.setAttribute('cy',pt.y);player.label.setAttribute('x',pt.x);player.label.setAttribute('y',pt.y+3.5)}
+  function moveBall(pt){state.ball.setAttribute('cx',pt.x);state.ball.setAttribute('cy',pt.y)}
+  function render(){
+   const phase=phases[state.phase];if(!phase)return;
+   const ratio=Math.min(1,state.elapsed/Number(speed.value));
+   if(phase.kind==='run'){
+    state.markers.forEach(({path,playerIndex})=>{const pt=path.getPointAtLength(path.getTotalLength()*ratio);if(playerIndex>=0)movePlayer(playerIndex,pt)});
+    if(state.ballHolder!==null&&state.ballHolder>=0){const holder=state.players[state.ballHolder];if(holder)moveBall({x:holder.x+12,y:holder.y})}
+   }else{
+    const path=phase.paths[0],pt=path.getPointAtLength(path.getTotalLength()*ratio);moveBall(pt);
+   }
+   status.textContent=`Moment ${state.phase+1}/${phases.length}: ${phase.title}`;
+   choose.value=String(state.phase);prev.disabled=state.phase===0&&state.elapsed===0;
+   next.disabled=state.finished;progress.value=String(Math.round(ratio*100));
+  }
+  function beginPhase(){
+   const phase=phases[state.phase];if(!phase)return;
+   if(phase.kind==='run'){
+    const used=new Set();state.markers=phase.paths.map(path=>{
+     const start=path.getPointAtLength(0);let idx=nearest(start,state.players,32);
+     if(used.has(idx))idx=-1;if(idx>=0)used.add(idx);
+     return {path,playerIndex:idx};
+    });
+   }else{
+    const path=phase.paths[0],start=path.getPointAtLength(0);
+    // Snap to pass origin, because some tactical drawings are schematic and do not connect perfectly.
+    moveBall(start);state.ballHolder=null;
+   }
+  }
+  function endPhase(){
+   const phase=phases[state.phase];if(phase.kind==='pass'){
+    const p=phase.paths[0],end=p.getPointAtLength(p.getTotalLength());
+    const receiver=nearest(end,state.players,28);
+    state.ballHolder=receiver;
+    if(receiver>=0){const pl=state.players[receiver];moveBall({x:pl.x+12,y:pl.y})}
+   }
+  }
+  function pause(){state.playing=false;cancelAnimationFrame(state.raf);play.textContent='▶ Fortsätt'}
+  function reset(){pause();state.phase=0;state.elapsed=0;state.last=0;state.finished=false;init();beginPhase();render();play.textContent='▶ Spela';next.disabled=false}
+  function tick(t){
+   if(!state.playing)return;if(!details.isConnected||!details.open){pause();return}
+   if(state.last)state.elapsed+=Math.min(100,t-state.last);state.last=t;
+   if(state.elapsed>=Number(speed.value)){
+    state.elapsed=Number(speed.value);render();endPhase();
+    if(state.phase===phases.length-1){state.finished=true;pause();status.textContent='Sekvens färdig';play.textContent='↺ Spela igen';next.disabled=true;return}
+    state.phase++;state.elapsed=0;beginPhase();
+   }
+   render();state.raf=requestAnimationFrame(tick);
+  }
+  play.onclick=()=>{if(state.playing){pause();return}if(state.finished)reset();state.playing=true;state.last=0;play.textContent='Ⅱ Pausa';state.raf=requestAnimationFrame(tick)};
+  restart.onclick=reset;speed.onchange=render;
+  progress.oninput=()=>{
+   pause();
+   // Reconstruct the phase before scrubbing, so rewinding also restores players and ball.
+   const target=state.phase, percent=Number(progress.value);seek(target);
+   state.elapsed=Number(speed.value)*percent/100;
+   render();play.textContent='▶ Fortsätt';
+  };
+  next.onclick=()=>{
+   pause();
+   if(state.finished){reset();return}
+   state.elapsed=Number(speed.value);render();endPhase();
+   if(state.phase===phases.length-1){state.finished=true;status.textContent='Sekvens färdig';play.textContent='↺ Spela igen';next.disabled=true;return}
+   state.phase++;state.elapsed=0;beginPhase();render();play.textContent='▶ Fortsätt';
+  };
+  // Replay completed phases from their original positions when seeking backwards.
+  function seek(target){
+   pause();state.phase=0;state.elapsed=0;state.finished=false;init();beginPhase();
+   const index=Math.max(0,Math.min(phases.length-1,target));
+   while(state.phase<index){state.elapsed=Number(speed.value);render();endPhase();state.phase++;state.elapsed=0;beginPhase()}
+   state.elapsed=0;render();play.textContent='▶ Spela';next.disabled=false;
+  }
+  prev.onclick=()=>seek(state.phase-1);
+  choose.onchange=()=>seek(Number(choose.value));
+  details.addEventListener('toggle',()=>{
+   if(!details.open){pause();baseIcons.forEach(c=>c.style.opacity='');}
+   else baseIcons.forEach(c=>c.style.opacity='0');
+  });reset();
+ }
+ document.addEventListener('toggle',e=>{if(e.target.matches?.('details.coach173-sketch')&&e.target.open)setup(e.target)},true);
+})();
+
+
+(function(){
+ const sheet=document.getElementById('fullCoachSheet');
+ if(!sheet)return;
+ // A top-level dialog is not covered by the fullscreen pitch or its touch-capturing SVG.
+ document.body.appendChild(sheet);
+ // A user selection must always close the menu, without interfering with its existing handlers.
+ sheet.addEventListener('click',function(e){
+   const btn=e.target.closest('button');
+   if(!btn || !sheet.contains(btn))return;
+   if(btn.closest('.fc-grid') && btn.textContent.trim()){
+     // The existing button handler runs first; this is only a defensive fallback.
+     requestAnimationFrame(()=>{
+       if(sheet.classList.contains('open') && btn.isConnected && btn.closest('.fc-grid')){
+         sheet.classList.remove('open');sheet.setAttribute('aria-hidden','true');
+       }
+     });
+   }
+ });
+})();
+
+
+(function(){
+'use strict';
+const old=document.getElementById('fullCoachSheet');
+if(!old)return;
+const overlay=document.createElement('div');overlay.id='coach205Menu';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-label','Välj planverktyg');
+const panel=document.createElement('div');panel.className='coach205-panel';
+const head=document.createElement('div');head.className='coach205-head';
+const title=document.createElement('span');title.textContent='🏑 Välj verktyg';
+const close=document.createElement('button');close.id='coach205Close';close.type='button';close.textContent='✕';
+head.append(title,close);panel.append(head);
+const grid=document.createElement('div');grid.className='coach205-grid';panel.append(grid);overlay.append(panel);document.body.append(overlay);
+let lastTouch=0,normalOpen=false;
+overlay.addEventListener('coach-open-normal',()=>{normalOpen=true;sync()});
+function hide(){normalOpen=false;old.classList.remove('open');old.setAttribute('aria-hidden','true');sync();}
+function choose(mode){
+ // Reuse the existing delegated mode selector rather than maintaining a second board state.
+ const source=document.querySelector('#modes [data-mode="'+mode+'"]');
+ if(source && !source.classList.contains('active'))source.click();
+ hide();
+ const current=document.getElementById('currentMode');
+ if(current){const message=document.getElementById('coach206Mode');if(message){message.textContent='Valt: '+current.textContent+' · '+(mode==='draw'?'Dra fingret över planen för att rita':mode==='arrow'?'Dra fingret för att skapa en pil':'Tryck eller dra på planen');message.classList.add('visible');}}
+}
+[['✋ Flytta','move'],['🔵 Spelare','playerA'],['🔴 Motståndare','playerB'],['🧤 Målvakt','goalieA'],['⚪ Boll','ball'],['🔺 Kona','cone'],['🥅 Mål','goal'],['✏️ Rita','draw'],['↗️ Pil','arrow'],['🧽 Sudda','erase'],['📝 Redigera','edit'],['🔄 Rotera','rotateObject']].forEach(([label,mode])=>{
+ const b=document.createElement('button');b.type='button';b.textContent=label;
+ b.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();lastTouch=Date.now();choose(mode)},{passive:false});
+ b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(Date.now()-lastTouch<600)return;choose(mode)});
+ grid.append(b);
+});
+close.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();lastTouch=Date.now();hide()},{passive:false});
+close.addEventListener('click',()=>{if(Date.now()-lastTouch>=600)hide()});
+overlay.addEventListener('touchend',e=>{if(e.target===overlay){e.preventDefault();hide()}},{passive:false});
+overlay.addEventListener('click',e=>{if(e.target===overlay)hide()});
+function sync(){overlay.classList.toggle('visible',normalOpen)}
+new MutationObserver(sync).observe(old,{attributes:true,attributeFilter:['class','data-tab']});
+new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class']});
+sync();
+})();
+
+(function(){const badge=document.getElementById('coach206Mode');document.getElementById('exitFullBoard')?.addEventListener('click',()=>badge.classList.remove('visible'));document.querySelectorAll('#modes [data-mode]').forEach(b=>b.addEventListener('click',()=>{if(!document.body.classList.contains('board-fullscreen'))return;requestAnimationFrame(()=>{badge.textContent='Valt: '+(document.getElementById('currentMode')?.textContent||'');badge.classList.add('visible')})}));})();
+
+(function(){
+ const body=document.body;
+ const toggle=document.getElementById('immersiveMenu');
+ // Legacy sidebar-open class is never needed: the centered menu is authoritative.
+ new MutationObserver(()=>{if(body.classList.contains('board-fullscreen')&&body.classList.contains('coach201-tools-open'))body.classList.remove('coach201-tools-open')}).observe(body,{attributes:true,attributeFilter:['class']});
+ if(toggle)toggle.setAttribute('aria-label','Öppna verktyg mitt på planen');
+})();
+
+
+(function(){
+'use strict';
+const root=document.createElement('div');root.id='coach212Handles';
+root.innerHTML='<button type="button" id="coach212Left" aria-label="Alla verktyg">❯</button><button type="button" id="coach212Right" aria-label="Redigera och spara">❮</button><button type="button" id="coach212Bottom" aria-label="Övningar och träningspass">▲ Mer</button>';
+document.body.append(root);
+const shade=document.createElement('div');shade.id='coach212Shade';shade.setAttribute('role','dialog');shade.setAttribute('aria-label','Helplansfunktioner');
+const sheet=document.createElement('section');sheet.id='coach212Sheet';shade.append(sheet);document.body.append(shade);
+const groups={
+main:{title:'☰ Huvudmeny',hint:'Match, chatt, delning och träning öppnas ovanpå helplanen. Gemensam tavla och chatt kräver konfigurerad Firebase.',items:[
+['🏑 Snabbverktyg','special:tools'],['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['📋 Träningspass','more:coach80Planner'],['📚 Övningar','more:smartDrills'],['👥 Femmor & trupp','more:rosterPanel'],['🎬 Animationer','more:customStoryboard'],['💾 Spara tavlan','click:save'],['⚙️ Planinställningar','more:boardOptions'],['📤 Exportera','click:export']]},
+left:{title:'🧰 Alla verktyg',hint:'Välj verktyg och arbeta vidare direkt på planen.',items:[
+['✋ Flytta','mode:move'],['🔵 Blå spelare','mode:playerA'],['🔴 Röd spelare','mode:playerB'],['🧤 Målvakt','mode:goalieA'],['⚪ Boll','mode:ball'],['🔺 Kona','mode:cone'],['🥅 Mål','mode:goal'],['✏️ Rita','mode:draw'],['↗️ Pil','mode:arrow'],['🧽 Sudda','mode:erase'],['📝 Ändra spelare','mode:edit'],['🔄 Rotera objekt','mode:rotateObject'],['🎨 Färg & tjocklek','more:boardOptions'],['👥 Spelartrupp','more:rosterPanel']]},
+right:{title:'⚙️ Redigera & spara',hint:'Snabbåtgärder utan att lämna helplan.',items:[
+['↶ Ångra','click:undo'],['↷ Gör om','click:redo'],['📸 Nytt filmsteg','click:frame'],['💾 Spara','click:save'],['📤 Exportera','click:export'],['🗑️ Töm planen','click:clear'],['👥 Spelartrupp','more:rosterPanel'],['🎨 Planinställningar','more:boardOptions']]},
+bottom:{title:'📋 Match, övningar & träningspass',hint:'Använd funktionerna från helplan. För större redigering kan du öppna motsvarande del av appen.',items:[
+['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['🎬 Filmsteg','click:frame'],['▶️ Spela film','click:filmQuickPlay'],['⏸️ Pausa film','click:filmQuickPause'],['📽️ Filmverktyg','more:customStoryboard'],['🏑 Övningar','more:smartDrills'],['📋 Träningspass','more:coach80Planner'],['💾 Spara övning','click:customSave'],['📤 Exportera film','click:customExport']]}
+};
+let active=null,down=null;
+function close(){shade.classList.remove('open');active=null;down=null}
+function act(spec){
+ const [type,id]=spec.split(':');
+ if(type==='special'&&id==='tools'){document.getElementById('coach205Menu')?.dispatchEvent(new Event('coach-open-normal'));return true}
+ if(type==='special'&&(id==='chat'||id==='share')){
+  const result=act('more:matchPanel');
+  if(result==='keep'){
+   const target=document.getElementById(id==='chat'?'matchChat':'matchShare');
+   if(target){target.scrollIntoView({block:'center',behavior:'instant'});if(id==='chat'&&document.getElementById('matchMessage'))document.getElementById('matchMessage').focus({preventScroll:true});}
+  }
+  return result;
+ }
+ if(type==='mode'){
+  const source=document.querySelector('#modes [data-mode="'+id+'"]');
+  if(source){if(!source.classList.contains('active'))source.click();return true}
+  return false;
+ }
+ const el=document.getElementById(id);if(!el)return false;
+ if(type==='click'){el.click();return true}
+ if(type==='more'){
+  if(id==='boardOptions'){
+   const opts=document.getElementById('boardOptions');if(opts){opts.classList.add('open');opts.open=true;}
+  }else if(el.tagName==='DETAILS'){el.open=true}else{el.classList.add('open');el.hidden=false}
+  // Legacy panels are located outside fullscreen; show them inside a temporary sheet instead.
+  const oldParent=el.parentNode,oldNext=el.nextSibling;
+  if(oldParent){
+   const holder=document.createElement('div');holder.style.cssText='margin-top:12px;padding:10px;background:#102d3e;border-radius:12px;max-height:55dvh;overflow:auto';
+   sheet.append(holder);holder.append(el);el.style.display='block';
+   const restore=()=>{if(oldNext&&oldNext.parentNode===oldParent)oldParent.insertBefore(el,oldNext);else oldParent.append(el);el.style.display='';holder.remove();shade.removeEventListener('coach212-close',restore)};
+   shade.addEventListener('coach212-close',restore,{once:true});
+   return 'keep';
+  }
+ }
+ return true;
+}
+function open(side){
+ if(!document.body.classList.contains('board-fullscreen'))return;
+ close();active=side;shade.dataset.side=side==='main'?'left':side;
+ const g=groups[side];sheet.replaceChildren();
+ const head=document.createElement('div');head.className='c212-head';
+ const h=document.createElement('h2');h.textContent=g.title;
+ const x=document.createElement('button');x.className='c212-close';x.textContent='✕';x.type='button';x.addEventListener('click',dismiss);
+ head.append(h,x);sheet.append(head);
+ const hint=document.createElement('p');hint.className='c212-hint';hint.textContent=g.hint;sheet.append(hint);
+ const grid=document.createElement('div');grid.className='c212-grid';
+ for(const [label,spec] of g.items){const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const result=act(spec);if(result===true)dismiss();else if(result===false){hint.textContent='Funktionen är inte tillgänglig i detta läge.'}else{grid.style.display='none';hint.textContent='Stäng panelen med ✕ för att återgå till planen.'}});grid.append(b)}
+ sheet.append(grid);shade.classList.add('open');
+}
+function dismiss(){shade.dispatchEvent(new Event('coach212-close'));close()}
+shade.addEventListener('click',e=>{if(e.target===shade)dismiss()});
+for(const side of ['left','right','bottom']){
+ const b=document.getElementById('coach212'+side[0].toUpperCase()+side.slice(1));
+ b.addEventListener('click',()=>open(side));
+ b.addEventListener('pointerdown',e=>{down={side,x:e.clientX,y:e.clientY};},{passive:true});
+ b.addEventListener('pointerup',e=>{if(!down)return;const dist=side==='bottom'?down.y-e.clientY:side==='left'?e.clientX-down.x:down.x-e.clientX;if(dist>18){e.preventDefault();open(side)}down=null});
+}
+window.coach214OpenMain=function(){open('main')};
+document.getElementById('exitFullBoard')?.addEventListener('click',dismiss);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&shade.classList.contains('open'))dismiss()});
+})();
+
+
+(function(){'use strict';
+const hamburger=document.getElementById('immersiveMenu');
+function showTools(){
+ const overlay=document.getElementById('coach205Menu');
+ if(!overlay)return;
+ // Open the actual, working centered selector rather than the legacy dock.
+ overlay.dispatchEvent(new Event('coach-open-normal'));
+}
+if(hamburger){
+ hamburger.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();if(window.coach214OpenMain)window.coach214OpenMain();else showTools()},true);
+}
+// Prevent iOS Safari's double-tap zoom specifically on the board and toolbar.
+// Let the app's existing pointer double-tap recognizer handle the action.
+// Touch-action:none on #board prevents Safari double-tap zoom.
+// Do not preventDefault on document touchend: it can cancel pointerup on iOS.
+// On iOS, dblclick can trigger zoom unless explicitly cancelled.
+document.addEventListener('dblclick',function(e){
+ if(e.target.closest?.('#board, .board-workspace, #immersiveMenu, #coach205Menu'))e.preventDefault();
+},true);
+})();
+
+/* Coach 21.4: distinct main navigation from left tool drawer */
+
+(function(){'use strict';
+const menu=document.getElementById('coach205Menu');if(!menu)return;
+// Remove legacy inline visibility flags if another script left them behind.
+for(const prop of ['display','visibility','opacity','z-index'])menu.style.removeProperty(prop);
+const panel=menu.querySelector('.coach205-panel');if(panel)panel.style.removeProperty('visibility');
+// Never write inline display on opening or closing; CSS follows the class.
+})();

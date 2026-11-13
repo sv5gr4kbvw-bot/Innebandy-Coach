@@ -1,0 +1,11 @@
+TESTA PÅ TVÅ TELEFONER
+1. Publicera ZIP på Netlify och publicera database.rules.json i Firebase Realtime Database Rules.
+2. Skapa ett nytt rum på telefon A.
+3. Öppna inbjudan på telefon B, som ska vara åskådare.
+4. Försök ändra på B: ändringen får inte skickas till A.
+5. Tryck Be om redigeringsrätt på B.
+6. På A: tryck Ge redigering vid B.
+7. Flytta en spelare på B, verifiera att A uppdateras.
+8. På A: tryck Ta bort redigering; B får inte längre synkronisera.
+9. Testa även chatt, frånkoppling och återanslutning.
+OBS: Åskådarläget hindrar synkronisering men låser inte alla lokala ritverktyg ännu. Firebase-reglerna är den faktiska skrivspärren. Befintliga rum kan påverkas av ändrade regler.

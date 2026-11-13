@@ -1,0 +1,1 @@
+Innebandy Coach PRO 16.1 – lokal regressionskontroll. Ingen Netlify-publicering gjord. Testa i Safari innan skarp användning. ?test=1 visar teknisk planstatus.

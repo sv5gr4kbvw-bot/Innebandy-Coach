@@ -1,0 +1,24 @@
+INNEBANDY COACH PRO 19.0 – TESTVERSION
+INGEN PUBLICERING GJORD.
+
+Genomgång:
+- JS-syntax i alla inline- och externa skript, Firebase-reglernas JSON, ZIP-integritet.
+- Kontrollerad struktur: Plan, Träningspass, Övningar ligger som direkta barn i huvudvyn.
+- Åtgärdat: träningsgeneratorn kraschade vid nekad eller trasig localStorage-historik.
+- Åtgärdat: mobilanpassning för stegknappar, välj moment och skisser.
+- Ändrat: teknisk sekvenskontroll framställs inte som taktiskt godkännande.
+- Service worker-cache uppdaterad för version 19.0.
+
+ÅTERSTÅR: verklig iPhone/Safari-testning av rita, dra, placera, helplan, animation, plan, export, offline och matchdelning.
+Den automatiserade webbläsarkörningen kunde inte genomföras eftersom lokala sidladdningar blockerades i testmiljön.
+Firebase-reglernas JSON är giltig, men säkerhet och livebehörigheter har inte testats mot Firebase.
+
+FÖRESLAGEN IPHONE-TEST:
+1. Öppna publicerad testversion i Safari (först när du vill använda en Netlify-publicering).
+2. Plan: välj Blå, tryck på planen; välj Rita, dra med fingret; testa Ångra/Gör om.
+3. Helplan: upprepa spelare, rita, flytta och stäng helplan.
+4. Träningspass: skapa tre pass med samma val; kontrollera variation och totalt antal minuter.
+5. Öppna övningsskiss: Nästa/Föregående, välj steg, spola, spela/pausa.
+6. Stäng och öppna sidan: kontrollera att passet finns kvar.
+7. Testa offline efter första nätladdning.
+8. Matchdelning testas separat med två telefoner och Firebase-regler installerade.

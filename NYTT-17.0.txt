@@ -1,0 +1,1 @@
+Version 17.0: förenklad toppnavigering och 22 konkreta träningsövningar. Passgeneratorn varierar fokus, övningar och progression. Testa i Safari före publicering. Ingen Netlify-publicering gjord.

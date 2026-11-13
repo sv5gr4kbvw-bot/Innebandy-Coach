@@ -1,0 +1,1 @@
+17.3: Individuella övningsskisser för 20 övningar. Ingen Netlify-publicering krävs för att bygga vidare. JavaScript syntax kontrollerad; inte testad i Safari.

@@ -1,0 +1,1 @@
+Version 17.7: 12 individuella skisser för nya övningar från 17.6. Kontrollera att skissens passningar, löpningar och positioner matchar instruktionen. Ej testad i Safari. Ingen Netlify-publicering har gjorts.

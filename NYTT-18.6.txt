@@ -1,0 +1,1 @@
+Version 18.6: Momentlista, varning för löpvägar utan närliggande spelare, tydlig skillnad mellan ritad sekvens och taktiskt verifierad övning, rättning av sista-steg-knapp. Kräver fortfarande funktionstest på iPhone Safari.

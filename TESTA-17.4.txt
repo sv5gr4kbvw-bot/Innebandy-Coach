@@ -1,0 +1,1 @@
+17.4: Tre fokusvyer utan långa scrollsträckor. Testa Plan, Träningspass och Övningar. Skapa pass och öppna varje övningsskiss. Publicera inte innan Safari-test.

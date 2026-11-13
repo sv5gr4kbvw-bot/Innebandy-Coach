@@ -1,0 +1,11 @@
+INNEBANDY COACH PRO 16.0 – samlad testversion
+
+Ändringar:
+- Placering av spelare, koner, bollar och mål sker direkt vid tryck, utan fördröjning.
+- Dubbeltryck för verktygsmeny är begränsat till Flytta-läget, så ritning/placering inte avbryts.
+- Helplanslägets sidverktyg har förbättrad pekhantering och markerat aktivt verktyg.
+- Korrigerad CSS för att stänga av redigering när helplansverktygspanelen är öppen.
+- Tidigare funktioner för animation, övningar och matchdelning följer med, men är inte fullständigt funktionstestade.
+
+TESTA FÖRE PUBLICERING: använd Safari på iPhone, kontrollera spelare, ritning, flyttning, helplan, ångra/gör om och matchdelning med två enheter. Firebase-regler kräver separat installation och verifiering.
+Ingen Netlify-publicering har gjorts.

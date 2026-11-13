@@ -1,0 +1,8 @@
+TESTPLAN 13.5 – bollanimationer
+1. Skapa två filmsteg med spelare och boll.
+2. Välj Dribbla och rita en kurvig löpväg. Bollen ska följa spelaren.
+3. Välj Passa och mottagare, testa 25/50/75 procent.
+4. Välj Skjut och målbur, kontrollera att bollen slutar vid målet.
+5. Spela flera steg i följd och kontrollera att bollen inte hoppar tillbaka mellan stegen.
+6. Testa paus/fortsätt, Safari och låst åskådarläge.
+OBS: Manuellt iPhone-test och Firebase-test återstår.

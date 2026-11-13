@@ -1,0 +1,13 @@
+INNEBANDY COACH PRO 10.0 BETA – TESTCHECKLISTA
+
+1. Öppna Netlify-länken i Safari och ladda om.
+2. Lägg till en spelare, boll och kona. Flytta alla med fingret.
+3. Rita fri linje och pil. Kontrollera ångra/gör om.
+4. Testa dubbeltryck för verktygsmenyn och helplansläge.
+5. Skapa övningsfilm med minst två steg och en löpväg.
+6. Spela, pausa, byt app och återvänd till Safari.
+7. Spara filmen, öppna den för redigering, exportera JSON och importera den igen.
+8. Lägg till på hemskärmen från Safari och öppna appen därifrån.
+9. Kontrollera att det går att öppna appen offline (funktioner som kräver nät kan då inte användas).
+
+OBS: Detta är en beta. Gör säkerhetskopia av befintliga övningar före publicering.

@@ -1,0 +1,13 @@
+TESTPLAN – iPhone Safari (innan Netlify-publicering)
+
+1. Öppna tavlan och kontrollera att Flytta, Rita, Spelare, Boll och Ångra fungerar.
+2. Dra spelare i en cirkel, spara filmsteg och spela upp. Kontrollera att hela banan följs.
+3. Dribbla med boll, passa efter 50 % och skjut. Kontrollera att bollen inte hoppar mellan filmsteg.
+4. Generera flera passningsövningar; kontrollera stationer, koner och flyttade mål.
+5. Öppna Match på två telefoner med samma Firebase-projekt. Skapa rum på telefon A, dela länk till B.
+6. Bekräfta att båda syns i deltagarlistan och att ändringar går åt båda håll.
+7. Stäng B och kontrollera att deltagaren försvinner efter frånkoppling.
+8. Testa utan internet och kontrollera att fel visas tydligt.
+
+OBS: Match kräver konfigurerad Firebase och korrekt databasregler.
+Behörigheterna är ännu inte uppdelade i redigerare och åskådare.

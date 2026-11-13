@@ -1,0 +1,1 @@
+Version 20.5: Ny separat tryckbar verktygsmeny för helplan. Testa dubbeltryck, välj spelare, placera spelare, välj Rita och rita. Publicera först som Preview.

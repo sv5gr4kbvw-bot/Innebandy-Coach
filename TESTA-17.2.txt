@@ -1,0 +1,1 @@
+Öppna Träningspass, skapa pass, tryck Visa övningen på planen. Skisser är schematiska och varierar med övningstyp. Ingen Netlify-publicering behövs under utveckling.

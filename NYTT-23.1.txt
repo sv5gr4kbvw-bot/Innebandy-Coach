@@ -1,0 +1,1 @@
+23.1: Appen startar direkt i helplansläge utan sidscrollning. Alla befintliga pek- och dubbeltryckshanterare från 23.0 är oförändrade. Testa som Preview först.

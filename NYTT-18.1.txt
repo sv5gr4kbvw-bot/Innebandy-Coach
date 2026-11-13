@@ -1,0 +1,1 @@
+18.1: Spelare behåller positioner, boll följer närmaste spelare under löpning, animerade passningar och mottagning nära spelare. Skissernas passningsvägar är schematiska och inte fullt taktiskt synkroniserade. Ej Safari-testad.

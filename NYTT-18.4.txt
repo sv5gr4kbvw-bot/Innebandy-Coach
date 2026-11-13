@@ -1,0 +1,1 @@
+18.4: Verifierbar Föregående-steg-knapp, valfri stegväxling, korrekt rekonstruktion av tidigare faser, kompaktare mobilkontroller. Ej Safari-testad.

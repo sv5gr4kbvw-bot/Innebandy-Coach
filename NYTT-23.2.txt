@@ -1,0 +1,1 @@
+23.2: uppdaterat appnamn och installationsmetadata; korrigerat service-worker-cache för versionsuppdateringar och borttagning av gamla cacheversioner. Plan- och dubbeltryckskoden är oförändrad.

@@ -1,0 +1,1 @@
+TEST I SAFARI: 1. Öppna helplan. 2. Tryck på 🔵 Spelare i vänster verktygsrad, tryck på planen. 3. Tryck på ✏️ Rita till höger, dra på planen. 4. Välj ✋ Flytta och dra spelaren. 5. Testa ångra. 6. Testa både stående och liggande iPhone. OBS: Ej verifierat i fysisk iPhone/Safari.

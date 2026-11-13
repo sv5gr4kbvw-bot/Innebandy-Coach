@@ -1,0 +1,1 @@
+29.5: Bygger direkt på uppladdade 29.4. Större namnfält i laguppställning och Match+. Utvisningar 2/5/10 minuter kan registreras per spelare, period och match. Händelselista, säsongsstatistik och CSV inkluderar utvisningar. Timern finns kvar separat. Testa som Preview först.

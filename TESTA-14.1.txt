@@ -1,0 +1,8 @@
+TESTA 14.1 PÅ IPHONE
+1. Öppna appen i Safari.
+2. Kontrollera att ⛶ Helplan syns även i fokusläge.
+3. Tryck ⛶ Helplan och kontrollera att hela planen visas.
+4. Avsluta helplansläge och växla Visa fler val / Dölj extra val.
+5. Rita en linje, ångra, gör om och flytta en spelare.
+6. Prova animation med boll, passning och skott.
+7. Testa matchdelning mellan två enheter innan behörigheterna betraktas som verifierade.

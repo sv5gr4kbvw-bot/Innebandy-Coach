@@ -1,0 +1,9 @@
+20.1 – HELPLAN MED MAXIMAL PLANSTORLEK
+- Helplan öppnas med dolda sidomenyer.
+- Dubbeltryck på planen när Flytta är valt visar/döljer verktygen.
+- ☰ uppe till vänster visar/döljer också verktygen, oavsett aktivt verktyg.
+- Efter val av verktyg döljs sidomenyerna automatiskt.
+- Ritning och objekt använder samma befintliga verktygskod som tidigare.
+- Ingen publicering utförd.
+OBS: dubbeltryck i andra verktygslägen är avsiktligt inte aktiverat eftersom första trycket annars kan skapa ett objekt. Välj Flytta eller använd ☰.
+TESTA I SAFARI: öppna helplan, kontrollera maximal planstorlek, dubbeltryck med Flytta, välj Spelare, placera spelare, öppna ☰ och välj Rita, dra linje, stäng helplan.

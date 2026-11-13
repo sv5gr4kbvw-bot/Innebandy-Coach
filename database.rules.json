@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null && $room.matches(/^[a-f0-9]{40}$/)",
+        ".write": "auth != null && !data.exists() && newData.child('createdBy').val() === auth.uid && $room.matches(/^[a-f0-9]{40}$/)",
+        "createdBy": {
+          ".write": false
+        },
+        "createdAt": {
+          ".write": false
+        },
+        "board": {
+          ".write": "auth != null && (root.child('rooms').child($room).child('createdBy').val() === auth.uid || root.child('rooms').child($room).child('editors').child(auth.uid).val() === true)",
+          ".validate": "newData.isString() && newData.val().length <= 250000"
+        },
+        "editors": {
+          "$uid": {
+            ".write": "auth != null && root.child('rooms').child($room).child('createdBy').val() === auth.uid && $uid !== auth.uid",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "chat": {
+          "$msg": {
+            ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['uid','name','text','time']) && newData.child('uid').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length <= 500"
+          }
+        },
+        "participants": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid",
+            ".validate": "newData.hasChildren(['name','joinedAt']) && newData.child('name').isString() && newData.child('name').val().length <= 32"
+          }
+        }
+      }
+    }
+  }
+}

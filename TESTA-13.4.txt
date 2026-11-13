@@ -1,0 +1,9 @@
+13.4 - test innan publicering
+1. Öppna appen i Safari och kontrollera att ritning och flytt fungerar lokalt.
+2. Skapa ett Firebase-rum på telefon A.
+3. Öppna inbjudningslänken på telefon B: åskådare ska inte kunna ändra planen eller använda radera/ångra.
+4. Ge B redigeringsrätt, flytta en spelare, kontrollera synkronisering på A.
+5. Återkalla redigering och kontrollera att B inte kan spara ändringar.
+6. Lämna och anslut igen; kontrollera deltagarlistan.
+7. Testa smart bollinnehav, passningar och skott i Safari.
+Obs: Firebase-regler måste installeras separat. Inte verifierat med två riktiga telefoner.

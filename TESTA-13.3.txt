@@ -1,0 +1,9 @@
+13.3 TESTVERSION – INTE PUBLICERAD
+1. Öppna match på två separata iPhones med Firebase konfigurerat.
+2. Som gäst: försök flytta, rita, lägga till spelare och ångra; det ska blockeras.
+3. Gäst: prova uppspelning och Match-chatten, som ska fungera.
+4. Gäst: begär redigeringsrätt. Ägare: godkänn. Prova att rita.
+5. Ägare: återkalla redigeringsrätt; ritning ska blockeras igen.
+6. Lämna matchen; lokal taktiktavla ska åter kunna redigeras.
+7. Testa att ansluta och lämna upprepade gånger för att hitta dubbla lyssnare.
+Obs: Behörigheter i Firebase behöver uppdateras enligt database.rules.json. Ej testat i riktig Safari eller med Firebase.
