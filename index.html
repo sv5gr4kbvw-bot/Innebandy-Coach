@@ -356,6 +356,31 @@ body.board-fullscreen .board-workspace{max-height:100dvh!important;overflow:hidd
  },{passive:true});
 })();
 </script>
+<style id="coach305-stable-pitch">
+/* Freeze the tactical workspace height during Safari chrome changes. */
+body.board-fullscreen{height:var(--coach305-fixed-height,100svh)!important;max-height:var(--coach305-fixed-height,100svh)!important}
+body.board-fullscreen .board-workspace{height:var(--coach305-fixed-height,100svh)!important;max-height:var(--coach305-fixed-height,100svh)!important;min-height:0!important;transform:none!important;transition:none!important}
+body.board-fullscreen .board-workspace .pitch{min-height:0!important;transform:none!important;transition:none!important}
+body.board-fullscreen #board{transition:none!important;transform:none!important}
+</style>
+<script id="coach305-stable-pitch-js">
+(function(){
+ let orientation=window.matchMedia('(orientation: portrait)').matches;
+ function freeze(){
+  if(!document.body.classList.contains('board-fullscreen'))return;
+  const height=Math.round(window.innerHeight);
+  if(height>250)document.documentElement.style.setProperty('--coach305-fixed-height',height+'px');
+ }
+ function checkOrientation(){
+  const next=window.matchMedia('(orientation: portrait)').matches;
+  if(next!==orientation){orientation=next;requestAnimationFrame(()=>requestAnimationFrame(freeze))}
+ }
+ document.addEventListener('DOMContentLoaded',freeze,{once:true});
+ window.addEventListener('orientationchange',()=>setTimeout(checkOrientation,300),{passive:true});
+ window.addEventListener('resize',checkOrientation,{passive:true});
+ window.addEventListener('pageshow',freeze,{passive:true});
+})();
+</script>
 <style id="coach303-plan-first-navigation">
 /* One persistent pitch; navigation is an overlay rather than another page. */
 body.board-fullscreen #immersiveExit,
