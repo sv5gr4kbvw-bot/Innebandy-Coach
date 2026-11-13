@@ -65,3 +65,12 @@ Senast uppdaterad: 2026-11-13
 - Reserverar samma högermarginal från start så planen inte krymper/flyttas när träning öppnas eller inspelning startar.
 - Döljer duplicerad högerflik medan träningspanelen är öppen; fliken flyttas inte in över planen.
 - Samordnade SVG-ikoner, mörk panel, röd inspelning och grön uppspelning. Symbolvalet En/Flera kvar.
+
+## Version 30.9 – delning
+- Eget tillgängligt delningsfönster ovanpå helplansläget för Dela, Chatt och Matchcenter.
+- Rättar konflikten mellan tavlans history-array och webbläsarens window.history.replaceState.
+- Deltagarcallback deklareras före Firebase-prenumerationerna för att tåla tidiga svar.
+- Delad anslutningsinitiering, vänteläge för knappar och återförsök efter auth-fel.
+- Inbjudningslänk rensas från versionsparametrar. Mottagare bekräftar namn och Gå med; börjar som åskådare.
+- Matchchatten och länken rensas vid Lämna. Chattprenumerationen avslutas på samma query som startades.
+- Mocktester av rumsskapande, tidiga Firebase-callbacks, ren länk, lämna och manuell anslutning godkända. Verklig synk mellan två enheter återstår att verifiera.
