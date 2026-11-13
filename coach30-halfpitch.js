@@ -24,7 +24,6 @@
    adjusting=false;
   };
   const start=()=>{
-   if(window.matchReadOnly){return;}
    half=true;side='first';
    if(!document.body.classList.contains('board-fullscreen'))enter.click();
    apply();
