@@ -1,4 +1,4 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.4</title>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.5</title>
 <link rel="stylesheet" href="./coach30-mobile.css">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
@@ -692,6 +692,25 @@ $('orientation').onchange=e=>{checkpoint();let old=dimensions();orientation=e.ta
 function toast(s){let el=$('toast');el.textContent=s;el.style.display='block';setTimeout(()=>el.style.display='none',2600)}
 function download(blob,name){let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 function updateFrameCount(){$('frameCount').textContent=frames.length+' bildrutor'}
+window.coachRecordedAction=function(action){
+ if(window.matchReadOnly)return;
+ stopPlayback();
+ if(action==='save'){
+  if(frames.length<2){toast('Spela in minst ett rörelsesteg först');return;}
+  const name=prompt('Namn på filmen','Min övning');if(!name?.trim())return;
+  try{const saved=getSavedStories();if(saved.length>=30){toast('Biblioteket är fullt (30 filmer)');return;}
+   saved.unshift({name:name.trim().slice(0,90),frames:frames.map(it=>({items:copy(it),text:'',routes:{},timing:{players:0,ball:0}})),info:null,date:new Date().toISOString()});
+   localStorage.setItem(STORY_KEY,JSON.stringify(saved));renderStoryCatalog();toast('Filmen sparad');
+  }catch{toast('Kunde inte spara filmen');}
+ }else if(action==='load'){
+  const saved=getSavedStories();if(!saved.length){toast('Inga sparade filmer');return;}
+  const choice=prompt('Öppna film:\n'+saved.map((f,i)=>(i+1)+'. '+f.name).join('\n'),'1');if(choice===null)return;
+  const entry=saved[Number(choice)-1];if(!entry){toast('Ogiltigt val');return;}
+  if(frames.length&&!confirm('Öppna filmen och ersätta nuvarande animationssteg?'))return;
+  checkpoint();frames=entry.frames.map(f=>copy(f.items));items=copy(frames[0]||[]);updateFrameCount();render();
+ }else if(frames.length&&(action==='first'||action==='last')){checkpoint();items=copy(frames[action==='first'?0:frames.length-1]);render();}
+};
+
 window.coachUndoAnimationStep=function(pending){
  if(window.matchReadOnly)return;
  stopPlayback();if(!frames.length)return;
@@ -705,7 +724,7 @@ $('frame').onclick=()=>{if(playing)return;frames.push(copy(items));updateFrameCo
 function stopPlayback(){playing=false;if(playTimer)clearInterval(playTimer);playTimer=null;render();$('play').disabled=false}
 $('stop').onclick=stopPlayback;
 $('framesClear').onclick=()=>{stopPlayback();frames=[];updateFrameCount()};
-$('play').onclick=()=>{if(frames.length<2){toast('Spara minst två bildrutor');return}stopPlayback();playing=true;$('play').disabled=true;let saved=copy(items),start=Date.now(),duration=1200;const animate=()=>{if(!playing)return;let elapsed=Date.now()-start,segment=Math.floor(elapsed/duration),t=(elapsed%duration)/duration;if(segment>=frames.length-1){items=saved;stopPlayback();return}let from=frames[segment],to=frames[segment+1],map=new Map(to.map(x=>[x.id,x]));items=from.map(a=>{let b=map.get(a.id);if(!b||a.points||b.points)return copy(a);return {...a,x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}});render()};animate();playTimer=setInterval(animate,35)};
+$('play').onclick=()=>{if(frames.length<2){toast('Spara minst två bildrutor');return}stopPlayback();playing=true;$('play').disabled=true;let saved=copy(items),start=Date.now(),duration=Number(window.coachPlaybackDuration)||1200,pausedAt=null;window.coachPauseRecordedAnimation=()=>{if(!playing)return false;if(pausedAt!==null){start+=Date.now()-pausedAt;pausedAt=null;return false;}pausedAt=Date.now();return true;};const animate=()=>{if(!playing||pausedAt!==null)return;let elapsed=Date.now()-start,segment=Math.floor(elapsed/duration),t=(elapsed%duration)/duration;if(segment>=frames.length-1){items=saved;stopPlayback();return}let from=frames[segment],to=frames[segment+1],map=new Map(to.map(x=>[x.id,x]));items=from.map(a=>{let b=map.get(a.id);if(!b||a.points||b.points)return copy(a);return {...a,x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}});render()};animate();playTimer=setInterval(animate,35)};
 const SKEY='innebandy_coach_sessions_v1';function getSessions(){try{return JSON.parse(localStorage.getItem(SKEY)||'[]')}catch{return[]}}
 function renderDrills(){let el=$('sessionList');el.replaceChildren();let total=0;drills.forEach((d,i)=>{total+=d.minutes;let r=document.createElement('div');r.className='line';r.style.margin='6px 0';let t=document.createElement('span');t.style.flex='1';t.textContent=(i+1)+'. '+d.name+' · '+d.minutes+' min';let b=document.createElement('button');b.textContent='×';b.onclick=()=>{drills.splice(i,1);renderDrills()};r.append(t,b);el.append(r)});let t=document.createElement('small');t.textContent='Total tid: '+total+' minuter';el.append(t)}
 $('addDrill').onclick=()=>{let name=$('drillTitle').value.trim(),minutes=Number($('drillMinutes').value);if(!name||!Number.isFinite(minutes)||minutes<1){toast('Ange moment och minuter');return}drills.push({name,minutes});$('drillTitle').value='';renderDrills()};
@@ -2697,13 +2716,15 @@ body.board-fullscreen #coach304Anim.coach304-open{display:flex}
 </style>
 
 <style id="coach303-training-layout">
-/* One compact row, with no controls covering the pitch. */
-body.board-fullscreen #coach304Anim.coach304-open{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;display:grid!important;grid-template-columns:32px minmax(0,1fr) 44px 44px 28px!important;align-items:center!important;gap:4px!important;padding:4px 4px max(4px,env(safe-area-inset-bottom))!important;background:#102d3e!important;border-top:1px solid #8ab4c5;pointer-events:auto;box-sizing:border-box}
-body.board-fullscreen #coach304Anim.coach304-open button{display:block!important;writing-mode:horizontal-tb!important;width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;border-radius:8px!important;font-size:18px!important;padding:3px!important;touch-action:manipulation}
-body.board-fullscreen #coach304Anim.coach304-open #coach304Capture{font-size:13px!important;white-space:nowrap!important}
+body.board-fullscreen #coach304Anim.coach304-open{position:fixed!important;left:auto!important;right:env(safe-area-inset-right,0px)!important;top:max(8px,env(safe-area-inset-top))!important;bottom:max(8px,env(safe-area-inset-bottom))!important;width:58px!important;display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:center!important;gap:4px!important;padding:4px!important;background:#102d3e!important;border:1px solid #8ab4c5;border-radius:10px 0 0 10px;pointer-events:auto;box-sizing:border-box;overflow-y:auto}
+body.board-fullscreen #coach304Anim.coach304-open button{display:block!important;flex:0 0 44px!important;writing-mode:horizontal-tb!important;width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;border-radius:7px!important;font-size:11px!important;line-height:1.15!important;padding:2px!important;white-space:pre-line!important;touch-action:manipulation}
 body.board-fullscreen #coach304Anim.recording #coach304Capture{background:#13614d!important;border-color:#88e8c3!important}
-body.board-fullscreen #coach304Anim.coach304-open #coach304Count{display:block!important;min-width:0!important;max-width:none!important;font-size:11px;text-align:center}
-body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Bottom{bottom:calc(var(--coach-training-height,56px) + 4px)!important}
+body.board-fullscreen #coach304Anim.coach304-open #coach304Count{display:block!important;max-width:none!important;font-size:11px;text-align:center}
+body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{right:calc(62px + env(safe-area-inset-right))!important}
+#coach305Options{position:fixed;z-index:2147483500;right:calc(66px + env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));width:min(300px,calc(100vw - 80px));max-height:calc(100dvh - 24px);overflow:auto;padding:12px;border:1px solid #8ab4c5;border-radius:12px;background:#102d3e;color:white}
+#coach305Options[hidden]{display:none!important}
+#coach305Options button,#coach305Options label{display:block;width:100%;margin-top:7px;min-height:44px}
+#coach305Options select{width:100%;min-height:44px;background:#173247;color:white;font:inherit}
 #board,#board *{touch-action:none!important;overscroll-behavior:none!important;-webkit-user-drag:none}
 </style>
 <script id="coach304-quick-animation-js">
@@ -2711,13 +2732,23 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Bottom{bottom:ca
  const dock=document.createElement('div');dock.id='coach304Anim';
  dock.innerHTML='<button type="button" id="coach304Toggle" aria-label="Öppna träning och animation" aria-expanded="false">🏑 Träning</button><button type="button" id="coach304Capture">● Spela in ett steg</button><button type="button" id="coach304Undo" aria-label="Ångra senaste animationssteget" title="Ångra steg">↶</button><button type="button" id="coach304Play" aria-label="Spela upp övningen" title="Spela upp">▶</button><span id="coach304Count" aria-live="polite">0</span>';
  document.body.append(dock);
+ dock.querySelector('#coach304Undo').textContent='↶\nÅngra';dock.querySelector('#coach304Play').textContent='▶\nSpela';
  const capture=dock.querySelector('#coach304Capture'),play=dock.querySelector('#coach304Play'),count=dock.querySelector('#coach304Count'),toggle=dock.querySelector('#coach304Toggle'),undo=dock.querySelector('#coach304Undo');
+ const stop=document.createElement('button');stop.type='button';stop.id='coach305Stop';stop.textContent='■\nStopp';stop.setAttribute('aria-label','Stoppa uppspelningen');dock.append(stop);
+ const more=document.createElement('button');more.type='button';more.id='coach305More';more.textContent='⚙\nFler val';more.setAttribute('aria-label','Fler animationsval');dock.append(more);
+ const options=document.createElement('section');options.id='coach305Options';options.hidden=true;options.setAttribute('role','dialog');options.setAttribute('aria-label','Animationsval');
+ options.innerHTML='<strong>Animationsval</strong><button type="button" data-action="close">✕ Stäng</button><label>Hastighet <select id="coach305Speed" aria-label="Animationshastighet"><option value="2200">Långsam</option><option value="1200" selected>Normal</option><option value="700">Snabb</option></select></label><button type="button" data-action="pause">⏸ Pausa / fortsätt</button><button type="button" data-action="save">💾 Spara film</button><button type="button" data-action="load">📂 Öppna film</button><button type="button" data-action="first">↩ Visa start</button><button type="button" data-action="last">🏁 Visa slut</button><button type="button" data-action="clear">Rensa animationssteg</button>';
+ document.body.append(options);
+ options.addEventListener('click',e=>{const action=e.target.closest('[data-action]')?.dataset.action;if(!action)return;if(action==='close'){options.hidden=true;return;}finishStep();if(action==='pause'){window.coachPauseRecordedAnimation?.();return;}if(action==='clear')document.getElementById('framesClear')?.click();else window.coachRecordedAction?.(action);});
+ options.querySelector('select').addEventListener('change',e=>{finishStep();document.getElementById('stop')?.click();window.coachPlaybackDuration=Number(e.target.value);});
+ more.addEventListener('click',()=>{options.hidden=!options.hidden;});
+ stop.addEventListener('click',()=>{finishStep();document.getElementById('stop')?.click();});
  const frame=document.getElementById('frame'),frameCount=document.getElementById('frameCount');
  let recording=false,pending=false,moved=0;
  const total=()=>parseInt(frameCount?.textContent,10)||0;
  function update(){
   count.textContent=String(Math.max(0,total()-1));count.setAttribute('aria-label',Math.max(0,total()-1)+' rörelsesteg sparade');
-  capture.textContent=recording?'✓ Spara steget':'● Spela in ett steg';
+  capture.textContent=recording?'✓\nSpara steg':'●\nSpela in';
   capture.setAttribute('aria-label',recording?'Spara steget med alla förflyttningar':'Spela in ett steg: flytta valfritt antal spelare och bollar');
   capture.setAttribute('aria-pressed',String(recording));
   capture.title=recording?moved+' förflyttningar – alla spelas upp samtidigt':'Starta ett nytt gemensamt rörelsesteg';
@@ -2726,7 +2757,7 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Bottom{bottom:ca
  function captureStep(){const before=total();frame?.click();if(total()>before){pending=false;moved=0;}update();}
  function finishStep(){if(pending)captureStep();recording=false;update();}
  function openTraining(){dock.classList.add('coach304-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Stäng träningskontroller');toggle.textContent='×';update();}
- toggle.addEventListener('click',()=>{if(dock.classList.contains('coach304-open')){finishStep();dock.classList.remove('coach304-open');toggle.setAttribute('aria-expanded','false');toggle.textContent='🏑 Träning';}else openTraining();});
+ toggle.addEventListener('click',()=>{if(dock.classList.contains('coach304-open')){finishStep();options.hidden=true;dock.classList.remove('coach304-open');toggle.setAttribute('aria-expanded','false');toggle.textContent='🏑 Träning';}else openTraining();});
  capture.addEventListener('click',()=>{
   if(recording){finishStep();return;}
   document.getElementById('stop')?.click();

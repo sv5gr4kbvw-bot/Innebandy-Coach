@@ -45,3 +45,10 @@ Senast uppdaterad: 2026-11-13
 - Explicit Spela in ett steg / Spara steget-flöde. Alla förflyttningar mellan dessa tryck lagras i en destination och spelas samtidigt.
 - Ingen begränsning till två spelare; test med åtta förflyttningar sparar en gemensam bildruta.
 - En kompakt rad utan radbrytning: stäng, spela in/spara steg, ångra, spela och stegräknare. Gamla En/Flera-valet tas bort.
+
+## Version 30.5
+- Träningskontroller flyttade till 58 px bred högerpanel; planens bredd reserverar panelens utrymme, utan bottenrad.
+- Spela in/spara steg, ångra, spela, stopp och Fler val i sidopanelen.
+- Fler val innehåller paus/fortsätt, hastighet, spara/öppna film, start/slutläge och rensa steg.
+- Inspelningar sparas i befintligt filmbibliotek (ib-coach-storyboards-v7) som ingår i full backup.
+- Syntax och faktisk uppspelning av åtta spelare samt paus/fortsätt testade.
