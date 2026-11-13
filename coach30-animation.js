@@ -11,6 +11,22 @@
   hint.setAttribute('role','status');
   hint.setAttribute('aria-live','polite');
   count.parentElement.insertAdjacentElement('afterend',hint);
+  let multiMode=false, movedCount=0;
+  const multi=document.createElement('button');
+  multi.type='button';
+  multi.className='coach30-multi-toggle';
+  multi.textContent='👥 Flera spelare: Av';
+  multi.setAttribute('aria-pressed','false');
+  hint.insertAdjacentElement('afterend',multi);
+  const multiInfo=document.createElement('p');
+  multiInfo.className='coach30-multi-info';
+  multiInfo.hidden=true;
+  multi.insertAdjacentElement('afterend',multiInfo);
+  const showMulti=()=>{multiInfo.hidden=!multiMode;if(multiMode)multiInfo.textContent=movedCount+' förflyttningar sedan senaste bildrutan. Flytta alla önskade spelare en i taget och tryck sedan + Bildruta. Rörelserna sparas i samma steg.';};
+  multi.addEventListener('click',()=>{multiMode=!multiMode;movedCount=0;multi.setAttribute('aria-pressed',String(multiMode));multi.textContent=multiMode?'👥 Flera spelare: På':'👥 Flera spelare: Av';showMulti();});
+  document.addEventListener('coach306-object-moved',()=>{if(multiMode){movedCount++;showMulti();}});
+  frame.addEventListener('click',()=>{if(multiMode){movedCount=0;showMulti();}});
+  document.getElementById('framesClear')?.addEventListener('click',()=>{if(multiMode){movedCount=0;showMulti();}});
   const update=()=>{
    const n=parseInt(count.textContent,10)||0;
    if(n===0){hint.textContent='Börja med att placera spelare på planen. Tryck sedan + Bildruta för att spara startläget.';}
