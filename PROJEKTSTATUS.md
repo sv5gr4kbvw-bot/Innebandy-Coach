@@ -78,3 +78,11 @@ Senast uppdaterad: 2026-11-13
 ## Version 30.10
 - Rättar ReferenceError i delning: match.js använder coachMatchBoard.getItems/setItems i stället för privata items/render i tavlans IIFE.
 - Testmiljön saknar nu globala items/render, så samma åtkomstfel upptäcks av testet.
+
+## Version 30.11
+- Namn krävs före anslutning; kan sparas/ändras även efter anslutning. Chatt visar avsändarnamn, även för egna meddelanden.
+- Flerradigt skrivfält med förhandsvisning och teckenräknare. Endast Skicka publicerar; Enter ger ny rad.
+- Gå till tavlan-knapp i delningsfönstrets fasta sidhuvud.
+- Ägaren ger automatiskt inbjudna redigeringsrätt via befintliga editors-regler när ägaren är ansluten. Kan stängas av; uttryckligt återkallade gäster återgodkänns inte automatiskt i sessionen.
+- Separat tangentbordsanpassning för delningsfönstret via visualViewport, utan ändring av tavlans fasta layout.
+- Två simulerade klienter testade med behörighetskontroller: namn, automatisk redigeringsrätt, gästritning till ägare och meddelandeutkast före explicit skickning.
