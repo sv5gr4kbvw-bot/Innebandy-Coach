@@ -504,11 +504,11 @@ function dimensions(){return orientation==='vertical'?{w:420,h:760}:{w:760,h:420
 function paintField(){
  const {w,h}=dimensions();board.setAttribute('viewBox',`0 0 ${w} ${h}`);field.replaceChildren();
  const vertical=orientation==='vertical';
- node('rect',{x:0,y:0,width:w,height:h,fill:'#ef4444'},field);
+ node('rect',{x:0,y:0,width:w,height:h,fill:'#ffffff'},field);
  const g=node('g',vertical?{}:{transform:'translate(760 0) rotate(90)'},field);
  const ink='#37305f',stroke=2.8;
  // Innebandytavla enligt referens: rundad sarg, tekningskryss, mittlinje och målområden.
- node('rect',{x:24,y:27,width:372,height:706,rx:52,ry:52,fill:'#ef4444',stroke:ink,'stroke-width':stroke},g);
+ node('rect',{x:24,y:27,width:372,height:706,rx:52,ry:52,fill:'#ffffff',stroke:ink,'stroke-width':stroke},g);
  node('line',{x1:24,y1:380,x2:396,y2:380,stroke:ink,'stroke-width':stroke},g);
  node('circle',{cx:210,cy:380,r:6.3,fill:ink},g);
  for(const x of [62,358])node('line',{x1:x,y1:372,x2:x,y2:388,stroke:ink,'stroke-width':2.4},g);
