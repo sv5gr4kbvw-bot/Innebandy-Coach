@@ -2397,15 +2397,17 @@ main:{title:'☰ Huvudmeny',hint:'Match, chatt, delning och träning öppnas ova
 left:{title:'🧰 Alla verktyg',hint:'Välj verktyg och arbeta vidare direkt på planen.',items:[
 ['✋ Flytta','mode:move'],['🔵 Blå spelare','mode:playerA'],['🔴 Röd spelare','mode:playerB'],['🧤 Målvakt','mode:goalieA'],['⚪ Boll','mode:ball'],['🔺 Kona','mode:cone'],['🥅 Mål','mode:goal'],['✏️ Rita','mode:draw'],['↗️ Pil','mode:arrow'],['🧽 Sudda','mode:erase'],['📝 Ändra spelare','mode:edit'],['🔄 Rotera objekt','mode:rotateObject'],['🎨 Färg & tjocklek','more:boardOptions'],['👥 Spelartrupp','more:rosterPanel']]},
 right:{title:'⚙️ Redigera & spara',hint:'Snabbåtgärder utan att lämna helplan.',items:[
-['↶ Ångra','click:undo'],['↷ Gör om','click:redo'],['📸 Nytt filmsteg','click:frame'],['💾 Spara','click:save'],['📤 Exportera','click:export'],['🗑️ Töm planen','click:clear'],['👥 Spelartrupp','more:rosterPanel'],['🎨 Planinställningar','more:boardOptions']]},
+['🏑 Match+ · statistik','special:matchstats'],['↶ Ångra','click:undo'],['↷ Gör om','click:redo'],['📸 Nytt filmsteg','click:frame'],['💾 Spara','click:save'],['📤 Exportera','click:export'],['🗑️ Töm planen','click:clear'],['👥 Spelartrupp','more:rosterPanel'],['🎨 Planinställningar','more:boardOptions']]},
 bottom:{title:'📋 Match, övningar & träningspass',hint:'Använd funktionerna från helplan. För större redigering kan du öppna motsvarande del av appen.',items:[
+['🏑 Match+ · statistik','special:matchstats'],
 ['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['🎬 Filmsteg','click:frame'],['▶️ Spela film','click:filmQuickPlay'],['⏸️ Pausa film','click:filmQuickPause'],['📽️ Filmverktyg','more:customStoryboard'],['🏑 Övningar','more:smartDrills'],['📋 Träningspass','more:coach80Planner'],['💾 Spara övning','click:customSave'],['📤 Exportera film','click:customExport']]}
 };
 let active=null,down=null;
 function close(){shade.classList.remove('open');active=null;down=null}
 function act(spec){
  const [type,id]=spec.split(':');
- if(type==='special'&&id==='tools'){document.getElementById('coach205Menu')?.dispatchEvent(new Event('coach-open-normal'));return true}
+ if(type==='special'&&id==='matchstats'){document.getElementById('coach294open')?.click();return true}
+  if(type==='special'&&id==='tools'){document.getElementById('coach205Menu')?.dispatchEvent(new Event('coach-open-normal'));return true}
  if(type==='special'&&(id==='chat'||id==='share')){
   if(id==='share'&&typeof window.matchShareCurrentRoom==='function'){window.matchShareCurrentRoom();return true;}
   const result=act('more:matchPanel');
@@ -2533,7 +2535,7 @@ html:has(body.board-fullscreen),body.board-fullscreen{height:100%;overflow:hidde
 </style>
 
 <style>
-#coach294open{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:2147481000;border:2px solid #a7f3d0;border-radius:24px;padding:11px 15px;background:#064e3b;color:white;font:700 14px system-ui;box-shadow:0 3px 16px #0007}
+#coach294open{display:none!important;position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:2147481000;border:2px solid #a7f3d0;border-radius:24px;padding:11px 15px;background:#064e3b;color:white;font:700 14px system-ui;box-shadow:0 3px 16px #0007}
 #coach294panel{display:none;position:fixed;inset:0;z-index:2147482000;background:#091b23;color:#f8fafc;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 40px);font:15px system-ui}
 #coach294panel.open{display:block}
 #coach294panel *{box-sizing:border-box}
