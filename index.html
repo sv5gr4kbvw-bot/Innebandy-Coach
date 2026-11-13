@@ -356,6 +356,25 @@ body.board-fullscreen .board-workspace{max-height:100dvh!important;overflow:hidd
  },{passive:true});
 })();
 </script>
+<style id="coach303-plan-first-navigation">
+/* One persistent pitch; navigation is an overlay rather than another page. */
+body.board-fullscreen #immersiveExit,
+body.board-fullscreen #exitFullBoard,
+body.board-fullscreen .board-view-controls{display:none!important}
+body.board-fullscreen #coach212Shade.open{position:fixed!important;inset:0!important;z-index:2147483600!important}
+body.board-fullscreen #coach212Sheet{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px)!important;overflow-y:auto!important;overscroll-behavior:contain!important}
+</style>
+<script id="coach303-plan-first-navigation-js">
+(function(){
+ // Main hamburger always opens the same in-place navigation sheet.
+ document.addEventListener('click',function(e){
+  const trigger=e.target.closest?.('#immersiveMenu');
+  if(!trigger||!document.body.classList.contains('board-fullscreen'))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  window.coach214OpenMain?.();
+ },true);
+})();
+</script>
 </head><body><details id="installCoachHelp" class="panel"><summary>📱 Installera som app på iPhone</summary><p>Öppna den publicerade adressen i Safari, tryck på Dela och välj <strong>Lägg till på hemskärmen</strong>. Starta sedan Innebandy Coach från ikonen. Grundfunktionerna kan användas offline efter att appen har laddats in; matchdelning kräver internet.</p><p>Vill du senare publicera en native iOS-app kan samma webbapp användas som grund, men App Store-publicering har egna krav och kostnader.</p></details><div class="wrap"><header><div><h1>🏑 Innebandy Coach <span style="color:#78b7ff">PRO</span></h1><small>Taktiktavla · träningspass · övningar</small></div><span class="pill">Offline-klar</span></header>
 <section class="coach-focus-toggle" aria-label="Fokusläge"><div><strong>🏑 Planen i fokus</strong><small>Dubbeltryck på planen för verktyg</small></div><div class="focus-actions"><button type="button" id="coachFocusUndo" aria-label="Ångra senaste ändringen" title="Ångra">↶ Ångra</button><button type="button" id="coachFocusRedo" aria-label="Gör om ändringen" title="Gör om">↷ Gör om</button><button type="button" id="coachFocusFullBoard" aria-label="Öppna helplansläge">⛶ Helplan</button><button type="button" id="coachFocusToggle" aria-pressed="true">Visa fler val</button></div></section><div class="toolbox" id="modes">
 <div class="tool-section"><div class="tool-label">Redigera</div><div class="tools"><button data-mode="move" class="active">✋ Flytta</button><button data-mode="draw">✏️ Rita</button><button data-mode="arrow">↗️ Pil</button><button data-mode="erase">🧽 Sudda</button></div></div>
