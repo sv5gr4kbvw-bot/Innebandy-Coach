@@ -22,8 +22,9 @@
   multiInfo.className='coach30-multi-info';
   multiInfo.hidden=true;
   multi.insertAdjacentElement('afterend',multiInfo);
-  const showMulti=()=>{multiInfo.hidden=!multiMode;if(multiMode)multiInfo.textContent=movedCount+' förflyttningar sedan senaste bildrutan. Flytta alla önskade spelare en i taget och tryck sedan + Bildruta. Rörelserna sparas i samma steg.';};
-  multi.addEventListener('click',()=>{multiMode=!multiMode;movedCount=0;multi.setAttribute('aria-pressed',String(multiMode));multi.textContent=multiMode?'👥 Flera spelare: På':'👥 Flera spelare: Av';showMulti();});
+  const showMulti=()=>{multiInfo.hidden=!multiMode;if(multiMode)multiInfo.textContent=movedCount+' förflyttningar sedan senaste bildrutan. Flytta alla önskade spelare en i taget och tryck sedan + Steg i träningspanelen eller + Bildruta. Rörelserna sparas i samma steg.';};
+  multi.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('coach30-multi-mode',{detail:{enabled:!multiMode}})));
+  document.addEventListener('coach30-multi-mode',e=>{multiMode=!!e.detail.enabled;movedCount=0;multi.setAttribute('aria-pressed',String(multiMode));multi.textContent=multiMode?'👥 Flera spelare: På':'👥 Flera spelare: Av';showMulti();});
   document.addEventListener('coach306-object-moved',()=>{if(multiMode){movedCount++;showMulti();}});
   frame.addEventListener('click',()=>{if(multiMode){movedCount=0;showMulti();}});
   document.getElementById('framesClear')?.addEventListener('click',()=>{if(multiMode){movedCount=0;showMulti();}});

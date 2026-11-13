@@ -26,3 +26,10 @@ Senast uppdaterad: 2026-11-13
 ## Nästa steg
 - Samordna animationens inspelning och flerspelarläge.
 - Förbättra versionsvisning och verifiering av ny publicering vid behov.
+
+## Version 30.2
+- Träningspanelen har synkroniserat val En/Flera och + Steg för grupperade förflyttningar.
+- En spelare: automatisk bildruta efter varje flytt. Flera: manuell bildruta efter önskade flyttar.
+- Sista väntande gruppsteget sparas vid stopp, uppspelning och växling av läge.
+- Rensning av bildrutor avslutar inspelningen. Räknaren följer befintliga bildrutor.
+- Automatiska flödestester för inspelning, gruppsteg, stopp, uppspelning, lägesbyte och rensning godkända. iPhone-gester återstår att testa.
