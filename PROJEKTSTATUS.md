@@ -52,3 +52,11 @@ Senast uppdaterad: 2026-11-13
 - Fler val innehåller paus/fortsätt, hastighet, spara/öppna film, start/slutläge och rensa steg.
 - Inspelningar sparas i befintligt filmbibliotek (ib-coach-storyboards-v7) som ingår i full backup.
 - Syntax och faktisk uppspelning av åtta spelare samt paus/fortsätt testade.
+
+## Version 30.6–30.7
+- 42 px symbolpanel med röd inspelningsknapp och En/Flera.
+- Dragning flyttar befintligt SVG-objekt i stället för att ersätta alla SVG-noder vid varje pekrörelse.
+- Direkta träffar på spelares grafik/namn prioriteras och den indirekta träffytan har minst 22 skärmpixlars radie.
+- Dubbeltrycksmenyn reagerar inte på spelare/objekt.
+- Planens mått följer inte längre höjdändringar från Safaris adressfält. Rotation och verklig breddändring uppdaterar måtten.
+- Test av faktisk pointermove-kod visar förflyttning utan DOM-ombyggnad och bibehållen begränsning till planen. iPhone/Safari behöver användarverifieras.

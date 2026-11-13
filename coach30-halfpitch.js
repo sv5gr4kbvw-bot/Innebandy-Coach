@@ -4,6 +4,9 @@
   const board=document.getElementById('board'),sheet=document.getElementById('coach212Sheet');
   if(!board||!sheet)return;
   let mode='full',changing=false,dragging=false;
+  let stableWidth=window.innerWidth,stableHeight=window.innerHeight,orientationKey=window.matchMedia('(orientation: portrait)').matches;
+  function refreshViewport(){const next=window.matchMedia('(orientation: portrait)').matches;if(next!==orientationKey||Math.abs(window.innerWidth-stableWidth)>24){orientationKey=next;stableWidth=window.innerWidth;stableHeight=window.innerHeight;requestAnimationFrame(fitBoard);}}
+
   board.addEventListener('pointerdown',()=>{dragging=true;},{capture:true});
   const release=()=>{dragging=false;};
   window.addEventListener('pointerup',release,{capture:true});
@@ -29,9 +32,8 @@
     for(const p of ['position','left','top','width','height','max-width','max-height','margin','transform','object-fit','z-index'])board.style.removeProperty(p);
     return;
    }
-   const viewport=window.visualViewport;
-   const vw=viewport?.width||window.innerWidth;
-   const vh=viewport?.height||window.innerHeight;
+   const vw=stableWidth;
+   const vh=stableHeight;
    const [fw,fh]=dimensions();
    const aspect=mode==='full'?fw/fh:(fw>fh?390/420:420/390);
    const dock=document.getElementById('coach304Anim');
@@ -48,9 +50,9 @@
    const props={position:'fixed',left:x+'px',top:y+'px',width:width+'px',height:height+'px','max-width':'none','max-height':'none',margin:'0',transform:'none','object-fit':'fill','z-index':'152'};
    for(const [k,v] of Object.entries(props))board.style.setProperty(k,v,'important');
   }
-  window.addEventListener('resize',()=>requestAnimationFrame(fitBoard),{passive:true});
-  window.visualViewport?.addEventListener('resize',()=>requestAnimationFrame(fitBoard),{passive:true});
-  window.addEventListener('orientationchange',()=>setTimeout(fitBoard,250),{passive:true});
+  window.addEventListener('resize',refreshViewport,{passive:true});
+  // Safari address-bar/keyboard height changes do not move the playing surface.
+  window.addEventListener('orientationchange',()=>setTimeout(refreshViewport,300),{passive:true});
   const dock=document.getElementById('coach304Anim');
   if(dock){new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(dock,{attributes:true,attributeFilter:['class']});if(window.ResizeObserver)new ResizeObserver(()=>requestAnimationFrame(fitBoard)).observe(dock);}
   new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(document.body,{attributes:true,attributeFilter:['class']});
