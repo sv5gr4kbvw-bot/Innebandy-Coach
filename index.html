@@ -1,4 +1,4 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.12</title>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.13</title>
 <link rel="stylesheet" href="./coach30-mobile.css">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
@@ -426,6 +426,21 @@ body.board-fullscreen #coach212Sheet{max-height:calc(100dvh - env(safe-area-inse
 #matchAutoEditSetting{display:flex;align-items:center;gap:8px;margin:10px 0;line-height:1.4}#matchAutoEditSetting[hidden]{display:none!important}#matchAutoEdit{width:22px;height:22px;flex:none}
 .share-center-head{gap:8px;flex-wrap:wrap}.share-center-head h2{flex:1}#matchToBoard{background:#156550;white-space:nowrap;font-size:13px}
 #coachShareCenter .share-center-body{scroll-padding-bottom:140px}#coachShareCenter #matchChat p{white-space:pre-wrap}
+</style><script>try{window.coachPagePreferred=localStorage.getItem('coach-layout-v1')==='page';}catch{window.coachPagePreferred=false;}</script><style id="coach313-page-layout">
+body.coach-page{position:static!important;inset:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;touch-action:auto!important}
+html:has(body.coach-page){height:auto!important;overflow-y:auto!important;overscroll-behavior:auto!important}
+body.coach-page .wrap{width:100%;max-width:1200px;margin:auto}
+body.coach-page .board-workspace{position:relative!important;inset:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:8px auto!important}
+body.coach-page .board-workspace .pitch{width:100%!important;max-width:960px!important;height:auto!important;margin:auto!important}
+body.coach-page #board{position:static!important;inset:auto!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:75svh!important;margin:0!important;transform:none!important}
+body.coach-page .toolbox{display:block!important}
+body.coach-page .board-options.open{display:flex!important}
+body.coach-page .coach174-nav,body.coach-page #coach212Handles,body.coach-page #coach304Anim,body.coach-page #immersiveMenu,body.coach-page #coach206Mode{display:none!important}
+body.coach-page .panel{scroll-margin-top:70px}
+#coachPageToolbar{display:none}
+body.coach-page #coachPageToolbar{display:flex;position:sticky;top:0;z-index:1000;align-items:center;justify-content:space-between;gap:8px;padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left));background:#102737f5;border-bottom:1px solid #456578;backdrop-filter:blur(10px)}
+#coachPageToolbar button{min-height:44px}
+body.coach-page #coach212Shade.open{display:flex!important}
 </style></head><body><details id="installCoachHelp" class="panel"><summary>📱 Installera som app på iPhone</summary><p>Öppna den publicerade adressen i Safari, tryck på Dela och välj <strong>Lägg till på hemskärmen</strong>. Starta sedan Innebandy Coach från ikonen. Grundfunktionerna kan användas offline efter att appen har laddats in; matchdelning kräver internet.</p><p>Vill du senare publicera en native iOS-app kan samma webbapp användas som grund, men App Store-publicering har egna krav och kostnader.</p></details><div class="wrap"><header><div><h1>🏑 Innebandy Coach <span style="color:#78b7ff">PRO</span></h1><small>Taktiktavla · träningspass · övningar</small></div><span class="pill">Offline-klar</span></header>
 <section class="coach-focus-toggle" aria-label="Fokusläge"><div><strong>🏑 Planen i fokus</strong><small>Dubbeltryck på planen för verktyg</small></div><div class="focus-actions"><button type="button" id="coachFocusUndo" aria-label="Ångra senaste ändringen" title="Ångra">↶ Ångra</button><button type="button" id="coachFocusRedo" aria-label="Gör om ändringen" title="Gör om">↷ Gör om</button><button type="button" id="coachFocusFullBoard" aria-label="Öppna helplansläge">⛶ Helplan</button><button type="button" id="coachFocusToggle" aria-pressed="true">Visa fler val</button></div></section><div class="toolbox" id="modes">
 <div class="tool-section"><div class="tool-label">Redigera</div><div class="tools"><button data-mode="move" class="active">✋ Flytta</button><button data-mode="draw">✏️ Rita</button><button data-mode="arrow">↗️ Pil</button><button data-mode="erase">🧽 Sudda</button></div></div>
@@ -1793,7 +1808,7 @@ $('smartAddSession').onclick=()=>{if(!smartLast){toast('Skapa en övning först'
  }
  enter.addEventListener('click',()=>setFull(true));
  // Start directly in the main coaching workspace; all other views open from its menu.
- const startInFullBoard=()=>{if(!document.body.classList.contains('board-fullscreen'))setFull(true)};
+ const startInFullBoard=()=>{if(!window.coachPagePreferred&&!document.body.classList.contains('board-fullscreen'))setFull(true)};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startInFullBoard,{once:true});else startInFullBoard();
  exit.addEventListener('click',()=>setFull(false));
  tools.addEventListener('click',()=>document.getElementById('toolMenuButton').click());
@@ -2546,7 +2561,7 @@ const shade=document.createElement('div');shade.id='coach212Shade';shade.setAttr
 const sheet=document.createElement('section');sheet.id='coach212Sheet';shade.append(sheet);document.body.append(shade);
 const groups={
 main:{title:'☰ Huvudmeny',hint:'Match, chatt, delning och träning öppnas ovanpå helplanen. Gemensam tavla och chatt kräver konfigurerad Firebase.',items:[
-['🏑 Snabbverktyg','special:tools'],['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['📋 Träningspass','more:coach80Planner'],['📚 Övningar','more:smartDrills'],['👥 Femmor & trupp','more:rosterPanel'],['🎬 Animationer','more:customStoryboard'],['💾 Spara tavlan','click:save'],['⚙️ Planinställningar','more:boardOptions'],['📤 Exportera','click:export']]},
+['📜 Sidläge med scroll','special:pageview'],['🏑 Snabbverktyg','special:tools'],['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['📋 Träningspass','more:coach80Planner'],['📚 Övningar','more:smartDrills'],['👥 Femmor & trupp','more:rosterPanel'],['🎬 Animationer','more:customStoryboard'],['💾 Spara tavlan','click:save'],['⚙️ Planinställningar','more:boardOptions'],['📤 Exportera','click:export']]},
 left:{title:'🧰 Alla verktyg',hint:'Välj verktyg och arbeta vidare direkt på planen.',items:[
 ['✋ Flytta','mode:move'],['🏑 Träning','special:training'],['🔵 Blå spelare','mode:playerA'],['🔴 Röd spelare','mode:playerB'],['🧤 Målvakt','mode:goalieA'],['⚪ Boll','mode:ball'],['🔺 Kona','mode:cone'],['🥅 Mål','mode:goal'],['✏️ Rita','mode:draw'],['↗️ Pil','mode:arrow'],['🧽 Sudda','mode:erase'],['📝 Ändra spelare','mode:edit'],['🔄 Rotera objekt','mode:rotateObject'],['🎨 Färg & tjocklek','more:boardOptions'],['👥 Spelartrupp','more:rosterPanel']]},
 right:{title:'⚙️ Redigera & spara',hint:'Snabbåtgärder utan att lämna helplan.',items:[
@@ -2559,6 +2574,7 @@ let active=null,down=null;
 function close(){shade.classList.remove('open');active=null;down=null}
 function act(spec){
  const [type,id]=spec.split(':');
+ if(type==='special'&&id==='pageview'){window.coachSetLayout?.(document.body.classList.contains('coach-page')?'plan':'page');return true;}
  if(type==='special'&&id==='training'){window.coach304OpenTraining?.();return true}
     if(type==='special'&&id==='matchstats'){document.getElementById('coach294open')?.click();return true}
   if(type==='special'&&id==='tools'){document.getElementById('coach205Menu')?.dispatchEvent(new Event('coach-open-normal'));return true}
@@ -2597,7 +2613,7 @@ function act(spec){
  return true;
 }
 function open(side){
- if(!document.body.classList.contains('board-fullscreen'))return;
+ if(!document.body.classList.contains('board-fullscreen')&&!document.body.classList.contains('coach-page'))return;
  if(shade.classList.contains('open'))shade.dispatchEvent(new Event('coach212-close'));
  close();active=side;shade.dataset.side=side==='main'?'left':side;
  const g=groups[side];sheet.replaceChildren();
@@ -2607,7 +2623,7 @@ function open(side){
  head.append(h,x);sheet.append(head);
  const hint=document.createElement('p');hint.className='c212-hint';hint.textContent=g.hint;sheet.append(hint);
  const grid=document.createElement('div');grid.className='c212-grid';
- for(const [label,spec] of g.items){const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const result=act(spec);if(result===true)dismiss();else if(result===false){hint.textContent='Funktionen är inte tillgänglig i detta läge.'}else{grid.style.display='none';hint.textContent='Stäng panelen med ✕ för att återgå till planen.'}});grid.append(b)}
+ for(const [label,spec] of g.items){const b=document.createElement('button');b.type='button';b.textContent=spec==='special:pageview'&&document.body.classList.contains('coach-page')?'🏑 Byt till planläge':label;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const result=act(spec);if(result===true)dismiss();else if(result===false){hint.textContent='Funktionen är inte tillgänglig i detta läge.'}else{grid.style.display='none';hint.textContent='Stäng panelen med ✕ för att återgå till planen.'}});grid.append(b)}
  sheet.append(grid);shade.classList.add('open');
 }
 function dismiss(){shade.dispatchEvent(new Event('coach212-close'));close()}
@@ -2681,7 +2697,7 @@ const panel=menu.querySelector('.coach205-panel');if(panel)panel.style.removePro
 (function(){
   function start(){
     var enter=document.getElementById('enterFullBoard');
-    if(enter && !document.body.classList.contains('board-fullscreen')) enter.click();
+    if(!window.coachPagePreferred && enter && !document.body.classList.contains('board-fullscreen')) enter.click();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
@@ -2839,5 +2855,37 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{display:no
  update();
 })();
 </script>
-<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js?v=312" defer></script></body></html>
+<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js?v=312" defer></script><script id="coach313-layout-switch">
+(()=>{
+ const body=document.body,details=new Map();let focusWas=false,routingWas=false;
+ const bar=document.createElement('nav');bar.id='coachPageToolbar';bar.setAttribute('aria-label','Sidläge');
+ bar.innerHTML='<button type="button" id="coachPageMenu">☰ Huvudmeny</button><span>Sidläge med scroll</span><button type="button" id="coachPagePlan">🏑 Planläge</button>';
+ body.prepend(bar);
+ function setLayout(mode,skipEnter=false){
+  const page=mode==='page';window.coachPagePreferred=page;
+  try{localStorage.setItem('coach-layout-v1',page?'page':'plan');}catch{}
+  if(page){
+   if(!body.classList.contains('coach-page')){
+    focusWas=body.classList.contains('coach-focus');routingWas=body.classList.contains('coach174');
+    document.querySelectorAll('details.panel').forEach(el=>{details.set(el,el.open);el.open=true;});
+   }
+   document.getElementById('exitFullBoard')?.click();
+   body.classList.remove('board-fullscreen','coach-focus','coach174');body.classList.add('coach-page');
+   const board=document.getElementById('board');for(const prop of ['position','left','top','width','height','max-width','max-height','margin','transform','object-fit','z-index'])board?.style.removeProperty(prop);
+  }else{
+   body.classList.remove('coach-page');
+   if(focusWas)body.classList.add('coach-focus');
+   if(routingWas)body.classList.add('coach174');
+   for(const [el,open] of details)el.open=open;details.clear();
+   if(!skipEnter)document.getElementById('enterFullBoard')?.click();
+  }
+ }
+ window.coachSetLayout=setLayout;
+ document.getElementById('coachPageMenu').onclick=()=>window.coach214OpenMain?.();
+ document.getElementById('coachPagePlan').onclick=()=>setLayout('plan');
+ document.getElementById('enterFullBoard')?.addEventListener('click',()=>{if(body.classList.contains('coach-page'))setLayout('plan',true);});
+ const init=()=>{if(window.coachPagePreferred)setLayout('page');};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script></body></html>
 

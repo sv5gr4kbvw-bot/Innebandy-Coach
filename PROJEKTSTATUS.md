@@ -92,3 +92,9 @@ Senast uppdaterad: 2026-11-13
 - Den frysta arbetsytans höjd uppdateras samtidigt med planens mått.
 - Helplan/halvplan behålls. Vanliga höjdändringar från adressfält utanför rotationsfönstret ignoreras fortfarande.
 - Simulerad stående–liggande–stående rotation med försenad höjduppdatering återställer ursprunglig storlek i halvplansläget.
+
+## Version 30.13
+- Huvudmenyn har Sidläge med scroll / Byt till planläge.
+- Sidläget visar tavla, verktyg och öppna funktionspaneler i normalt dokumentflöde. Sidnavigeringens tidigare dolda vyer visas tillsammans.
+- Fast sidverktygsfält med Huvudmeny och Planläge. Läget sparas lokalt (coach-layout-v1), standard är planläge.
+- Återgång till planläge återställer tidigare fokus-/navigeringsklasser och expanderade paneler. Tavlans objekt och inspelningar byts inte ut.
