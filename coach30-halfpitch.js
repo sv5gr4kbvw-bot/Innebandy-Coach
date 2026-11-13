@@ -13,7 +13,8 @@
   };
   function apply(){
    const expected=viewFor();
-   if(board.getAttribute('viewBox')!==expected){changing=true;board.setAttribute('viewBox',expected);changing=false;}
+   if(mode!=='full'&&board.getAttribute('viewBox')!==expected){changing=true;board.setAttribute('viewBox',expected);changing=false;}
+   if(mode==='full'){const [w,h]=dimensions();const nativeView=`0 0 ${w} ${h}`;if(board.getAttribute('viewBox')!==nativeView){changing=true;board.setAttribute('viewBox',nativeView);changing=false;}}
    document.body.classList.toggle('coach30-half-active',mode!=='full');
   }
   function insertControls(){
@@ -24,7 +25,9 @@
     const b=document.createElement('button');b.type='button';b.dataset.coach30Pitch=value;b.textContent=label;
     b.setAttribute('aria-pressed',String(mode===value));
     b.addEventListener('click',e=>{
-     e.preventDefault();e.stopPropagation();mode=value;apply();
+     e.preventDefault();e.stopPropagation();mode=value;
+     if(!document.body.classList.contains('board-fullscreen'))document.getElementById('enterFullBoard')?.click();
+     apply();
      sheet.parentElement.querySelector('.c212-close')?.click();
     });
     return b;
