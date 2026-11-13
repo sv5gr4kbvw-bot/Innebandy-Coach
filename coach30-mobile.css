@@ -32,3 +32,24 @@
 #coach30HalfBar button[hidden]{display:none!important}
 body:not(.board-fullscreen) #coach30HalfBar{position:relative;bottom:auto;left:auto;transform:none;width:max-content;margin:8px auto;box-shadow:none}
 body.coach30-half-active .pitch svg{object-fit:contain!important}
+
+/* PRO 30: maximize the full pitch on iPhone without cropping the rink.
+   Preserve the SVG aspect ratio and existing side-menu hit targets. */
+body.board-fullscreen:not(.coach30-half-active) .board-workspace,
+body.board-fullscreen:not(.coach30-half-active) .board-workspace .pitch {
+  width:100vw!important;
+  max-width:100vw!important;
+  height:var(--coach305-fixed-height,100dvh)!important;
+  max-height:var(--coach305-fixed-height,100dvh)!important;
+  padding:0!important;
+  margin:0!important;
+  min-width:0!important;
+}
+body.board-fullscreen:not(.coach30-half-active) .board-workspace .pitch svg#board {
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:contain!important;
+}
