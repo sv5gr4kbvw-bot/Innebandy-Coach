@@ -319,6 +319,24 @@ body.board-fullscreen #rotationPanel.open p {margin:0 0 8px!important;font-size:
 body.board-fullscreen{overscroll-behavior:none!important;overflow:hidden!important;position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important}
 body.board-fullscreen .board-workspace{overscroll-behavior:contain!important}
 </style>
+<style id="coach301-iphone-canvas-lock">
+/* iPhone board behaves as a fixed canvas, not a scrolling document. */
+html:has(body.board-fullscreen){overflow:hidden!important;overscroll-behavior:none!important;height:100%!important}
+body.board-fullscreen{margin:0!important;overflow:hidden!important;overscroll-behavior:none!important;touch-action:none!important}
+body.board-fullscreen #board,body.board-fullscreen #board *,body.board-fullscreen .pitch{touch-action:none!important;overscroll-behavior:none!important;-webkit-user-select:none!important;user-select:none!important}
+</style>
+<script id="coach301-iphone-touch-guard">
+(function(){
+ const onBoard=e=>!!e.target.closest?.('#board');
+ // Safari may scroll despite SVG pointer capture; explicitly consume canvas touches.
+ document.addEventListener('touchmove',function(e){
+   if(document.body.classList.contains('board-fullscreen')&&onBoard(e)&&e.cancelable)e.preventDefault();
+ },{capture:true,passive:false});
+ document.addEventListener('gesturestart',function(e){
+   if(document.body.classList.contains('board-fullscreen')&&onBoard(e)&&e.cancelable)e.preventDefault();
+ },{capture:true,passive:false});
+})();
+</script>
 </head><body><details id="installCoachHelp" class="panel"><summary>📱 Installera som app på iPhone</summary><p>Öppna den publicerade adressen i Safari, tryck på Dela och välj <strong>Lägg till på hemskärmen</strong>. Starta sedan Innebandy Coach från ikonen. Grundfunktionerna kan användas offline efter att appen har laddats in; matchdelning kräver internet.</p><p>Vill du senare publicera en native iOS-app kan samma webbapp användas som grund, men App Store-publicering har egna krav och kostnader.</p></details><div class="wrap"><header><div><h1>🏑 Innebandy Coach <span style="color:#78b7ff">PRO</span></h1><small>Taktiktavla · träningspass · övningar</small></div><span class="pill">Offline-klar</span></header>
 <section class="coach-focus-toggle" aria-label="Fokusläge"><div><strong>🏑 Planen i fokus</strong><small>Dubbeltryck på planen för verktyg</small></div><div class="focus-actions"><button type="button" id="coachFocusUndo" aria-label="Ångra senaste ändringen" title="Ångra">↶ Ångra</button><button type="button" id="coachFocusRedo" aria-label="Gör om ändringen" title="Gör om">↷ Gör om</button><button type="button" id="coachFocusFullBoard" aria-label="Öppna helplansläge">⛶ Helplan</button><button type="button" id="coachFocusToggle" aria-pressed="true">Visa fler val</button></div></section><div class="toolbox" id="modes">
 <div class="tool-section"><div class="tool-label">Redigera</div><div class="tools"><button data-mode="move" class="active">✋ Flytta</button><button data-mode="draw">✏️ Rita</button><button data-mode="arrow">↗️ Pil</button><button data-mode="erase">🧽 Sudda</button></div></div>
