@@ -1,0 +1,13 @@
+/* Innebandy-Coach 30.0 — non-destructive mobile usability layer */
+@media (max-width: 600px) {
+  button, [role="button"], select { min-height: 44px; }
+  button { -webkit-tap-highlight-color: transparent; }
+  .tools { scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+  .tools button { scroll-snap-align: start; }
+  .panel { scroll-margin-top: 12px; }
+  .pitch { overflow: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
