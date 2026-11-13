@@ -15,3 +15,5 @@
 /* 30.0: concise tool feedback without covering the playing surface */
 .coach30-mode-status { margin: 2px 12px 8px; padding: 7px 10px; color: #d7eaff; background: #142b43; border: 1px solid #315574; border-radius: 9px; font-size: 12px; line-height: 1.4; }
 @media (max-width: 600px) { .coach30-mode-status { font-size: 11px; } }
+
+.coach30-animation-hint { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: #173653; color: #e1f0ff; font-size: 13px; line-height: 1.45; }
