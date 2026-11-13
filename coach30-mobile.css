@@ -20,3 +20,8 @@
 
 .coach30-quick-move { margin: 0 12px 8px; min-height: 44px; padding: 8px 13px; border-color: #4f8cbb; background: #183d60; color: #f1f8ff; }
 .coach30-quick-move[hidden] { display: none !important; }
+
+.coach30-multi-toggle { display:block; margin:8px 0 0; min-height:44px; background:#21456a; border-color:#4c80ad; }
+.coach30-multi-toggle[aria-pressed="true"] { background:#17634f; border-color:#65c8a0; }
+.coach30-multi-info { margin:7px 0 0; padding:9px 11px; border-radius:9px; background:#122f3d; color:#d6f6e9; font-size:12px; line-height:1.45; }
+.coach30-multi-info[hidden] { display:none !important; }
