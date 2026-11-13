@@ -20,10 +20,28 @@
   };
   modes.addEventListener('click',e=>{if(e.target.closest('button[data-mode]'))queueMicrotask(refresh)});
   const observer=new MutationObserver(()=>{const active=buttons.find(b=>b.classList.contains('active'));if(active&&active.dataset.mode!==previous)refresh()});
-  buttons.forEach(b=>observer.observe(b,{attributes:true,attributeFilter:['class']}));
   // Selecting a placement tool leaves the existing placement and drag logic untouched.
   const board=document.getElementById('board');
   if(board){board.setAttribute('aria-description','Välj ett verktyg och tryck på planen. Använd Flytta för att dra objekt.');}
+  // Fast return to move mode without interfering with existing board gestures.
+  const quick=document.createElement('button');
+  quick.type='button';
+  quick.id='coach30QuickMove';
+  quick.className='coach30-quick-move';
+  quick.textContent='✋ Flytta objekt';
+  quick.setAttribute('aria-label','Växla till verktyget Flytta');
+  quick.addEventListener('click',()=>{
+   const move=modes.querySelector('button[data-mode="move"]');
+   if(move && !window.matchReadOnly) move.click();
+  });
+  status.insertAdjacentElement('afterend',quick);
+  const updateQuick=()=>{
+   const active=buttons.find(b=>b.classList.contains('active'))?.dataset.mode;
+   quick.hidden=active==='move'||!!window.matchReadOnly;
+  };
+  buttons.forEach(b=>observer.observe(b,{attributes:true,attributeFilter:['class']}));
+  modes.addEventListener('click',()=>queueMicrotask(updateQuick));
+  updateQuick();
   refresh();
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
