@@ -53,3 +53,49 @@ body.board-fullscreen:not(.coach30-half-active) .board-workspace .pitch svg#boar
   max-height:none!important;
   object-fit:contain!important;
 }
+
+/* PRO 30 viewport fix: fit the ACTUAL SVG to the available viewport.
+   Earlier 100% x 100% sizing stretched the SVG element and clipped the field. */
+body.board-fullscreen .board-workspace {
+  box-sizing:border-box!important;
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+}
+body.board-fullscreen .board-workspace .pitch {
+  box-sizing:border-box!important;
+  width:100vw!important;
+  height:100dvh!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+}
+body.board-fullscreen .board-workspace .pitch svg#board {
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+  display:block!important;
+  width:min(100vw, calc((100dvh - 95px) * 0.55263158))!important;
+  height:min(calc(100vw * 1.80952381), calc(100dvh - 95px))!important;
+  max-width:100vw!important;
+  max-height:calc(100dvh - 95px)!important;
+  object-fit:contain!important;
+}
+body.board-fullscreen.coach30-half-active .board-workspace .pitch {
+  align-items:flex-start!important;
+  padding-top:calc(74px + env(safe-area-inset-top))!important;
+}
+body.board-fullscreen.coach30-half-active .board-workspace .pitch svg#board {
+  width:min(100vw, calc((100dvh - 105px) * 1.07692308))!important;
+  height:min(calc(100vw * 0.92857143), calc(100dvh - 105px))!important;
+  max-height:calc(100dvh - 105px)!important;
+}
