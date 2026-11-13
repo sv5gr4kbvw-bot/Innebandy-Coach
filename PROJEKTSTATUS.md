@@ -86,3 +86,9 @@ Senast uppdaterad: 2026-11-13
 - Ägaren ger automatiskt inbjudna redigeringsrätt via befintliga editors-regler när ägaren är ansluten. Kan stängas av; uttryckligt återkallade gäster återgodkänns inte automatiskt i sessionen.
 - Separat tangentbordsanpassning för delningsfönstret via visualViewport, utan ändring av tavlans fasta layout.
 - Två simulerade klienter testade med behörighetskontroller: namn, automatisk redigeringsrätt, gästritning till ägare och meddelandeutkast före explicit skickning.
+
+## Version 30.12
+- Rotation samplar viewportmåtten under 1,6 sekunder så fördröjd Safari-höjd inte fastnar.
+- Den frysta arbetsytans höjd uppdateras samtidigt med planens mått.
+- Helplan/halvplan behålls. Vanliga höjdändringar från adressfält utanför rotationsfönstret ignoreras fortfarande.
+- Simulerad stående–liggande–stående rotation med försenad höjduppdatering återställer ursprunglig storlek i halvplansläget.

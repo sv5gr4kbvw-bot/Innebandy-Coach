@@ -5,7 +5,29 @@
   if(!board||!sheet)return;
   let mode='full',changing=false,dragging=false;
   let stableWidth=window.innerWidth,stableHeight=window.innerHeight,orientationKey=window.matchMedia('(orientation: portrait)').matches;
-  function refreshViewport(){const next=window.matchMedia('(orientation: portrait)').matches;if(next!==orientationKey||Math.abs(window.innerWidth-stableWidth)>24){orientationKey=next;stableWidth=window.innerWidth;stableHeight=window.innerHeight;requestAnimationFrame(fitBoard);}}
+  let rotationUntil=0,rotationTimer=null;
+  function captureViewport(){
+   const width=window.innerWidth,height=window.innerHeight;
+   if(width<100||height<100)return;
+   stableWidth=width;stableHeight=height;
+   orientationKey=window.matchMedia('(orientation: portrait)').matches;
+   document.documentElement.style.setProperty('--coach305-fixed-height',height+'px');
+   requestAnimationFrame(fitBoard);
+  }
+  function settleRotation(){
+   rotationUntil=Date.now()+1600;
+   if(rotationTimer!==null)clearTimeout(rotationTimer);
+   const sample=()=>{
+    rotationTimer=null;captureViewport();
+    if(Date.now()<rotationUntil)rotationTimer=setTimeout(sample,100);
+   };
+   sample();
+  }
+  function refreshViewport(){
+   const next=window.matchMedia('(orientation: portrait)').matches;
+   if(next!==orientationKey||Math.abs(window.innerWidth-stableWidth)>24){settleRotation();}
+   else if(Date.now()<rotationUntil){captureViewport();}
+  }
 
   board.addEventListener('pointerdown',()=>{dragging=true;},{capture:true});
   const release=()=>{dragging=false;};
@@ -51,7 +73,9 @@
   }
   window.addEventListener('resize',refreshViewport,{passive:true});
   // Safari address-bar/keyboard height changes do not move the playing surface.
-  window.addEventListener('orientationchange',()=>setTimeout(refreshViewport,300),{passive:true});
+  window.addEventListener('orientationchange',settleRotation,{passive:true});
+  window.screen?.orientation?.addEventListener('change',settleRotation);
+  window.addEventListener('pageshow',()=>{if(Math.abs(window.innerWidth-stableWidth)>24)settleRotation();},{passive:true});
   const dock=document.getElementById('coach304Anim');
   if(dock){new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(dock,{attributes:true,attributeFilter:['class']});if(window.ResizeObserver)new ResizeObserver(()=>requestAnimationFrame(fitBoard)).observe(dock);}
   new MutationObserver(()=>requestAnimationFrame(fitBoard)).observe(document.body,{attributes:true,attributeFilter:['class']});
