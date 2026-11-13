@@ -17,3 +17,6 @@
 @media (max-width: 600px) { .coach30-mode-status { font-size: 11px; } }
 
 .coach30-animation-hint { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: #173653; color: #e1f0ff; font-size: 13px; line-height: 1.45; }
+
+.coach30-quick-move { margin: 0 12px 8px; min-height: 44px; padding: 8px 13px; border-color: #4f8cbb; background: #183d60; color: #f1f8ff; }
+.coach30-quick-move[hidden] { display: none !important; }
