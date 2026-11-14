@@ -30,7 +30,7 @@
   }
 
   board.addEventListener('pointerdown',()=>{dragging=true;},{capture:true});
-  const release=()=>{dragging=false;};
+  const release=()=>{dragging=false;requestAnimationFrame(fitBoard);};
   window.addEventListener('pointerup',release,{capture:true});
   window.addEventListener('pointercancel',release,{capture:true});
   board.addEventListener('lostpointercapture',release);

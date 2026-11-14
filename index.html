@@ -1,4 +1,4 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.13</title>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.14</title>
 <link rel="stylesheet" href="./coach30-mobile.css">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
@@ -538,7 +538,7 @@ body.coach-page #coach212Shade.open{display:flex!important}
 const NS='http://www.w3.org/2000/svg',board=document.getElementById('board'),field=document.getElementById('field'),content=document.getElementById('content'),preview=document.getElementById('preview'),status=document.getElementById('status');
 let mode='move',items=[],history=[],future=[],seq=0,gesture=null,orientation='vertical',frames=[],playing=false,playTimer=null,drills=[],selectedPlayer=null,selectedRotation=null,rosterTab=0;
 // Explicit interface between the board's private state and Match.
-window.coachMatchBoard={getItems:()=>JSON.parse(JSON.stringify(items)),setItems:next=>{if(!Array.isArray(next))return;items=JSON.parse(JSON.stringify(next));seq=Math.max(seq,0,...items.map(it=>Number(it.id)||0));render()}};
+window.coachMatchBoard={getItems:()=>JSON.parse(JSON.stringify(items)),setItems:next=>{if(!Array.isArray(next))return;stopPlayback();cancelPendingPlacement();history=[];future=[];items=JSON.parse(JSON.stringify(next));seq=Math.max(seq,0,...items.map(it=>Number(it.id)||0));render()}};
 const $=id=>document.getElementById(id),node=(tag,attrs={},parent)=>{const el=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));if(parent)parent.appendChild(el);return el};
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),copy=v=>JSON.parse(JSON.stringify(v)),uid=()=>++seq;
 function dimensions(){return orientation==='vertical'?{w:420,h:760}:{w:760,h:420}}
@@ -697,7 +697,7 @@ board.addEventListener('pointerdown',e=>{if(gesture||e.isPrimary===false||e.butt
   const timer=setTimeout(()=>{
    if(pendingBoardPlacement?.timer!==timer)return;
    pendingBoardPlacement=null;
-   if(mode!==placementMode)return;
+   if(mode!==placementMode||window.matchReadOnly)return;
    checkpoint();
    const count=items.filter(i=>i.type===placementMode).length+1;
    items.push({id:uid(),type:placementMode,x:placementPoint.x,y:placementPoint.y,label:String(count)});
@@ -728,7 +728,7 @@ window.matchLocalGestureActive=()=>!!gesture;board.addEventListener('pointerup',
 function openPlayer(it){selectedPlayer=it.id;$('editName').value=it.name||'';$('editNumber').value=it.number??it.label??'';$('editPosition').value=it.position|| (it.type.startsWith('goalie')?'Målvakt':'Center');$('playerEditor').classList.add('open')}
 function rotateSelected(degrees,reset=false){let it=items.find(x=>x.id===selectedRotation);if(!it||!['cone','goal'].includes(it.type)){toast('Välj först en kona eller ett mål');return}checkpoint();it.rotation=reset?0:((it.rotation||0)+degrees+360)%360;render();$('rotationTitle').textContent=(it.type==='cone'?'Kona':'Mål')+' · '+it.rotation+'°'}
 $('rotMinus').onclick=()=>rotateSelected(-15);$('rotPlus').onclick=()=>rotateSelected(15);$('rotQuarter').onclick=()=>rotateSelected(90);$('rotReset').onclick=()=>rotateSelected(0,true);$('rotClose').onclick=()=>setMode('move');
-$('editClose').onclick=()=>$('playerEditor').classList.remove('open');$('editApply').onclick=()=>{let it=items.find(x=>x.id===selectedPlayer);if(it){checkpoint();it.name=$('editName').value.trim();it.number=$('editNumber').value.trim().slice(0,2);it.position=$('editPosition').value;render()}$('playerEditor').classList.remove('open')};
+$('editClose').onclick=()=>$('playerEditor').classList.remove('open');$('editApply').onclick=()=>{if(window.matchReadOnly){$('playerEditor').classList.remove('open');return;}let it=items.find(x=>x.id===selectedPlayer);if(it){checkpoint();it.name=$('editName').value.trim();it.number=$('editNumber').value.trim().slice(0,2);it.position=$('editPosition').value;render()}$('playerEditor').classList.remove('open')};
 board.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation()});
 $('undo').onclick=()=>{if(!history.length)return;future.push(copy(items));items=history.pop();render()};
 $('redo').onclick=()=>{if(!future.length)return;history.push(copy(items));items=future.pop();render()};
@@ -2108,7 +2108,7 @@ if ('serviceWorker' in navigator) {
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script id="match-readonly-keyboard">(()=>{document.addEventListener('keydown',e=>{if(!window.matchReadOnly)return;const key=e.key.toLowerCase();const modifier=e.ctrlKey||e.metaKey;const typing=e.target.closest?.('input,textarea,[contenteditable="true"]');if(typing)return;if((modifier&&['z','y','x','v'].includes(key))||['delete','backspace'].includes(key)){e.preventDefault();e.stopImmediatePropagation();const n=document.getElementById('matchReadOnlyNotice');if(n)n.hidden=false;}},true)})();</script>
 <script id="match-readonly-controls">(()=>{const editingIds=new Set(['coach304Capture','coach304Undo','coach304Next','undo','redo','quickUndo','quickRedo','fullBoardUndo','fullBoardRedo','quickClear','clear','quickRotate','rotMinus','rotPlus','rotQuarter','rotReset','filmQuickCapture','filmQuickUndo','timelineStart','timelineNext','timelineEnd','customNew','customCapture','customNext','customClear','aiApply','aiGenerate','smartExercise','quickRoster','filmQuickAdd','filmQuickDelete','filmQuickSave','customPlay','customStop','smartApply']);document.addEventListener('click',event=>{if(!window.matchReadOnly)return;const button=event.target.closest('button');if(!button)return;if(button.dataset.mode||editingIds.has(button.id)){event.preventDefault();event.stopImmediatePropagation();const notice=document.getElementById('matchReadOnlyNotice');if(notice)notice.hidden=false;}},true);document.addEventListener('change',event=>{if(!window.matchReadOnly)return;if(event.target.id==='orientation'){event.stopImmediatePropagation();}},true);})();</script>
-<script src="./match.js?v=311"></script><script id="coach101-actions">
+<script src="./match.js?v=314"></script><script id="coach101-actions">
 (()=>{'use strict';
  const $=id=>document.getElementById(id),dock=$('filmDock'),status=$('filmDockStatus');
  const refresh=()=>{
@@ -2155,7 +2155,7 @@ if ('serviceWorker' in navigator) {
   content.replaceChildren();sheet.classList.add('open');sheet.setAttribute('aria-hidden','false');
   if(tab==='tools'){
    title.textContent='🧰 Planverktyg';note('Välj ett verktyg. Panelen stängs så du kan använda fingret direkt på planen.');const g=group();
-   [['✋ Flytta','move'],['🔵 Spelare','playerA'],['🔴 Motståndare','playerB'],['🧤 Målvakt','goalieA'],['⚪ Boll','ball'],['🔺 Kona','cone'],['🥅 Mål','goal'],['✏️ Rita','draw'],['↗️ Pil','arrow'],['🧽 Sudda','erase'],['📝 Redigera','edit'],['🔄 Rotera','rotateObject']].forEach(([t,m])=>button(t,()=>{const target=document.querySelector('#modes [data-mode="'+m+'"]');if(target&&!target.classList.contains('active'))target.click();close()},g));
+   [['✋ Flytta','move'],['🔵 Spelare','playerA'],['🔴 Motståndare','playerB'],['🧤 Målvakt','goalieA'],['⚪ Boll','ball'],['🔺 Kona','cone'],['🥅 Mål','goal'],['✏️ Rita','draw'],['↗️ Pil','arrow'],['🧽 Sudda','erase'],['📝 Redigera','edit'],['🔄 Rotera','rotateObject']].forEach(([t,m])=>button(t,()=>{const target=document.querySelector('#modes [data-mode="'+m+'"], .board-workspace .rail button[data-mode="'+m+'"]');if(target&&!target.classList.contains('active'))target.click();close()},g));
    const a=actions();button('↶ Ångra',()=>click('undo'),a);button('↷ Gör om',()=>click('redo'),a);button('↔ Vänd plan',()=>click('quickRotate'),a);
   }else if(tab==='tactics'){
    title.textContent='🛡️ Taktik och motdrag';
@@ -2475,7 +2475,7 @@ overlay.addEventListener('coach-open-normal',()=>{normalOpen=true;sync()});
 function hide(){normalOpen=false;old.classList.remove('open');old.setAttribute('aria-hidden','true');sync();}
 function choose(mode){
  // Reuse the existing delegated mode selector rather than maintaining a second board state.
- const source=document.querySelector('#modes [data-mode="'+mode+'"]');
+ const source=document.querySelector('#modes [data-mode="'+mode+'"], .board-workspace .rail button[data-mode="'+mode+'"]');
  if(source && !source.classList.contains('active'))source.click();
  hide();
  const current=document.getElementById('currentMode');
@@ -2589,7 +2589,7 @@ function act(spec){
   return result;
  }
  if(type==='mode'){
-  const source=document.querySelector('#modes [data-mode="'+id+'"]');
+  const source=document.querySelector('#modes [data-mode="'+id+'"], .board-workspace .rail button[data-mode="'+id+'"]');
   if(source){if(!source.classList.contains('active'))source.click();return true}
   return false;
  }
@@ -2855,7 +2855,7 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{display:no
  update();
 })();
 </script>
-<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js?v=312" defer></script><script id="coach313-layout-switch">
+<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js?v=314" defer></script><script id="coach313-layout-switch">
 (()=>{
  const body=document.body,details=new Map();let focusWas=false,routingWas=false;
  const bar=document.createElement('nav');bar.id='coachPageToolbar';bar.setAttribute('aria-label','Sidläge');

@@ -98,3 +98,28 @@ Senast uppdaterad: 2026-11-13
 - Sidläget visar tavla, verktyg och öppna funktionspaneler i normalt dokumentflöde. Sidnavigeringens tidigare dolda vyer visas tillsammans.
 - Fast sidverktygsfält med Huvudmeny och Planläge. Läget sparas lokalt (coach-layout-v1), standard är planläge.
 - Återgång till planläge återställer tidigare fokus-/navigeringsklasser och expanderade paneler. Tavlans objekt och inspelningar byts inte ut.
+
+## Version 30.14 – helhetskontroll 2026-11-14
+- Menyvalen Ändra spelare och Rotera objekt söker även i sidverktygen; de saknades i den äldre verktygsraden och gick därför inte att aktivera från menyerna.
+- Fördröjd placering avbryts om redigeringsrätt försvinner före placeringen.
+- Mottagen tavla stoppar pågående enkel uppspelning, avbryter väntande placering och rensar Ångra/Gör om så en äldre tavla inte återställs över den delade.
+- Spelarredigeraren kan inte spara om redigeringsrätten återkallats medan den var öppen.
+- Planens storlek räknas om efter släppt/avbrutet drag, även efter rotation under draget.
+- Rumsbyte rensar behörighetscache; en gammal skickbekräftelse raderar inte utkast i ett nytt rum.
+- Offlineversion och ändrade skriptadresser uppdaterade tillsammans.
+
+### Verifierat i denna kontroll
+- Syntax för samtliga inbäddade och externa JS-filer, JSON och lokala skriptreferenser.
+- DOM-tester av uppstart, plan/sidläge, halvplansval, namn och flerradigt utkast.
+- Reproducerat före rättning: fördröjd placering efter återkallad rätt; Ångra återställer tidigare tavla efter mottagen fjärrtavla. Samma fall klarar rättningarna.
+- Simulerad rotation i helplan och halvplan, fryst storlek under drag samt omräkning efter släpp.
+- Åtta spelare i ett gemensamt animationssteg, faktisk interpolering, filmsparning och träningspassparning.
+- Äldre matchdata migreras; felaktiga ID, matchreferenser, laguppställning, period och händelsetyp avvisas.
+- Tre simulerade tränarklienter med delad Firebase-mock: automatisk redigeringsrätt, gästritning till övriga, utkast före Skicka, namn/radbrytning i chatt och städning efter Lämna.
+
+### Återstår / begränsningar
+- Ingen riktig iPhone/iPad eller Safari har testats här. Lokal Chromium kunde inte starta på grund av miljöns socketbegränsning. DOM-tester verifierar inte visuell layout.
+- Firebase-testet använder en mock. Verklig anslutning, publicerade serverregler, nätavbrott och synk mellan fysiska enheter återstår.
+- Samtidiga ändringar skickar fortfarande hela tavlan; överlappande redigeringar är inte konfliktfria.
+- Offline-cachefilerna har granskats; verkligt flygplansläge återstår.
+- Arbetet ligger på audit-30-14 för separat granskning. develop-29-9 har inte uppdaterats av denna kontroll eftersom projektstatus uppger att både test- och ordinarie adress publicerar från den.

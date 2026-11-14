@@ -34,7 +34,7 @@ async function enter(id,create){
 }
 
 function leave(){
- session++;revokedEditors.clear();approvingEditors.clear();
+ session++;revokedEditors.clear();approvingEditors.clear();window.matchEditorsCache={};
  if(timer)clearTimeout(timer);timer=null;
  subs.forEach(f=>f());subs=[];
  if(presence){const old=presence;presence=null;old.onDisconnect().cancel().catch(()=>{});old.remove().catch(()=>{});}
@@ -154,10 +154,10 @@ $('matchSend').onclick=async()=>{
  name=$('matchName').value.trim().slice(0,32);
  if(!value||sending)return;
  sending=true;button.disabled=true;button.textContent='Skickar…';
- const target=chat;
+ const target=chat,sendSession=session;
  try{
   await target.push({uid,name,text:value,time:firebase.database.ServerValue.TIMESTAMP});
-  if(input.value.trim()===value)input.value='';refreshDraft();
+  if(sendSession===session&&target===chat&&input.value.trim()===value)input.value='';refreshDraft();
  }catch(e){status('Meddelandet kunde inte skickas: '+e.message)}
  finally{sending=false;button.disabled=false;button.textContent='Skicka'}
 };
