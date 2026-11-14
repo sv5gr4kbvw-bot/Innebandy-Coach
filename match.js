@@ -7,6 +7,7 @@ const conf=window.MATCH_FIREBASE_CONFIG;
 function getBoardItems(){const api=window.coachMatchBoard;if(!api?.getItems||!api?.setItems)throw Error('Tavlan är inte redo. Ladda om appen och försök igen.');return api.getItems();}
 function setBoardItems(next){window.coachMatchBoard.setItems(next);}
 let owner=false,canEdit=false,editorsRef=null,ownerId='',session=0;
+let chatStarted=false;const seenMessages=new Set(),unreadMessages=new Set();
 let autoApprove=true;const revokedEditors=new Set(),approvingEditors=new Set();
 window.matchReadOnly=false;
 function applyReadOnly(){window.matchReadOnly=Boolean(room&&!canEdit);document.body.classList.toggle('match-readonly',window.matchReadOnly);const b=document.getElementById('matchReadOnlyNotice');if(b)b.hidden=!window.matchReadOnly;}
@@ -34,7 +35,7 @@ async function enter(id,create){
 }
 
 function leave(){
- session++;revokedEditors.clear();approvingEditors.clear();window.matchEditorsCache={};
+ session++;chatStarted=false;seenMessages.clear();unreadMessages.clear();updateChatNotice();revokedEditors.clear();approvingEditors.clear();window.matchEditorsCache={};
  if(timer)clearTimeout(timer);timer=null;
  subs.forEach(f=>f());subs=[];
  if(presence){const old=presence;presence=null;old.onDisconnect().cancel().catch(()=>{});old.remove().catch(()=>{});}
@@ -48,6 +49,12 @@ function messages(data){
  const nearBottom=el.scrollHeight-el.scrollTop-el.clientHeight<65;
  el.replaceChildren();
  const entries=Object.entries(data||{}).sort((a,b)=>(a[1].time||0)-(b[1].time||0)).slice(-60);
+ const incoming=entries.filter(([id,m])=>!seenMessages.has(id)&&m.uid!==uid);
+ entries.forEach(([id])=>seenMessages.add(id));
+ const reading=!center.hidden&&!document.hidden;
+ if(reading){unreadMessages.clear();updateChatNotice();}
+ else if(chatStarted&&incoming.length){incoming.forEach(([id])=>unreadMessages.add(id));const latest=incoming[incoming.length-1][1];noticeName.textContent=String(latest.name||'Tränare').slice(0,32);noticeText.textContent=String(latest.text||'').slice(0,140);updateChatNotice(true);}
+ chatStarted=true;
  if(!entries.length){const empty=document.createElement('p');empty.textContent='Inga meddelanden ännu. Skriv det första till tränarna.';empty.style.opacity='.7';el.append(empty);}
  entries.forEach(([,m])=>{
  const p=document.createElement('p'),b=document.createElement('b'),meta=document.createElement('small');
@@ -175,6 +182,13 @@ const header=document.createElement('div');header.className='share-center-head';
 const heading=document.createElement('h2');heading.textContent='Dela tavla';
 const close=document.createElement('button');close.type='button';close.textContent='✕';close.setAttribute('aria-label','Stäng delning');const toBoard=document.createElement('button');toBoard.type='button';toBoard.id='matchToBoard';toBoard.textContent='🏑 Gå till tavlan';toBoard.onclick=()=>{closeCenter();if(!document.body.classList.contains('board-fullscreen'))$('enterFullBoard')?.click();};header.append(heading,toBoard,close);center.append(header);
 const body=document.createElement('div');body.className='share-center-body';center.append(body);document.body.append(center);
+const notice=document.createElement('aside');notice.id='coachChatNotice';notice.hidden=true;notice.setAttribute('aria-label','Nytt chattmeddelande');
+notice.innerHTML='<strong id="coachChatNoticeName"></strong><p id="coachChatNoticeText" role="status" aria-live="polite"></p><button type="button" id="coachChatRead">Läs och svara</button><button type="button" id="coachChatLater">Läs senare ✕</button>';
+const unreadButton=document.createElement('button');unreadButton.type='button';unreadButton.id='coachChatUnread';unreadButton.hidden=true;
+document.body.append(notice,unreadButton);const noticeName=$('coachChatNoticeName'),noticeText=$('coachChatNoticeText');
+function updateChatNotice(show=false){if(!unreadMessages.size){notice.hidden=true;unreadButton.hidden=true;return;}unreadButton.hidden=false;unreadButton.textContent='💬 '+unreadMessages.size+' olästa';unreadButton.setAttribute('aria-label','Öppna chatten, '+unreadMessages.size+' olästa meddelanden');if(show)notice.hidden=false;}
+function readChat(){window.matchOpenCenter();$('matchChat').scrollIntoView({block:'nearest'});$('matchMessage').focus({preventScroll:true});}
+$('coachChatRead').onclick=readChat;unreadButton.onclick=readChat;$('coachChatLater').onclick=()=>{notice.hidden=true;};
 const panel=$('matchPanel');let returnTo=null,previousFocus=null;
 function fitShareViewport(){if(center.hidden)return;const v=window.visualViewport;if(v){center.style.top=v.offsetTop+'px';center.style.height=v.height+'px';center.style.bottom='auto';}}
 window.visualViewport?.addEventListener('resize',fitShareViewport);
@@ -182,6 +196,7 @@ window.visualViewport?.addEventListener('scroll',fitShareViewport);
 $('matchMessage').addEventListener('focus',()=>setTimeout(()=>{fitShareViewport();$('matchMessage').scrollIntoView({block:'center',behavior:'smooth'});},250));
 function closeCenter(){center.hidden=true;if(returnTo){returnTo.replaceWith(panel);returnTo=null;}previousFocus?.focus?.({preventScroll:true});}
 window.matchOpenCenter=()=>{
+ unreadMessages.clear();updateChatNotice();
  if(!center.hidden)return;
  document.querySelector('#coach212Shade.open .c212-close')?.click();
  previousFocus=document.activeElement;returnTo=document.createComment('match-panel-home');panel.replaceWith(returnTo);body.append(panel);panel.open=true;center.hidden=false;fitShareViewport();close.focus({preventScroll:true});refreshDraft();

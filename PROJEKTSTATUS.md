@@ -123,3 +123,25 @@ Senast uppdaterad: 2026-11-13
 - Samtidiga ändringar skickar fortfarande hela tavlan; överlappande redigeringar är inte konfliktfria.
 - Offline-cachefilerna har granskats; verkligt flygplansläge återstår.
 - Arbetet ligger på audit-30-14 för separat granskning. develop-29-9 har inte uppdaterats av denna kontroll eftersom projektstatus uppger att både test- och ordinarie adress publicerar från den.
+
+## Version 30.15 – enklare statistik, chattnotiser och 5 mot 5
+- Tryck på en spelare i Match+ och registrera mål, assist eller 2/5/10 utvisningsminuter utan inmatningsdialog. Vald spelare behålls efter registrering.
+- Matchval visar resultat samt spelartabell för vald match. Tabellen kan växlas till säsong eller alla matcher och visar mål, assist, poäng (mål + assist), antal utvisningar och summerade utvisningsminuter, även för spelare utan poäng.
+- Säsongskort visar hela lagets gjorda mål, assist, spelarpoäng, utvisningsminuter och insläppta mål. Saknade insläppta mål markeras som ofullständig summa.
+- Eget resultat räknas från målregistreringar men kan anges manuellt. Motståndarens mål anges per match. Manuella resultat ändrar inte spelarstatistiken. CSV följer vald statistikvy och har en totalrad.
+- Matchresultat ingår i befintlig säkerhetskopiering och importvalideras. Lagringsfel återställer senaste sparade matchdata.
+- Nya meddelanden från andra tränare visar en liten notis. Läs och svara öppnar chatten; Läs senare stänger notisen men behåller knappen med antal olästa. Gamla meddelanden vid anslutning och egna meddelanden ger ingen notis. Detta är notiser inne i appen när anslutningen är aktiv, inte systempush.
+- 5×5 i träningspanelen ställer upp fem blå och fem röda spelare samt en boll. Flytta alla spelare mellan start och spara av samma steg; alla spelas upp samtidigt. Tydlig instruktion visas under inspelning. Befintliga sparade filmer behålls.
+- Offlinecachen och de ändrade filernas versionsadresser har uppdaterats tillsammans.
+
+### Testat
+- tests/statistics.cjs: separata spelare och matcher, mål/assist/poäng, 2+5+10=17 minuter, nollpoängsspelare, manuella/automatiska resultat, säsongssummor, saknade resultat, ogiltig import och lagringsfel.
+- tests/sharing.cjs: tre simulerade tränare, gästritning, namn, utkast, olästa meddelanden, läs senare, läs/svara och inga notiser för egna eller historiska meddelanden. Firebase är simulerad.
+- tests/runtime.cjs: verkliga tavlans drag- och uppspelningskod med tio spelare i ett steg, film- och träningspassparning samt regressionstester från 30.14.
+- tests/rotation.cjs: hel- och halvplan, rotation under drag, omräkning efter släpp.
+- DOM-tester bekräftar funktion men ersätter inte visuell testning på iPhone/iPad eller verifiering av verklig Firebase-anslutning.
+
+### Snabbval för namngivna femmor
+- Huvudmenyn och Alla verktyg har Första, Andra, Tredje och Fjärde femman → plan.
+- Namn, nummer och positioner hämtas från befintlig spelartrupp. Vald femma ersätter egna blå spelare; motståndare, boll och ritningar behålls. Ifylld ordinarie målvakt följer med.
+- Nya femmor placeras i grundpositioner (tre forwards, två backar). Därefter går de att flytta och animera. Gamla animationssteg rensas först efter bekräftelse; sparade filmer behålls. Tom femma eller visningsbehörighet ändrar inte tavlan.

@@ -20,6 +20,7 @@
    if(!seasons.has(m.seasonId))fail('Matchens säsong saknas');
    if(m.roster===undefined)m.roster=[...players];
    if(!Array.isArray(m.roster)||new Set(m.roster).size!==m.roster.length||m.roster.some(id=>!players.has(id)))fail('Ogiltig laguppställning');
+   for(const field of ['resultFor','resultAgainst'])if(m[field]!=null&&(!Number.isInteger(m[field])||m[field]<0||m[field]>999))fail('Ogiltigt matchresultat');
    if(m.period===undefined)m.period=1;
    if(![1,2,3,4].includes(m.period))fail('Ogiltig matchperiod');
   }
