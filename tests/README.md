@@ -6,6 +6,7 @@ Installera testberoendet separat från webbappen och kör exempelvis:
 
 ```sh
 npm install --prefix /tmp/coach-tests jsdom@26
+NODE_PATH=/tmp/coach-tests/node_modules node tests/device.cjs
 NODE_PATH=/tmp/coach-tests/node_modules node tests/statistics.cjs
 NODE_PATH=/tmp/coach-tests/node_modules node tests/sharing.cjs
 NODE_PATH=/tmp/coach-tests/node_modules node tests/runtime.cjs

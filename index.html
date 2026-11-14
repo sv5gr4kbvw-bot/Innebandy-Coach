@@ -1,5 +1,5 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.15</title>
-<link rel="stylesheet" href="./coach30-mobile.css"><link rel="stylesheet" href="./coach315.css?v=315">
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-visual"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Innebandy Coach"><title>Innebandy Coach PRO 30.16</title>
+<link rel="stylesheet" href="./coach30-mobile.css"><link rel="stylesheet" href="./coach315.css?v=315"><link rel="stylesheet" href="./coach-device.css?v=316">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#edf3ff;background:#0b1220}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{border:1px solid #34445d;background:#1e2b40;color:#f2f6ff;border-radius:11px;padding:10px 12px;min-height:43px;font-weight:600}button.active{background:#2563eb;border-color:#60a5fa}button:disabled{opacity:.4}button:active{transform:scale(.98)}header{padding:14px 15px 9px;display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:20px;margin:0}small{color:#aabbd1}.pill{background:#163e31;color:#9df4c1;border-radius:20px;padding:5px 9px;font-size:12px}.wrap{max-width:980px;margin:auto}.tools{display:flex;overflow-x:auto;gap:7px;padding:9px 12px;scrollbar-width:none}.tools button{white-space:nowrap;flex:none}.group{padding:7px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group label{font-size:13px;color:#b8c9dd}.group input[type=color]{height:38px;width:42px;border:0;background:none}.group select{background:#1e2b40;color:white;border:1px solid #34445d;padding:8px;border-radius:9px}.pitch{margin:4px 10px;background:#ffffff;border:1px solid #d6d8e4;border-radius:15px;padding:8px;box-shadow:0 8px 28px #0005}.pitch svg{overscroll-behavior:contain;-webkit-touch-callout:none;display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}.status{padding:6px 15px;color:#aabbd1;font-size:12px;min-height:29px}.bottom{padding:8px 12px 20px;display:flex;flex-wrap:wrap;gap:8px}.bottom button{flex:1;min-width:95px}.panel{margin:7px 12px;padding:12px;border:1px solid #34445d;border-radius:12px;background:#141f30}.panel input{background:#0e1828;color:white;border:1px solid #42516a;border-radius:8px;padding:10px;width:100%;margin:5px 0}.panel summary{cursor:pointer;font-weight:650}.hint{font-size:12px;color:#aabbd1;margin:7px 0 0}.line{display:flex;gap:8px}.line>*{min-width:0}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263e55;border:1px solid #7195b6;padding:10px 15px;border-radius:12px;display:none;z-index:5;max-width:90vw;text-align:center}#library{display:flex;flex-direction:column;gap:6px;margin-top:9px}#library button{text-align:left}.danger{color:#ffc5c5} @media(min-width:720px){.pitch{margin:8px 12px}.pitch svg{max-height:65vh}}
 .toolbox{padding:0 10px 7px}.tool-section{margin:7px 0;background:#141f30;border:1px solid #34445d;border-radius:13px;padding:6px 3px}.tool-label{font-size:12px;color:#aabbd1;padding:5px 12px 0;font-weight:700;letter-spacing:.02em}.tools{padding:6px 7px;gap:6px}.tools button{min-height:46px;padding:10px 14px}.mode-banner{margin:4px 12px 7px;padding:10px 12px;border-radius:11px;background:#173653;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#b7d5f4}.mode-banner #currentMode{font-size:14px;font-weight:800;color:#fff;white-space:nowrap}.group{background:#101b2b;margin:5px 12px;border-radius:11px;padding:8px}.pitch{margin-top:0}.bottom{padding-bottom:12px}button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}@media(max-width:390px){header h1{font-size:18px}.mode-banner span:last-child{font-size:11px}} .roster-grid{display:grid;grid-template-columns:105px minmax(0,1fr) 65px;gap:6px;align-items:center;margin:7px 0}.roster-grid input{width:100%;min-width:0}.roster-tabs{display:flex;gap:5px;overflow-x:auto;padding:8px 0}.roster-tabs button{flex:none}.roster-tabs .active{background:#2563eb}.roster-actions{display:flex;gap:6px;flex-wrap:wrap}.roster-actions button{flex:1}.player-editor{display:none;position:fixed;inset:0;background:#000b;z-index:30;align-items:center;justify-content:center;padding:16px}.player-editor.open{display:flex}.player-card{width:min(100%,390px);background:#192b40;border:1px solid #527090;border-radius:18px;padding:18px}.player-card input,.player-card select{display:block;width:100%;margin:5px 0 12px;padding:12px;background:white;color:#111;border-radius:8px} 
@@ -366,15 +366,16 @@ body.board-fullscreen #board{transition:none!important;transform:none!important}
 </style>
 <script id="coach305-stable-pitch-js">
 (function(){
- let orientation=window.matchMedia('(orientation: portrait)').matches;
+ let orientation=window.matchMedia('(orientation: portrait)').matches,orientationWidth=window.innerWidth;
  function freeze(){
   if(!document.body.classList.contains('board-fullscreen'))return;
   const height=Math.round(window.innerHeight);
   if(height>250)document.documentElement.style.setProperty('--coach305-fixed-height',height+'px');
  }
  function checkOrientation(){
+  if(document.activeElement?.matches('input,textarea,[contenteditable="true"]')&&Math.abs(window.innerWidth-orientationWidth)<=24)return;
   const next=window.matchMedia('(orientation: portrait)').matches;
-  if(next!==orientation){orientation=next;requestAnimationFrame(()=>requestAnimationFrame(freeze))}
+  if(next!==orientation){orientation=next;orientationWidth=window.innerWidth;requestAnimationFrame(()=>requestAnimationFrame(freeze))}
  }
  document.addEventListener('DOMContentLoaded',freeze,{once:true});
  window.addEventListener('orientationchange',()=>setTimeout(checkOrientation,300),{passive:true});
@@ -466,7 +467,7 @@ body.coach-page #coach212Shade.open{display:flex!important}
   <button id="filmQuickMore" type="button">⚙️ <span>Avancerat</span></button>
  </div>
 </div><div class="under-rail"><button id="quickUndo">↶<span>Ångra</span></button><button id="quickRedo">↷<span>Gör om</span></button><button id="quickFrame">🎬<span>Bildruta</span></button><button id="quickOptions">⚙️<span>Fler val</span></button></div><section class="coach80" id="coach80Planner" aria-label="Träningsplanerare 8.0">
-<h2>📋 Träningsplanerare</h2><p>Bygg ett träningspass utifrån antal spelare, målvakter och tid. Markera momenten som klara vid sargen. Sparas automatiskt på din iPhone.</p>
+<h2>📋 Träningsplanerare</h2><p>Bygg ett träningspass utifrån antal spelare, målvakter och tid. Markera momenten som klara vid sargen. Sparas automatiskt på den här enheten.</p>
 <div class="coach80-grid"><label>Åldersnivå<select id="coach80Level"><option value="red">Röd nivå</option><option value="junior">Junior</option><option value="senior">Senior</option></select></label>
 <label>Spelare<input id="coach80Players" type="number" min="4" max="30" value="12"></label><label>Målvakter<input id="coach80Goalies" type="number" min="0" max="4" value="1"></label>
 <label>Passlängd<select id="coach80Minutes"><option value="45">45 minuter</option><option value="60" selected>60 minuter</option><option value="75">75 minuter</option><option value="90">90 minuter</option></select></label></div>
@@ -783,11 +784,11 @@ const SKEY='innebandy_coach_sessions_v1';function getSessions(){try{return JSON.
 function renderDrills(){let el=$('sessionList');el.replaceChildren();let total=0;drills.forEach((d,i)=>{total+=d.minutes;let r=document.createElement('div');r.className='line';r.style.margin='6px 0';let t=document.createElement('span');t.style.flex='1';t.textContent=(i+1)+'. '+d.name+' · '+d.minutes+' min';let b=document.createElement('button');b.textContent='×';b.onclick=()=>{drills.splice(i,1);renderDrills()};r.append(t,b);el.append(r)});let t=document.createElement('small');t.textContent='Total tid: '+total+' minuter';el.append(t)}
 $('addDrill').onclick=()=>{let name=$('drillTitle').value.trim(),minutes=Number($('drillMinutes').value);if(!name||!Number.isFinite(minutes)||minutes<1){toast('Ange moment och minuter');return}drills.push({name,minutes});$('drillTitle').value='';renderDrills()};
 function renderSessions(){let el=$('savedSessions');el.replaceChildren();getSessions().forEach((v,i)=>{let r=document.createElement('div');r.className='line';r.style.margin='6px 0';let b=document.createElement('button');b.style.flex='1';b.textContent='📅 '+v.title;b.onclick=()=>{$('sessionTitle').value=v.title;drills=copy(v.drills);renderDrills()};let d=document.createElement('button');d.textContent='Ta bort';d.onclick=()=>{let a=getSessions();a.splice(i,1);localStorage.setItem(SKEY,JSON.stringify(a));renderSessions()};r.append(b,d);el.append(r)})}
-$('saveSession').onclick=()=>{let title=$('sessionTitle').value.trim();if(!title||!drills.length){toast('Ange namn och minst ett moment');return}try{let a=getSessions();a.unshift({title,drills:copy(drills)});localStorage.setItem(SKEY,JSON.stringify(a));renderSessions();toast('Träningspass sparat')}catch{toast('Kunde inte spara. Öppna i Safari.')}};
+$('saveSession').onclick=()=>{let title=$('sessionTitle').value.trim();if(!title||!drills.length){toast('Ange namn och minst ett moment');return}try{let a=getSessions();a.unshift({title,drills:copy(drills)});localStorage.setItem(SKEY,JSON.stringify(a));renderSessions();toast('Träningspass sparat')}catch{toast('Kunde inte spara. Öppna appen i din vanliga webbläsare.')}};
 renderDrills();renderSessions();
 function svgSource(){let clone=board.cloneNode(true);clone.setAttribute('xmlns',NS);clone.setAttribute('width',dimensions().w*2);clone.setAttribute('height',dimensions().h*2);return new XMLSerializer().serializeToString(clone)}
 $('export').onclick=()=>{let src=svgSource(),img=new Image(),url=URL.createObjectURL(new Blob([src],{type:'image/svg+xml'}));img.onload=()=>{let c=document.createElement('canvas'),d=dimensions();c.width=d.w*2;c.height=d.h*2;c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(b=>{if(b)download(b,'innebandy-ovning.png');else download(new Blob([src],{type:'image/svg+xml'}),'innebandy-ovning.svg')},'image/png');URL.revokeObjectURL(url)};img.onerror=()=>{download(new Blob([src],{type:'image/svg+xml'}),'innebandy-ovning.svg');URL.revokeObjectURL(url)};img.src=url};
-const KEY='innebandy_coach_pro_library_v1';function readLib(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}function writeLib(x){try{localStorage.setItem(KEY,JSON.stringify(x));return true}catch{toast('Kunde inte spara i den här visaren. Öppna i Safari.');return false}}
+const KEY='innebandy_coach_pro_library_v1';function readLib(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}function writeLib(x){try{localStorage.setItem(KEY,JSON.stringify(x));return true}catch{toast('Kunde inte spara. Öppna appen i din vanliga webbläsare.');return false}}
 function library(){let l=$('library');l.replaceChildren();let entries=readLib();if(!entries.length){let t=document.createElement('small');t.textContent='Inga sparade övningar ännu.';l.appendChild(t)}entries.forEach((v,i)=>{let row=document.createElement('div');row.className='line';let b=document.createElement('button');b.textContent='📋 '+v.name;b.style.flex='1';b.onclick=()=>{if(items.length&&!confirm('Öppna övningen och ersätta planen?'))return;checkpoint();items=copy(v.items);orientation=v.orientation||'vertical';$('orientation').value=orientation;seq=Math.max(seq,...items.map(it=>it.id||0));paintField();render();toast('Övning öppnad')};let del=document.createElement('button');del.textContent='Ta bort';del.className='danger';del.onclick=()=>{if(confirm('Ta bort sparad övning?')){entries.splice(i,1);writeLib(entries);library()}};row.append(b,del);l.appendChild(row)})}
 $('save').onclick=()=>{let name=prompt('Namn på övningen:','Ny innebandyövning');if(!name)return;let l=readLib();l.unshift({name:name.slice(0,80),items:copy(items),orientation,date:new Date().toISOString()});if(writeLib(l)){library();toast('Övningen sparad')}};
 $('backup').onclick=()=>download(new Blob([JSON.stringify(readLib(),null,2)],{type:'application/json'}),'innebandy-ovningar-backup.json');
@@ -1746,9 +1747,9 @@ $('aiBoardFullscreen').onclick=()=>$('enterFullBoard').click();
 $('aiFullRestart').onclick=()=>{if(!smartFrames.length)return toast('Välj en taktik först');smartPrepareOnFullPitch()};
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 if(!SpeechRecognition){
- $('aiTacticMic').textContent='🎙️ Diktera med iPhone';
- $('aiTacticMic').onclick=()=>{aiTacticInput.focus();$('aiTacticSpeechStatus').textContent='Tryck på mikrofonen på iPhones tangentbord och prata. Texten hamnar i rutan. Tryck sedan Föreslå motdrag.'};
- $('aiTacticSpeechStatus').textContent='På iPhone: tryck 🎙️ Diktera med iPhone och använd mikrofonen på tangentbordet. Safari stöder inte alltid webbappens egen taligenkänning.';
+ $('aiTacticMic').textContent='🎙️ Diktera med tangentbordet';
+ $('aiTacticMic').onclick=()=>{aiTacticInput.focus();$('aiTacticSpeechStatus').textContent='Tryck på mikrofonen på enhetens tangentbord och prata. Texten hamnar i rutan. Tryck sedan Föreslå motdrag.'};
+ $('aiTacticSpeechStatus').textContent='Tryck i textfältet och använd tangentbordets mikrofon om webbläsarens taligenkänning inte är tillgänglig.';
 }
 else{
  $('aiTacticMic').onclick=()=>{
@@ -2182,10 +2183,10 @@ if ('serviceWorker' in navigator) {
    const a=actions();button('🏑 Visa på plan',load,a);button('▶ Spela sekvens',()=>{load();click('tacticPlay')},a);button('🔀 Alternativ',()=>{load();click('tacticAlternative')},a);
    note('Använd ◀ ▶ i överkanten för stegvis uppspelning. Ändra spelarna med Flytta när filmen är pausad.');
   }else if(tab==='ai'){
-   title.textContent='🎙️ Smart taktikassistent';note('Beskriv vad motståndarna gör. På iPhone: tryck i textfältet och använd mikrofonen på tangentbordet.');
+   title.textContent='🎙️ Smart taktikassistent';note('Beskriv vad motståndarna gör. Tryck i textfältet och använd mikrofonen på tangentbordet.');
    const l=document.createElement('label');l.textContent='Vad gör motståndarna?';const input=document.createElement('textarea');input.placeholder='Exempel: De stänger diagonalen och pressar vår point i powerplay.';input.value=q('aiTacticInput').value;l.append(input);content.append(l);
    const answer=document.createElement('div');answer.className='fc-note';answer.setAttribute('aria-live','polite');content.append(answer);
-   const a=actions();button('🎙️ Diktera',()=>{input.focus();answer.textContent='Tryck på mikrofonen på iPhones tangentbord och prata.'},a);
+   const a=actions();button('🎙️ Diktera',()=>{input.focus();answer.textContent='Tryck på mikrofonen på enhetens tangentbord och prata.'},a);
    button('🧠 Föreslå motdrag',()=>{q('aiTacticInput').value=input.value;click('aiTacticAnalyze');answer.textContent=q('aiTacticAnswer').innerText||q('aiTacticAnswer').textContent},a);
    button('▶ Visa på planen',()=>{q('aiTacticInput').value=input.value;click('aiTacticAnalyze');if(!q('aiTacticAnimate').disabled){click('aiTacticAnimate');close()}else answer.textContent='Beskriv situationen lite mer först.'},a);
    note('Assistenten är regelbaserad och fungerar utan betalt AI-konto.');
@@ -2575,7 +2576,7 @@ const shade=document.createElement('div');shade.id='coach212Shade';shade.setAttr
 const sheet=document.createElement('section');sheet.id='coach212Sheet';shade.append(sheet);document.body.append(shade);
 const groups={
 main:{title:'☰ Huvudmeny',hint:'Match, chatt, delning och träning öppnas ovanpå helplanen. Gemensam tavla och chatt kräver konfigurerad Firebase.',items:[
-['📜 Sidläge med scroll','special:pageview'],['🏑 Snabbverktyg','special:tools'],['👥 Första femman → plan','line:0'],['👥 Andra femman → plan','line:1'],['👥 Tredje femman → plan','line:2'],['👥 Fjärde femman → plan','line:3'],['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['📋 Träningspass','more:coach80Planner'],['📚 Övningar','more:smartDrills'],['👥 Femmor & trupp','more:rosterPanel'],['🎬 Animationer','more:customStoryboard'],['💾 Spara tavlan','click:save'],['⚙️ Planinställningar','more:boardOptions'],['📤 Exportera','click:export']]},
+['📜 Sidläge med scroll','special:pageview'],['📱 Enhet & operativsystem','special:device'],['🏑 Snabbverktyg','special:tools'],['👥 Första femman → plan','line:0'],['👥 Andra femman → plan','line:1'],['👥 Tredje femman → plan','line:2'],['👥 Fjärde femman → plan','line:3'],['🤝 Matchcenter','more:matchPanel'],['💬 Chatt','special:chat'],['🔗 Dela tavla','special:share'],['📋 Träningspass','more:coach80Planner'],['📚 Övningar','more:smartDrills'],['👥 Femmor & trupp','more:rosterPanel'],['🎬 Animationer','more:customStoryboard'],['💾 Spara tavlan','click:save'],['⚙️ Planinställningar','more:boardOptions'],['📤 Exportera','click:export']]},
 left:{title:'🧰 Alla verktyg',hint:'Välj verktyg och arbeta vidare direkt på planen.',items:[
 ['✋ Flytta','mode:move'],['🏑 Träning','special:training'],['🔵 Blå spelare','mode:playerA'],['🔴 Röd spelare','mode:playerB'],['🧤 Målvakt','mode:goalieA'],['⚪ Boll','mode:ball'],['🔺 Kona','mode:cone'],['🥅 Mål','mode:goal'],['✏️ Rita','mode:draw'],['↗️ Pil','mode:arrow'],['🧽 Sudda','mode:erase'],['📝 Ändra spelare','mode:edit'],['🔄 Rotera objekt','mode:rotateObject'],['🎨 Färg & tjocklek','more:boardOptions'],['👥 Första femman → plan','line:0'],['👥 Andra femman → plan','line:1'],['👥 Tredje femman → plan','line:2'],['👥 Fjärde femman → plan','line:3'],['👥 Spelartrupp','more:rosterPanel']]},
 right:{title:'⚙️ Redigera & spara',hint:'Snabbåtgärder utan att lämna helplan.',items:[
@@ -2589,6 +2590,7 @@ function close(){shade.classList.remove('open');active=null;down=null}
 function act(spec){
  const [type,id]=spec.split(':');
  if(type==='line'){window.coachPlaceLine?.(Number(id));return true;}
+ if(type==='special'&&id==='device'){window.coachOpenDeviceSettings?.();return true;}
  if(type==='special'&&id==='pageview'){window.coachSetLayout?.(document.body.classList.contains('coach-page')?'plan':'page');return true;}
  if(type==='special'&&id==='training'){window.coach304OpenTraining?.();return true}
     if(type==='special'&&id==='matchstats'){document.getElementById('coach294open')?.click();return true}
@@ -2877,7 +2879,7 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{display:no
  update();
 })();
 </script>
-<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js?v=314" defer></script><script id="coach313-layout-switch">
+<script src="./coach30-tools.js" defer></script><script src="./coach30-animation.js" defer></script><script src="./coach30-halfpitch.js?v=316" defer></script><script id="coach313-layout-switch">
 (()=>{
  const body=document.body,details=new Map();let focusWas=false,routingWas=false;
  const bar=document.createElement('nav');bar.id='coachPageToolbar';bar.setAttribute('aria-label','Sidläge');
@@ -2909,5 +2911,5 @@ body.board-fullscreen:has(#coach304Anim.coach304-open) #coach212Right{display:no
  const init=()=>{if(window.coachPagePreferred)setLayout('page');};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
-</script></body></html>
+</script><script src="./coach-device.js?v=316" defer></script></body></html>
 

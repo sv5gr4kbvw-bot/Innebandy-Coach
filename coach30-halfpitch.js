@@ -24,6 +24,8 @@
    sample();
   }
   function refreshViewport(){
+   const editing=document.activeElement?.matches('input,textarea,[contenteditable="true"]');
+   if(editing&&Math.abs(window.innerWidth-stableWidth)<=24)return;
    const next=window.matchMedia('(orientation: portrait)').matches;
    if(next!==orientationKey||Math.abs(window.innerWidth-stableWidth)>24){settleRotation();}
    else if(Date.now()<rotationUntil){captureViewport();}
@@ -59,7 +61,7 @@
    const [fw,fh]=dimensions();
    const aspect=mode==='full'?fw/fh:(fw>fh?390/420:420/390);
    const dock=document.getElementById('coach304Anim');
-   const reserved=42+(dock?parseFloat(getComputedStyle(dock).right)||0:0);
+   const reserved=(document.documentElement.dataset.coachPlatform==='android'?48:42)+(dock?parseFloat(getComputedStyle(dock).right)||0:0);
    document.documentElement.style.setProperty('--coach-training-width',reserved+'px');
    const topSpace=mode==='full'?16:4,bottomSpace=8;
    const availableHeight=Math.max(200,vh-topSpace-bottomSpace);
@@ -72,6 +74,7 @@
    for(const [k,v] of Object.entries(props))board.style.setProperty(k,v,'important');
   }
   window.addEventListener('resize',refreshViewport,{passive:true});
+  document.addEventListener('coach-device-changed',()=>requestAnimationFrame(fitBoard));
   // Safari address-bar/keyboard height changes do not move the playing surface.
   window.addEventListener('orientationchange',settleRotation,{passive:true});
   window.screen?.orientation?.addEventListener('change',settleRotation);

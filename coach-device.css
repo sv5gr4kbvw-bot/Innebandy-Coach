@@ -1,0 +1,12 @@
+#coachDeviceDialog{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;overflow:auto;overscroll-behavior:contain;background:#04121de8;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));font:16px/1.5 system-ui;color:#f0f8fc}
+#coachDeviceDialog[hidden],#coachDeviceClose[hidden]{display:none!important}
+.coach-device-card{width:100%;max-width:440px;max-height:calc(100dvh - 32px);overflow-y:auto;touch-action:pan-y;background:#102d3e;border:1px solid #537b8f;border-radius:20px;padding:24px;box-shadow:0 16px 60px #0008}
+.coach-device-card h2{margin:0 0 8px;font-size:23px}.coach-device-card p{color:#c7dce8;margin:10px 0}
+.coach-device-choices{display:grid;gap:10px;margin:20px 0}
+.coach-device-choices button{min-height:58px;text-align:left;font-size:17px;background:#193e51;border-color:#567f94;touch-action:manipulation}
+.coach-device-choices button[aria-pressed="true"]{background:#0d6655;border:2px solid #87dfc5}
+#coachDeviceClose{min-height:44px;width:100%}
+:root[data-coach-platform="android"] button,:root[data-coach-platform="android"] select{min-height:44px}
+:root[data-coach-platform="android"] body.board-fullscreen #coach304Anim.coach304-open{width:48px!important}
+:root[data-coach-platform="android"] body.board-fullscreen #coach304Anim.coach304-open button{min-height:44px!important;height:44px!important;flex-basis:44px!important}
+@media(max-width:600px){input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),textarea,select{font-size:16px}.coach-device-card{padding:18px}.coach-device-card h2{font-size:21px}}

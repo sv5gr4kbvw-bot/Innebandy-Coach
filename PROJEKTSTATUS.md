@@ -145,3 +145,19 @@ Senast uppdaterad: 2026-11-13
 - Huvudmenyn och Alla verktyg har Första, Andra, Tredje och Fjärde femman → plan.
 - Namn, nummer och positioner hämtas från befintlig spelartrupp. Vald femma ersätter egna blå spelare; motståndare, boll och ritningar behålls. Ifylld ordinarie målvakt följer med.
 - Nya femmor placeras i grundpositioner (tre forwards, två backar). Därefter går de att flytta och animera. Gamla animationssteg rensas först efter bekräftelse; sparade filmer behålls. Tom femma eller visningsbehörighet ändrar inte tavlan.
+
+## Version 30.16 – Android och sparat operativsystemsval
+- Första starten visar iPhone/iPad, Android eller Dator/annan enhet. Valet sparas lokalt i coach-device-v1 och frågan visas inte igen när ett giltigt val finns.
+- Huvudmeny → Enhet & operativsystem öppnar samma val för byte. Befintlig tavla, trupp, statistik, sparade filmer och sidläge ersätts inte.
+- Android visar större tryckytor och bredare träningspanel; tavlan reserverar rätt utrymme även efter byte av enhet. Installationstext anpassas till plattformen. Dikterings- och lagringshjälp är inte längre låst till iPhone.
+- Viewportkonfigurationen använder visuell storleksändring för tangentbord. Breddoförändrade höjdändringar med aktivt textfält utlöser inte rotationsomräkning. Chattens befintliga visualViewport-anpassning behålls.
+- Enhetsdialogen har tangentbordsfokus, fokusfälla, läsbara knappar och är ändringsbar utan omladdning. Vid lagringsfel visas att valet bara kan användas i aktuell session.
+- Nya enhetsfiler och den ändrade planmodulen ingår i offlinecachen.
+- tests/device.cjs verifierar första start, sparat val vid ny laddning, alla tre plattformar, ändring, ogiltigt lagrat val, lagringsfel och bevarade befintliga data. Rotationstestet omfattar tangentbordsändringar.
+- Fysisk Android-telefon och fysisk iPhone/Safari är inte tillgängliga i denna testmiljö. Plattformssimulering och webbläsartest ersätter inte hårdvarutest.
+
+### Verkligt webbläsartest av version 30.15 (2026-11-14)
+- Publicerad app testad i Chrome: mål/assist/utvisning, resultat och lag/säsongssummor samt bevarande efter omladdning godkända.
+- Namngiven första femma placerad genom menyn.
+- Två separata riktiga Firebase-klienter: rum, automatisk gästrätt, gästritning, meddelanden/svar, notis, Läs senare och olästknapp verifierade. Båda lämnade testrummet.
+- Fem mot fem skapades i gränssnittet. Tio förflyttningar sparades i samma steg; DOM-positionerna verifierade att alla tio spelare var på väg samtidigt under uppspelningen.
