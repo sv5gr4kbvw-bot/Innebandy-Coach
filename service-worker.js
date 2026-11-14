@@ -1,6 +1,6 @@
-// Innebandy Coach PRO 30.16 – uppdaterbar offline-app
-const CACHE='innebandy-coach-v30-16';
-const CORE=['./','./index.html','./manifest.webmanifest','./match.js','./firebase-config.js','./coach294.js','./coach294.js?v=315','./coach-data.js?v=315','./match.js?v=315','./coach30-tools.js','./coach30-animation.js','./coach30-halfpitch.js','./coach30-halfpitch.js?v=316','./coach30-mobile.css','./coach315.css?v=315','./coach-device.js?v=316','./coach-device.css?v=316','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
+// Innebandy Coach PRO 30.17 – uppdaterbar offline-app
+const CACHE='innebandy-coach-v30-17';
+const CORE=['./','./index.html','./manifest.webmanifest','./match.js','./firebase-config.js','./coach294.js','./coach294.js?v=315','./coach-data.js?v=315','./match.js?v=315','./coach30-tools.js','./coach30-animation.js','./coach30-halfpitch.js','./coach30-halfpitch.js?v=317','./coach30-mobile.css','./coach315.css?v=315','./coach-device.js?v=316','./coach-device.css?v=316','./coach-plans.js?v=317','./coach-plans.css?v=317','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
 });

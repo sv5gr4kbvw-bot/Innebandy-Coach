@@ -63,7 +63,9 @@
    const dock=document.getElementById('coach304Anim');
    const reserved=(document.documentElement.dataset.coachPlatform==='android'?48:42)+(dock?parseFloat(getComputedStyle(dock).right)||0:0);
    document.documentElement.style.setProperty('--coach-training-width',reserved+'px');
-   const topSpace=mode==='full'?16:4,bottomSpace=8;
+   const plans=document.getElementById('coachPlanBar');
+   const bottomSpace=plans?Math.max(56,plans.getBoundingClientRect().height)+16:8;
+   const topSpace=mode==='full'?16:4;
    const availableHeight=Math.max(200,vh-topSpace-bottomSpace);
    const usableWidth=Math.max(100,vw-reserved-8);
    const width=Math.min(usableWidth,availableHeight*aspect);
@@ -75,6 +77,7 @@
   }
   window.addEventListener('resize',refreshViewport,{passive:true});
   document.addEventListener('coach-device-changed',()=>requestAnimationFrame(fitBoard));
+  document.addEventListener('coach-plans-layout',()=>requestAnimationFrame(fitBoard));
   // Safari address-bar/keyboard height changes do not move the playing surface.
   window.addEventListener('orientationchange',settleRotation,{passive:true});
   window.screen?.orientation?.addEventListener('change',settleRotation);

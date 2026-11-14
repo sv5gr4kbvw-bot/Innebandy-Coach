@@ -161,3 +161,13 @@ Senast uppdaterad: 2026-11-13
 - Namngiven första femma placerad genom menyn.
 - Två separata riktiga Firebase-klienter: rum, automatisk gästrätt, gästritning, meddelanden/svar, notis, Läs senare och olästknapp verifierade. Båda lämnade testrummet.
 - Fem mot fem skapades i gränssnittet. Tio förflyttningar sparades i samma steg; DOM-positionerna verifierade att alla tio spelare var på väg samtidigt under uppspelningen.
+
+## Version 30.17 – flera övningstavlor och tydlig uppspelning
+- Tre separata övningstavlor från start. En fast rad på planen visar numrerade flikar, aktuell övnings namn, Spela/Pausa och Nästa. Upp till åtta tavlor kan skapas; namn kan ändras i huvudmenyn.
+- Vald övningsfilm eller smart övning placeras i startläget och aktiverar den synliga Spela-knappen. Uppspelningen använder den befintliga animationsmotorn och startar inte automatiskt.
+- Varje tavla sparar egna objekt, orientering, inspelade steg, smarta/egna animationer och redigeringsdata. Byten stoppar föregående uppspelning och färdigställer pågående gruppinspelning. Ångrahistoriken rensas vid byte för att undvika ändringar från en annan tavla.
+- Tavlor och vald flik sparas automatiskt lokalt i coach-exercise-plans-v1, återställs efter omladdning och ingår i full backup med importvalidering. Vid läs-/lagringsfel behålls befintliga data och ett synligt fel visas.
+- Spara övning sparar nu även animationsdata. Äldre statiska övningar fungerar fortfarande och visar ingen aktiv Spela-knapp. Sparade filmer behåller orienteringen.
+- Planens yta räknar bort den nya raden; Android/iOS-val, halvplan, sidläge och träningspanelen behålls.
+- tests/plans.cjs verifierar oberoende tavlor, startläge, smart uppspelning/paus/fortsätt, gruppsteg vid byte, Nästa, omladdning, sparad animation, statisk övning utan gammal animation, ny tavla/namn samt skydd vid visningsläge och lagringsfel.
+- Fysisk iPhone/Android och deras rotationsbeteende är fortsatt inte hårdvarutestade i denna miljö.

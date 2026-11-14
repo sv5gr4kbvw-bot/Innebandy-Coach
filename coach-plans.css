@@ -1,0 +1,15 @@
+#coachPlanBar{position:fixed;bottom:calc(6px + env(safe-area-inset-bottom));left:max(8px,env(safe-area-inset-left));right:calc(var(--coach-training-width,42px) + 8px);z-index:2147483400;display:flex;align-items:center;gap:6px;min-height:56px;padding:6px 8px;border:1px solid #456c80;border-radius:13px;background:#102b3cf5;color:#eff9ff;box-shadow:0 4px 20px #0006;box-sizing:border-box}
+.coach-plan-strip{flex:1;min-width:0}
+#coachPlanName{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 11px/16px system-ui;color:#bcd5e2}
+#coachPlanTabs{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+#coachPlanTabs button{flex:none;min-width:40px;min-height:36px;height:36px;padding:4px 10px;border-radius:8px;font-size:14px;touch-action:manipulation}
+#coachPlanTabs [aria-selected="true"]{background:#0c7862;border-color:#8adbc4;color:white}
+.coach-plan-tab-name{margin-left:6px;display:inline-block;max-width:110px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;white-space:nowrap}
+#coachPlanPlay,#coachPlanNext{flex:none;min-height:44px;padding:7px 10px;font-size:14px;border-radius:10px}
+#coachPlanPlay{background:#11634f;border-color:#80c9af}#coachPlanPlay:disabled{background:#263e4a}
+#coachPlanMessage{position:absolute;left:0;right:0;bottom:calc(100% + 4px);margin:0;background:#643c10;color:#fff;padding:10px;border-radius:10px;font-size:13px;line-height:1.4}
+#coachPlanMessage[hidden]{display:none!important}
+@media(max-width:600px){.coach-plan-tab-name{display:none}#coachPlanTabs button{padding:4px 8px}#coachPlanBar{gap:5px;padding:5px 6px}#coachPlanPlay,#coachPlanNext{font-size:13px;padding:6px 8px}}
+#toast{bottom:calc(80px + env(safe-area-inset-bottom))!important}
+#coach315GroupHint{bottom:calc(80px + env(safe-area-inset-bottom))!important}
+body.coach-page #coachPlanBar{right:max(8px,env(safe-area-inset-right))}
